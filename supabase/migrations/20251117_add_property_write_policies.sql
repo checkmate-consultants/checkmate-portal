@@ -1,6 +1,10 @@
 alter table public.company_properties enable row level security;
 alter table public.property_focus_areas enable row level security;
 
+alter table public.company_properties
+  alter column latitude drop not null,
+  alter column longitude drop not null;
+
 drop policy if exists "Members can manage properties" on public.company_properties;
 create policy "Members can manage properties"
   on public.company_properties
