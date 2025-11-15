@@ -9,6 +9,7 @@ export type CompanyMembership = {
 export type SessionContext = {
   user: User | null
   membership: CompanyMembership | null
+  isSuperAdmin: boolean
 }
 
 type SessionOptions = {
@@ -29,10 +30,11 @@ export const getSessionContext = async (
   const user = userResult.user ?? null
 
   if (!user) {
-    return { user: null, membership: null }
+    return { user: null, membership: null, isSuperAdmin: false }
   }
 
   let membership = await fetchMembership(user.id)
+  const isSuperAdmin = await fetchSuperAdminFlag(user.id)
 
   if (!membership && autoProvision) {
     membership = await maybeProvisionCompany(user)
@@ -41,6 +43,7 @@ export const getSessionContext = async (
   return {
     user,
     membership,
+    isSuperAdmin,
   }
 }
 
@@ -57,6 +60,21 @@ const fetchMembership = async (userId: string) => {
   }
 
   return data ?? null
+}
+
+const fetchSuperAdminFlag = async (userId: string) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('super_admins')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error && !isNoRowsError(error)) {
+    throw error
+  }
+
+  return Boolean(data)
 }
 
 const maybeProvisionCompany = async (user: User) => {

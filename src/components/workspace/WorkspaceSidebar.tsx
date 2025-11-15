@@ -7,29 +7,39 @@ type WorkspaceSidebarProps = {
   onSignOut: () => void
   onNavigate?: () => void
   onClose?: () => void
+  isSuperAdmin?: boolean
 }
-
-const navItems = [
-  { id: 'overview', labelKey: 'workspace.sidebar.overview', to: '/workspace' },
-  {
-    id: 'company',
-    labelKey: 'workspace.sidebar.company',
-    to: '/workspace/company',
-  },
-  {
-    id: 'settings',
-    labelKey: 'workspace.sidebar.settings',
-    to: '/workspace/settings',
-    disabled: true,
-  },
-]
 
 export function WorkspaceSidebar({
   onSignOut,
   onNavigate,
   onClose,
+  isSuperAdmin = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
+  const navItems = [
+    { id: 'overview', labelKey: 'workspace.sidebar.overview', to: '/workspace' },
+    {
+      id: 'company',
+      labelKey: 'workspace.sidebar.company',
+      to: '/workspace/company',
+    },
+    ...(isSuperAdmin
+      ? [
+          {
+            id: 'companies',
+            labelKey: 'workspace.sidebar.companies',
+            to: '/workspace/admin/companies',
+          },
+        ]
+      : []),
+    {
+      id: 'settings',
+      labelKey: 'workspace.sidebar.settings',
+      to: '/workspace/settings',
+      disabled: true,
+    },
+  ]
 
   return (
     <aside className="workspace-sidebar">

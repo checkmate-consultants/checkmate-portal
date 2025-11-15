@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
@@ -32,6 +32,7 @@ type FocusAreaFormValues = {
 export function PropertyDetailsPage() {
   const { propertyId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useTranslation()
   const [reloadKey, setReloadKey] = useState(0)
   const [isFocusModalOpen, setFocusModalOpen] = useState(false)
@@ -122,12 +123,15 @@ export function PropertyDetailsPage() {
     )
   }
 
+  const backTo =
+    (location.state as { backTo?: string } | null)?.backTo ?? '/workspace/company'
+
   if (state.status === 'error' || !state.data) {
     return (
       <div className="property-details">
         <Card className="property-details__error">
           <p>{state.errorMessage ?? t('companyManagement.property.loadError')}</p>
-          <Button type="button" onClick={() => navigate('/workspace/company')}>
+          <Button type="button" onClick={() => navigate(backTo)}>
             {t('companyManagement.backToList')}
           </Button>
         </Card>
@@ -153,6 +157,7 @@ export function PropertyDetailsPage() {
               country: property.country,
             })}
           </p>
+          <p className="property-details__company">{company.name}</p>
           {hasCoordinates && (
             <button
               type="button"
@@ -169,7 +174,7 @@ export function PropertyDetailsPage() {
         <Button
           type="button"
           variant="ghost"
-          onClick={() => navigate('/workspace/company')}
+          onClick={() => navigate(backTo)}
         >
           {t('companyManagement.backToList')}
         </Button>

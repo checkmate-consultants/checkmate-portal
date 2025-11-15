@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,7 +17,7 @@ import {
   type CompanyProperty,
   type CompanySnapshot,
 } from '../data/companyManagement.ts'
-import { getSessionContext } from '../lib/session.ts'
+import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import './company-management-page.css'
 
 type LoadState = {
@@ -37,6 +37,8 @@ type PropertyFormValues = {
 export function CompanyManagementPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { session } = useOutletContext<WorkspaceOutletContext>()
+  const { companyId: routeCompanyId } = useParams<{ companyId?: string }>()
   const [reloadKey, setReloadKey] = useState(0)
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false)
   const [state, setState] = useState<LoadState>({
@@ -44,6 +46,15 @@ export function CompanyManagementPage() {
     company: null,
     errorMessage: null,
   })
+  const targetCompanyId = routeCompanyId ?? session.membership?.company_id ?? null
+  const isSuperAdminView = session.isSuperAdmin && Boolean(routeCompanyId)
+  const propertyPathPrefix = routeCompanyId
+    ? '/workspace/admin/properties'
+    : '/workspace/company/properties'
+  const backToPath = routeCompanyId
+    ? `/workspace/admin/companies/${routeCompanyId}`
+    : '/workspace/company'
+  const adminListPath = '/workspace/admin/companies'
 
   const propertySchema = useMemo(
     () =>
@@ -123,12 +134,20 @@ export function CompanyManagementPage() {
   useEffect(() => {
     let cancelled = false
     const loadCompany = async () => {
-      try {
-        const { membership } = await getSessionContext({ autoProvision: false })
-        if (!membership) {
-          throw new Error(t('companyManagement.errors.noMembership'))
+      if (!targetCompanyId) {
+        if (!cancelled) {
+          setState({
+            status: 'error',
+            company: null,
+            errorMessage: session.isSuperAdmin
+              ? t('superAdmin.selectCompany')
+              : t('companyManagement.errors.noMembership'),
+          })
         }
-        const snapshot = await fetchCompanySnapshot(membership.company_id)
+        return
+      }
+      try {
+        const snapshot = await fetchCompanySnapshot(targetCompanyId)
         if (!snapshot) {
           throw new Error(t('companyManagement.errors.notFound'))
         }
@@ -152,7 +171,7 @@ export function CompanyManagementPage() {
     return () => {
       cancelled = true
     }
-  }, [t, reloadKey])
+  }, [t, reloadKey, targetCompanyId, session.isSuperAdmin])
 
   if (state.status === 'loading') {
     return (
@@ -165,12 +184,24 @@ export function CompanyManagementPage() {
   }
 
   if (state.status === 'error' || !state.company) {
+    const showAdminRedirect = session.isSuperAdmin
     return (
       <div className="company-management company-management--centered">
         <Card className="company-management__state-card">
           <p>{state.errorMessage ?? t('companyManagement.errors.generic')}</p>
-          <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>
-            {t('companyManagement.retry')}
+          <Button
+            type="button"
+            onClick={() => {
+              if (showAdminRedirect) {
+                navigate(adminListPath)
+              } else {
+                setReloadKey((value) => value + 1)
+              }
+            }}
+          >
+            {showAdminRedirect
+              ? t('superAdmin.back')
+              : t('companyManagement.retry')}
           </Button>
         </Card>
       </div>
@@ -183,11 +214,22 @@ export function CompanyManagementPage() {
   return (
     <div className="company-management">
       <header className="company-management__header">
-        <p className="company-management__eyebrow">
-          {t('companyManagement.subtitle', { company: company.name })}
-        </p>
-        <h1>{t('companyManagement.title')}</h1>
-        <p>{t('companyManagement.description')}</p>
+        <div>
+          <p className="company-management__eyebrow">
+            {t('companyManagement.subtitle', { company: company.name })}
+          </p>
+          <h1>{t('companyManagement.title')}</h1>
+          <p>{t('companyManagement.description')}</p>
+        </div>
+        {isSuperAdminView && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate(adminListPath)}
+          >
+            {t('superAdmin.back')}
+          </Button>
+        )}
       </header>
 
       <section className="company-management__section">
@@ -202,6 +244,7 @@ export function CompanyManagementPage() {
             type="button"
             variant="ghost"
             onClick={() => setPropertyModalOpen(true)}
+            disabled={!state.company}
           >
             {t('companyManagement.newProperty')}
           </Button>
@@ -219,6 +262,8 @@ export function CompanyManagementPage() {
                 property={property}
                 navigate={navigate}
                 t={t}
+                propertyPathPrefix={propertyPathPrefix}
+                backToPath={backToPath}
               />
             ))}
           </div>
@@ -331,9 +376,17 @@ type PropertyCardProps = {
   property: CompanyProperty
   navigate: ReturnType<typeof useNavigate>
   t: TFunction
+  propertyPathPrefix: string
+  backToPath: string
 }
 
-const PropertyCard = ({ property, navigate, t }: PropertyCardProps) => {
+const PropertyCard = ({
+  property,
+  navigate,
+  t,
+  propertyPathPrefix,
+  backToPath,
+}: PropertyCardProps) => {
   const hasCoordinates =
     property.latitude !== null && property.longitude !== null
   return (
@@ -368,7 +421,9 @@ const PropertyCard = ({ property, navigate, t }: PropertyCardProps) => {
         <Button
           type="button"
           onClick={() => {
-            navigate(`/workspace/company/properties/${property.id}`)
+            navigate(`${propertyPathPrefix}/${property.id}`, {
+              state: { backTo: backToPath },
+            })
           }}
         >
           {t('companyManagement.viewProperty')}

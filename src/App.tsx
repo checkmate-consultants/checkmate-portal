@@ -5,6 +5,7 @@ import { WorkspacePage } from './pages/WorkspacePage.tsx'
 import { CompanyOnboardingPage } from './pages/CompanyOnboardingPage.tsx'
 import { CompanyManagementPage } from './pages/CompanyManagementPage.tsx'
 import { PropertyDetailsPage } from './pages/PropertyDetailsPage.tsx'
+import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
 
 function App() {
   return (
@@ -18,6 +19,15 @@ function App() {
         <Route path="company" element={<CompanyManagementPage />} />
         <Route
           path="company/properties/:propertyId"
+          element={<PropertyDetailsPage />}
+        />
+        <Route path="admin/companies" element={<SuperAdminCompaniesPage />} />
+        <Route
+          path="admin/companies/:companyId"
+          element={<CompanyManagementPage />}
+        />
+        <Route
+          path="admin/properties/:propertyId"
           element={<PropertyDetailsPage />}
         />
       </Route>

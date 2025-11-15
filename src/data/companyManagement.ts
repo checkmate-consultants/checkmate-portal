@@ -51,6 +51,20 @@ type SupabasePropertyRecord = {
 
 type SupabaseCompanyJoin = CompanySummary | CompanySummary[] | null
 
+type CompanyDirectoryRecord = {
+  id: string
+  name: string
+  created_at: string
+  company_properties: { count: number }[] | null
+}
+
+export type CompanyDirectoryItem = {
+  id: string
+  name: string
+  createdAt: string
+  propertyCount: number
+}
+
 export type CreatePropertyInput = {
   companyId: string
   name: string
@@ -107,6 +121,31 @@ export const fetchCompanySnapshot = async (
     name: data.name,
     properties: mapProperties(data.properties),
   }
+}
+
+export const fetchCompanyDirectory = async (): Promise<
+  CompanyDirectoryItem[]
+> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('companies')
+    .select('id, name, created_at, company_properties(count)')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  return data.map((record: CompanyDirectoryRecord) => ({
+    id: record.id,
+    name: record.name,
+    createdAt: record.created_at,
+    propertyCount: record.company_properties?.[0]?.count ?? 0,
+  }))
 }
 
 export const fetchPropertyDetails = async (
