@@ -51,6 +51,13 @@ type SupabasePropertyRecord = {
 
 type SupabaseCompanyJoin = CompanySummary | CompanySummary[] | null
 
+type SupabaseVisitFocusArea = {
+  focus_area?: {
+    id: string
+    name: string
+  } | null
+} | null
+
 type CompanyDirectoryRecord = {
   id: string
   name: string
@@ -63,6 +70,43 @@ export type CompanyDirectoryItem = {
   name: string
   createdAt: string
   propertyCount: number
+}
+
+type VisitRecord = {
+  id: string
+  scheduled_for: string
+  notes: string | null
+  company: {
+    id: string
+    name: string
+  } | null
+  property: {
+    id: string
+    name: string
+    city: string
+    country: string
+  } | null
+  focus_areas?: SupabaseVisitFocusArea[] | null
+}
+
+export type Visit = {
+  id: string
+  scheduledFor: string
+  notes: string | null
+  company: {
+    id: string
+    name: string
+  }
+  property: {
+    id: string
+    name: string
+    city: string
+    country: string
+  }
+  focusAreas: {
+    id: string
+    name: string
+  }[]
 }
 
 export type CreatePropertyInput = {
@@ -78,6 +122,14 @@ export type CreateFocusAreaInput = {
   propertyId: string
   name: string
   description: string
+}
+
+export type CreateVisitInput = {
+  companyId: string
+  propertyId: string
+  scheduledFor: string
+  focusAreaIds: string[]
+  notes?: string
 }
 
 export const fetchCompanySnapshot = async (
@@ -146,6 +198,111 @@ export const fetchCompanyDirectory = async (): Promise<
     createdAt: record.created_at,
     propertyCount: record.company_properties?.[0]?.count ?? 0,
   }))
+}
+
+export const fetchVisits = async (): Promise<Visit[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visits')
+    .select(
+      `
+        id,
+        company:companies (
+          id,
+          name
+        ),
+        scheduled_for,
+        notes,
+        property:company_properties (
+          id,
+          name,
+          city,
+          country
+        ),
+        focus_areas:visit_focus_areas (
+          focus_area:property_focus_areas (
+            id,
+            name
+          )
+        )
+      `,
+    )
+    .order('scheduled_for', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  const records = data as unknown as VisitRecord[]
+
+  return records
+    .filter((record) => Boolean(record.property && record.company))
+    .map((record) => ({
+      id: record.id,
+      scheduledFor: record.scheduled_for,
+      notes: record.notes,
+      company: {
+        id: record.company!.id,
+        name: record.company!.name,
+      },
+      property: {
+        id: record.property!.id,
+        name: record.property!.name,
+        city: record.property!.city,
+        country: record.property!.country,
+      },
+      focusAreas:
+        record.focus_areas
+          ?.map((wrapper) => wrapper?.focus_area)
+          .filter(
+            (focus): focus is { id: string; name: string } => Boolean(focus),
+          ) ?? [],
+    }))
+}
+
+export const createVisit = async ({
+  companyId,
+  propertyId,
+  scheduledFor,
+  focusAreaIds,
+  notes,
+}: CreateVisitInput) => {
+  const supabase = getSupabaseClient()
+  const { data: userData } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('visits')
+    .insert({
+      company_id: companyId,
+      property_id: propertyId,
+      scheduled_for: scheduledFor,
+      notes: notes?.trim() ? notes.trim() : null,
+      created_by: userData.user?.id ?? null,
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    throw error ?? new Error('Unable to create visit')
+  }
+
+  if (focusAreaIds.length > 0) {
+    const { error: focusError } = await supabase
+      .from('visit_focus_areas')
+      .insert(
+        focusAreaIds.map((focusAreaId) => ({
+          visit_id: data.id,
+          focus_area_id: focusAreaId,
+        })),
+      )
+
+    if (focusError) {
+      throw focusError
+    }
+  }
 }
 
 export const fetchPropertyDetails = async (

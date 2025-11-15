@@ -6,6 +6,7 @@ import { CompanyOnboardingPage } from './pages/CompanyOnboardingPage.tsx'
 import { CompanyManagementPage } from './pages/CompanyManagementPage.tsx'
 import { PropertyDetailsPage } from './pages/PropertyDetailsPage.tsx'
 import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
+import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           path="admin/properties/:propertyId"
           element={<PropertyDetailsPage />}
         />
+        <Route path="admin/visits" element={<SuperAdminVisitsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/signup" replace />} />
     </Routes>
