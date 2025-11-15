@@ -1,0 +1,52 @@
+import type { ReactNode } from 'react'
+import './modal.css'
+
+type ModalProps = {
+  open: boolean
+  title: string
+  description?: string
+  children: ReactNode
+  onClose?: () => void
+  actions?: ReactNode
+}
+
+export function Modal({
+  open,
+  title,
+  description,
+  children,
+  onClose,
+  actions,
+}: ModalProps) {
+  if (!open) {
+    return null
+  }
+
+  return (
+    <div className="ui-modal" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="ui-modal__backdrop" onClick={onClose} />
+      <div className="ui-modal__content">
+        <header className="ui-modal__header">
+          <div>
+            <h2>{title}</h2>
+            {description && <p>{description}</p>}
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              className="ui-modal__close"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          )}
+        </header>
+        <div className="ui-modal__body">{children}</div>
+        {actions && <footer className="ui-modal__footer">{actions}</footer>}
+      </div>
+    </div>
+  )
+}
+
+

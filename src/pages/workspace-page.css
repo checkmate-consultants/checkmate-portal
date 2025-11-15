@@ -14,6 +14,131 @@
   color: var(--color-text);
 }
 
+.workspace-shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  color: var(--color-text);
+  position: relative;
+}
+
+.workspace-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--color-accent) 10%, transparent),
+      transparent 58%
+    ),
+    var(--color-bg);
+  overflow: hidden;
+}
+
+.workspace-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+
+.workspace-topbar__title {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.workspace-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.workspace-menu-button {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.workspace-menu-button span {
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  position: relative;
+}
+
+.workspace-menu-button span::before,
+.workspace-menu-button span::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 2px;
+  left: 0;
+  background: currentColor;
+}
+
+.workspace-menu-button span::before {
+  top: -6px;
+}
+
+.workspace-menu-button span::after {
+  bottom: -6px;
+}
+
+.workspace-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.workspace-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.workspace-shell[data-sidebar-open='true'] .workspace-sidebar-overlay {
+  display: block;
+}
+
+@media (max-width: 960px) {
+  .workspace-main {
+    min-height: 100vh;
+  }
+
+  .workspace-menu-button {
+    display: inline-flex;
+  }
+
+  .workspace-topbar {
+    padding: 1rem 1.5rem;
+  }
+
+  .workspace-topbar__actions {
+    gap: 0.5rem;
+  }
+}
+
+
 .workspace-card {
   max-width: 540px;
   text-align: center;
