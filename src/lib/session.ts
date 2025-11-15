@@ -3,7 +3,7 @@ import { getSupabaseClient } from './supabaseClient.ts'
 
 export type CompanyMembership = {
   company_id: string
-  role: 'owner' | 'admin' | 'member'
+  role: string
 }
 
 export type SessionContext = {
