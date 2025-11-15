@@ -3,6 +3,9 @@ dist/
 .DS_Store
 .env
 .env.*
+/supabase/.temp/
+/supabase/.branches/
+tmp/
 /coverage/
 *.log
 pnpm-lock.yaml

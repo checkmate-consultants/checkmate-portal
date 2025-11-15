@@ -1,4 +1,4 @@
-import { useThemeContext } from './ThemeProvider.tsx'
+import { useThemeContext } from './theme-context.ts'
 
 export const useTheme = () => useThemeContext()
 

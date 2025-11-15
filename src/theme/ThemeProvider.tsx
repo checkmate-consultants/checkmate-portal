@@ -1,23 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getTheme } from './tokens.ts'
-import type { ThemeMode, ThemeTokens } from './tokens.ts'
-
-type ThemeContextValue = {
-  theme: ThemeTokens
-  mode: ThemeMode
-  toggleMode: () => void
-  setMode: (mode: ThemeMode) => void
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null)
+import type { ThemeMode } from './tokens.ts'
+import { ThemeContext } from './theme-context.ts'
 
 const THEME_STORAGE_KEY = 'checkmate-theme-mode'
 
@@ -103,11 +88,5 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-export const useThemeContext = () => {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useThemeContext must be used within ThemeProvider')
-  return ctx
 }
 

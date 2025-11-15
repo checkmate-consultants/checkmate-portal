@@ -13,6 +13,7 @@ import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
+import { getSessionContext } from '../lib/session.ts'
 import './signin-page.css'
 
 type SignInValues = {
@@ -66,9 +67,18 @@ export function SignInPage() {
       if (error) {
         throw new Error(error.message)
       }
+      const context = await getSessionContext()
+      if (!context.user) {
+        throw new Error(t('validation.generic'))
+      }
+      return context.membership ? 'workspace' : 'onboarding'
     },
-    onSuccess: () => {
-      navigate('/workspace')
+    onSuccess: (destination) => {
+      if (destination === 'workspace') {
+        navigate('/workspace', { replace: true })
+      } else {
+        navigate('/onboarding/company', { replace: true })
+      }
     },
   })
 

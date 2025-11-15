@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useForm, type SubmitHandler } from 'react-hook-form'
+import { useForm, useWatch, type SubmitHandler } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,6 +17,7 @@ import './signup-page.css'
 
 type SignUpValues = {
   name: string
+  companyName: string
   email: string
   password: string
   confirmPassword: string
@@ -43,6 +44,10 @@ export function SignUpPage() {
             .string()
             .min(2, t('validation.nameLength'))
             .nonempty(t('validation.required')),
+          companyName: z
+            .string()
+            .min(2, t('validation.companyLength'))
+            .nonempty(t('validation.required')),
           email: z
             .string()
             .nonempty(t('validation.required'))
@@ -68,6 +73,7 @@ export function SignUpPage() {
     resolver: zodResolver(validationSchema),
     defaultValues: {
       name: '',
+      companyName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -85,8 +91,9 @@ export function SignUpPage() {
         options: {
           data: {
             full_name: values.name,
+            pending_company_name: values.companyName,
           },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/onboarding/company`,
         },
       })
       if (error) throw new Error(error.message)
@@ -99,7 +106,11 @@ export function SignUpPage() {
 
   const isSuccess = mutation.isSuccess
 
-  const pwd = form.watch('password')
+  const pwd = useWatch({
+    control: form.control,
+    name: 'password',
+    defaultValue: '',
+  })
   const pwdStrength = passwordScore(pwd)
 
   const dir = i18n.dir()
@@ -151,6 +162,21 @@ export function SignUpPage() {
                   {...form.register('name')}
                   hasError={Boolean(form.formState.errors.name)}
                   aria-invalid={Boolean(form.formState.errors.name)}
+                />
+              </FormField>
+
+              <FormField
+                id="company"
+                label={t('signup.company')}
+                helperText={t('signup.companyHelper')}
+                error={form.formState.errors.companyName?.message}
+              >
+                <Input
+                  id="company"
+                  placeholder={t('signup.companyPlaceholder')}
+                  {...form.register('companyName')}
+                  hasError={Boolean(form.formState.errors.companyName)}
+                  aria-invalid={Boolean(form.formState.errors.companyName)}
                 />
               </FormField>
 
