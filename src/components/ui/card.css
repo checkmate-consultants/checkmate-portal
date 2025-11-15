@@ -1,0 +1,8 @@
+.ui-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg, 24px);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid color-mix(in srgb, var(--color-border) 65%, transparent);
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+

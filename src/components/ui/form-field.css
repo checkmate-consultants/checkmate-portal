@@ -1,0 +1,29 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field__label {
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+}
+
+.form-field__helper {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.form-field__message {
+  min-height: 1em;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.form-field__message.is-error {
+  color: var(--color-danger);
+}
+
