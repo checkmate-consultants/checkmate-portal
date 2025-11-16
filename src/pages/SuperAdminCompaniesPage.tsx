@@ -89,9 +89,15 @@ export function SuperAdminCompaniesPage() {
           <h1>{t('superAdmin.title')}</h1>
           <p>{t('superAdmin.description')}</p>
         </div>
-        <Button type="button" variant="ghost" onClick={() => navigate('/workspace/company')}>
-          {t('superAdmin.goToMyCompany')}
-        </Button>
+        {session.membership && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate('/workspace/company')}
+          >
+            {t('superAdmin.goToMyCompany')}
+          </Button>
+        )}
       </header>
 
       {state.companies.length === 0 ? (

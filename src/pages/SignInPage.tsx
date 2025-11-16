@@ -71,6 +71,12 @@ export function SignInPage() {
       if (!context.user) {
         throw new Error(t('validation.generic'))
       }
+      // Super admins should always be routed into the workspace even if they
+      // don't belong to a specific company. The workspace shell will then
+      // redirect them to the appropriate admin route.
+      if (context.isSuperAdmin) {
+        return 'workspace'
+      }
       return context.membership ? 'workspace' : 'onboarding'
     },
     onSuccess: (destination) => {
