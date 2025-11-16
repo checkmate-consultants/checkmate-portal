@@ -4,7 +4,7 @@
 
 .visits-table .super-admin-table__head,
 .visits-table .super-admin-table__row {
-  grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1.2fr 1.5fr 1fr;
+  grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1.2fr 1.5fr 1fr 1.1fr;
 }
 
 .modal-select {

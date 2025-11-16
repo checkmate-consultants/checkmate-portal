@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
@@ -79,6 +80,7 @@ type VisitFormValues = {
 
 export function SuperAdminVisitsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [visitState, setVisitState] = useState<VisitState>({
     status: 'loading',
@@ -353,6 +355,19 @@ export function SuperAdminVisitsPage() {
                   : visit.focusAreas.map((area) => area.name).join(', ')}
               </span>
               <span>{visit.notes?.trim() ? visit.notes : '—'}</span>
+              {visit.status !== 'done' && (
+                <span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      navigate(`/workspace/admin/visits/${visit.id}/report`)
+                    }
+                  >
+                    {t('superAdmin.visitReport.open')}
+                  </Button>
+                </span>
+              )}
             </div>
           ))}
         </div>

@@ -8,6 +8,9 @@ import { PropertyDetailsPage } from './pages/PropertyDetailsPage.tsx'
 import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
 import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
 import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
+import { SuperAdminVisitReportPage } from './pages/SuperAdminVisitReportPage.tsx'
+import { CompanyVisitsPage } from './pages/CompanyVisitsPage.tsx'
+import { CompanyVisitReportPage } from './pages/CompanyVisitReportPage.tsx'
 
 function App() {
   return (
@@ -23,6 +26,8 @@ function App() {
           path="company/properties/:propertyId"
           element={<PropertyDetailsPage />}
         />
+        <Route path="visits" element={<CompanyVisitsPage />} />
+        <Route path="visits/:visitId" element={<CompanyVisitReportPage />} />
         <Route path="admin/companies" element={<SuperAdminCompaniesPage />} />
         <Route
           path="admin/companies/:companyId"
@@ -33,6 +38,10 @@ function App() {
           element={<PropertyDetailsPage />}
         />
         <Route path="admin/visits" element={<SuperAdminVisitsPage />} />
+        <Route
+          path="admin/visits/:visitId/report"
+          element={<SuperAdminVisitReportPage />}
+        />
         <Route path="admin/shoppers" element={<SuperAdminShoppersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/signup" replace />} />

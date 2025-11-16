@@ -124,9 +124,6 @@ export function WorkspacePage() {
           >
             <span />
           </button>
-          <p className="workspace-topbar__title">
-            {t('workspace.sidebar.company')}
-          </p>
           <div className="workspace-topbar__actions">
             <ThemeToggle />
             <LanguageSwitcher />

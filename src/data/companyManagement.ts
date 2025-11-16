@@ -58,6 +58,12 @@ type SupabaseVisitFocusArea = {
   } | null
 } | null
 
+type VisitFocusAreaReportRecord = {
+  visit_id: string
+  focus_area_id: string
+  content: string
+}
+
 type CompanyDirectoryRecord = {
   id: string
   name: string
@@ -140,6 +146,12 @@ export type Visit = {
     id: string
     name: string
   }[]
+}
+
+export type VisitFocusAreaReport = {
+  focusAreaId: string
+  focusAreaName: string
+  content: string
 }
 
 export type CreatePropertyInput = {
@@ -376,6 +388,162 @@ export const updateVisitStatus = async (
   if (error || !data) {
     throw error ?? new Error('Unable to update visit status')
   }
+}
+
+export const fetchVisitReports = async (
+  visitId: string,
+): Promise<VisitFocusAreaReport[]> => {
+  const supabase = getSupabaseClient()
+  const { data: focusRows, error: focusError } = await supabase
+    .from('visit_focus_areas')
+    .select(
+      `
+        focus_area:property_focus_areas (
+          id,
+          name
+        )
+      `,
+    )
+    .eq('visit_id', visitId)
+
+  if (focusError) {
+    throw focusError
+  }
+
+  const { data: reportRows, error: reportError } = await supabase
+    .from('visit_focus_area_reports')
+    .select('focus_area_id, content')
+    .eq('visit_id', visitId)
+
+  if (reportError) {
+    throw reportError
+  }
+
+  const reportMap = new Map<string, string>()
+  for (const row of (reportRows ?? []) as VisitFocusAreaReportRecord[]) {
+    reportMap.set(row.focus_area_id, row.content)
+  }
+
+  if (!focusRows) {
+    return []
+  }
+
+  return (focusRows as any[])
+    .map((row) => row.focus_area)
+    .filter((fa): fa is { id: string; name: string } => Boolean(fa))
+    .map((fa) => ({
+      focusAreaId: fa.id as string,
+      focusAreaName: fa.name as string,
+      content: reportMap.get(fa.id as string) ?? '',
+    }))
+}
+
+export const saveVisitFocusAreaReport = async (
+  visitId: string,
+  focusAreaId: string,
+  content: string,
+) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visit_focus_area_reports')
+    .upsert(
+      {
+        visit_id: visitId,
+        focus_area_id: focusAreaId,
+        content,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'visit_id,focus_area_id' },
+    )
+    .select('visit_id')
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
+export const fetchCompanyVisits = async (
+  companyId: string,
+): Promise<Visit[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visits')
+    .select(
+      `
+        id,
+        status,
+        company:companies (
+          id,
+          name
+        ),
+        scheduled_for,
+        notes,
+        property:company_properties (
+          id,
+          name,
+          city,
+          country
+        ),
+        focus_areas:visit_focus_areas (
+          focus_area:property_focus_areas (
+            id,
+            name
+          )
+        ),
+        shopper:shoppers (
+          id,
+          full_name,
+          email
+        )
+      `,
+    )
+    .eq('company_id', companyId)
+    .order('scheduled_for', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  const records = data as unknown as VisitRecord[]
+
+  return records
+    .filter((record) => Boolean(record.property && record.company))
+    .map((record) => ({
+      id: record.id,
+      scheduledFor: record.scheduled_for,
+      notes: record.notes,
+      status: (record.status as VisitStatus | null) ?? 'scheduled',
+      company: {
+        id: record.company!.id,
+        name: record.company!.name,
+      },
+      property: {
+        id: record.property!.id,
+        name: record.property!.name,
+        city: record.property!.city,
+        country: record.property!.country,
+      },
+      focusAreas:
+        record.focus_areas
+          ?.map((wrapper) => wrapper?.focus_area)
+          .filter(
+            (focus): focus is { id: string; name: string } => Boolean(focus),
+          ) ?? [],
+      shopper: record.shopper
+        ? {
+            id: record.shopper.id,
+            fullName: record.shopper.full_name,
+            email: record.shopper.email,
+          }
+        : null,
+    }))
 }
 
 export const fetchShoppers = async (): Promise<Shopper[]> => {

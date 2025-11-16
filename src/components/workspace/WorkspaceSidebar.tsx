@@ -10,6 +10,13 @@ type WorkspaceSidebarProps = {
   isSuperAdmin?: boolean
 }
 
+type NavItem = {
+  id: string
+  labelKey: string
+  to: string
+  disabled?: boolean
+}
+
 export function WorkspaceSidebar({
   onSignOut,
   onNavigate,
@@ -17,13 +24,22 @@ export function WorkspaceSidebar({
   isSuperAdmin = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
-  const navItems = [
+  const navItems: NavItem[] = [
     { id: 'overview', labelKey: 'workspace.sidebar.overview', to: '/workspace' },
-    {
-      id: 'company',
-      labelKey: 'workspace.sidebar.company',
-      to: '/workspace/company',
-    },
+    ...(!isSuperAdmin
+      ? [
+          {
+            id: 'company',
+            labelKey: 'workspace.sidebar.company',
+            to: '/workspace/company',
+          },
+          {
+            id: 'company-visits',
+            labelKey: 'workspace.sidebar.companyVisits',
+            to: '/workspace/visits',
+          },
+        ]
+      : []),
     ...(isSuperAdmin
       ? [
           {
@@ -43,12 +59,6 @@ export function WorkspaceSidebar({
           },
         ]
       : []),
-    {
-      id: 'settings',
-      labelKey: 'workspace.sidebar.settings',
-      to: '/workspace/settings',
-      disabled: true,
-    },
   ]
 
   return (
