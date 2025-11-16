@@ -21,10 +21,20 @@ const generatePassword = () => {
     .replace(/1/g, 'y')
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders,
+    },
   })
 
 const errorResponse = (message: string, status = 400) =>
@@ -53,6 +63,14 @@ const verifySuperAdmin = async (authHeader: string) => {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    })
+  }
+
   if (req.method !== 'POST') {
     return errorResponse('Method not allowed', 405)
   }
