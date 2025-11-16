@@ -63,40 +63,53 @@ const verifySuperAdmin = async (authHeader: string) => {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    })
-  }
-
-  if (req.method !== 'POST') {
-    return errorResponse('Method not allowed', 405)
-  }
-
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) {
-    return errorResponse('Unauthorized', 401)
-  }
-
-  const verification = await verifySuperAdmin(authHeader)
-  if (!verification.ok) {
-    const status = verification.error === 'Unauthorized' ? 401 : 403
-    return errorResponse(verification.error, status)
-  }
-
-  let payload: ShopperPayload
   try {
-    payload = await req.json()
-  } catch {
-    return errorResponse('Invalid JSON body', 400)
-  }
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      })
+    }
 
-  const { email, fullName } = payload
-  if (!email || !fullName) {
-    return errorResponse('Missing required fields', 422)
-  }
+    if (req.method !== 'POST') {
+      return errorResponse('Method not allowed', 405)
+    }
+
+    // Get Authorization header - HTTP headers are case-insensitive
+    const authHeader = req.headers.get('Authorization') || req.headers.get('authorization')
+    
+    if (!authHeader) {
+      console.error('Missing Authorization header')
+      return errorResponse('Missing Authorization header', 401)
+    }
+
+    const verification = await verifySuperAdmin(authHeader)
+    if (!verification.ok) {
+      const status = verification.error === 'Unauthorized' ? 401 : 403
+      console.error(`Verification failed: ${verification.error}`)
+      return errorResponse(verification.error, status)
+    }
+
+    let payload: ShopperPayload
+    try {
+      payload = await req.json()
+    } catch (error) {
+      console.error('JSON parse error:', error)
+      return errorResponse(
+        `Invalid JSON body: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        400,
+      )
+    }
+
+    const { email, fullName } = payload
+    if (!email || !fullName) {
+      console.error(`Missing fields - email: ${!!email}, fullName: ${!!fullName}`)
+      return errorResponse(
+        `Missing required fields: email=${!!email}, fullName=${!!fullName}`,
+        422,
+      )
+    }
 
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
@@ -128,14 +141,22 @@ const handler = async (req: Request): Promise<Response> => {
     created_by: verification.user.id,
   })
 
-  if (shopperError) {
-    return errorResponse(shopperError.message, 400)
-  }
+    if (shopperError) {
+      console.error('Shopper insert error:', shopperError)
+      return errorResponse(shopperError.message, 400)
+    }
 
-  return jsonResponse({
-    authUserId: userId,
-    tempPassword: temporaryPassword,
-  })
+    return jsonResponse({
+      authUserId: userId,
+      tempPassword: temporaryPassword,
+    })
+  } catch (error) {
+    console.error('Unexpected error in handler:', error)
+    return errorResponse(
+      `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      500,
+    )
+  }
 }
 
 Deno.serve(handler)

@@ -621,9 +621,12 @@ export const createShopper = async ({
 
   if (error) {
     console.error('Error invoking create-shopper function:', error)
-    throw new Error(
-      error.message || 'Failed to create shopper. Please check if the Edge Function is deployed.',
-    )
+    // Extract more detailed error message if available
+    const errorMessage =
+      error.message ||
+      (error as { context?: { msg?: string } })?.context?.msg ||
+      'Failed to create shopper. Please check if the Edge Function is deployed.'
+    throw new Error(errorMessage)
   }
 
   if (!data) {
