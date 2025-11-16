@@ -164,8 +164,8 @@ const resources = {
           idLabel: 'ID: {{id}}',
         },
         errors: {
-          unauthorized: 'You are not authorized to view the companies directory.',
-          generic: 'We could not load the companies directory.',
+          unauthorized: 'You are not authorized to view this page.',
+          generic: 'We could not load the data. Please try again.',
         },
         visits: {
           title: 'Visits log',
@@ -390,8 +390,8 @@ const resources = {
           idLabel: 'المعرّف: {{id}}',
         },
         errors: {
-          unauthorized: 'ليست لديك صلاحية رؤية دليل الشركات.',
-          generic: 'تعذّر تحميل دليل الشركات.',
+          unauthorized: 'ليست لديك صلاحية رؤية هذه الصفحة.',
+          generic: 'تعذّر تحميل البيانات. يرجى المحاولة مرة أخرى.',
         },
         visits: {
           title: 'سجل الزيارات',

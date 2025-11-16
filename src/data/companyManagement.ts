@@ -353,18 +353,7 @@ export const fetchShoppers = async (): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('shoppers')
-    .select(
-      `
-        id,
-        full_name,
-        email,
-        created_at,
-        company:companies (
-          id,
-          name
-        )
-      `,
-    )
+    .select('id, full_name, email, created_at')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -434,7 +423,14 @@ export const createShopper = async ({
   })
 
   if (error) {
-    throw new Error(error.message)
+    console.error('Error invoking create-shopper function:', error)
+    throw new Error(
+      error.message || 'Failed to create shopper. Please check if the Edge Function is deployed.',
+    )
+  }
+
+  if (!data) {
+    throw new Error('No data returned from create-shopper function')
   }
 
   return data as { authUserId: string; tempPassword: string }

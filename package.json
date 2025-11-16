@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "db:push": "supabase db push",
-    "db:start": "supabase start"  
+    "db:start": "supabase start",
+    "functions:serve": "supabase functions serve"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
