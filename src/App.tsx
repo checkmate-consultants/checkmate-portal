@@ -7,6 +7,7 @@ import { CompanyManagementPage } from './pages/CompanyManagementPage.tsx'
 import { PropertyDetailsPage } from './pages/PropertyDetailsPage.tsx'
 import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
 import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
+import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           element={<PropertyDetailsPage />}
         />
         <Route path="admin/visits" element={<SuperAdminVisitsPage />} />
+        <Route path="admin/shoppers" element={<SuperAdminShoppersPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/signup" replace />} />
     </Routes>

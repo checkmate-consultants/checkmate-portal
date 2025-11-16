@@ -1,0 +1,18 @@
+.shoppers-table__row span {
+  display: block;
+}
+
+.shoppers-table .super-admin-table__head,
+.shoppers-table .super-admin-table__row {
+  grid-template-columns: 2fr 2fr 1fr;
+}
+
+.shopper-result-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+

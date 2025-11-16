@@ -2,6 +2,11 @@
   display: block;
 }
 
+.visits-table .super-admin-table__head,
+.visits-table .super-admin-table__row {
+  grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1.5fr 1fr;
+}
+
 .modal-select {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -15,5 +20,57 @@
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.shopper-results {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.shopper-results li {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+}
+
+.shopper-results li:last-child {
+  border-bottom: none;
+}
+
+.shopper-results button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  cursor: pointer;
+}
+
+.shopper-results button strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.shopper-results button span {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.shopper-results__empty {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.shopper-selected {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
 }
 

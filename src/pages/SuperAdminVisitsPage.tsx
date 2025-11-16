@@ -15,9 +15,11 @@ import {
   fetchCompanySnapshot,
   fetchVisits,
   createVisit,
+  searchShoppers,
   type CompanyDirectoryItem,
   type CompanySnapshot,
   type Visit,
+  type Shopper,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import './super-admin-visits-page.css'
@@ -39,6 +41,7 @@ type ModalState = {
 type VisitFormValues = {
   companyId: string
   propertyId: string
+  shopperId: string
   focusAreaIds: string[]
   scheduledFor: string
   notes?: string
@@ -59,13 +62,20 @@ export function SuperAdminVisitsPage() {
     selectedSnapshot: null,
     loadingSnapshot: false,
   })
+  const [shopperQuery, setShopperQuery] = useState('')
+  const [shopperResults, setShopperResults] = useState<Shopper[]>([])
+  const [selectedShopper, setSelectedShopper] = useState<Shopper | null>(null)
+  const [isSearchingShoppers, setIsSearchingShoppers] = useState(false)
 
   const visitSchema = useMemo(
     () =>
       z.object({
-        companyId: z.string().uuid(t('console.uuid.error')),
-        propertyId: z.string().uuid(t('console.uuid.error')),
-        focusAreaIds: z.array(z.string().uuid()).min(1, t('superAdmin.visits.forms.focusAreasHelper')),
+        companyId: z.string().min(1, t('validation.required')),
+        propertyId: z.string().min(1, t('validation.required')),
+        shopperId: z.string().min(1, t('validation.required')),
+        focusAreaIds: z
+          .array(z.string())
+          .min(1, t('superAdmin.visits.forms.focusAreasHelper')),
         scheduledFor: z.string().min(1, t('validation.required')),
         notes: z.string().optional(),
       }),
@@ -77,15 +87,17 @@ export function SuperAdminVisitsPage() {
     defaultValues: {
       companyId: '',
       propertyId: '',
+      shopperId: '',
       focusAreaIds: [],
       scheduledFor: '',
       notes: '',
     },
     mode: 'onChange',
   })
-const companyField = form.register('companyId')
-const propertyField = form.register('propertyId')
-const focusField = form.register('focusAreaIds')
+  const companyField = form.register('companyId')
+  const propertyField = form.register('propertyId')
+  const focusField = form.register('focusAreaIds')
+  const shopperField = form.register('shopperId')
 
   const refreshVisits = async () => {
     try {
@@ -115,6 +127,25 @@ const focusField = form.register('focusAreaIds')
     refreshVisits()
   }, [session.isSuperAdmin, t])
 
+  useEffect(() => {
+    if (shopperQuery.trim().length < 2) {
+      setShopperResults([])
+      return
+    }
+    setIsSearchingShoppers(true)
+    const handle = setTimeout(async () => {
+      try {
+        const results = await searchShoppers(shopperQuery.trim(), 20)
+        setShopperResults(results)
+      } catch {
+        setShopperResults([])
+      } finally {
+        setIsSearchingShoppers(false)
+      }
+    }, 300)
+    return () => clearTimeout(handle)
+  }, [shopperQuery])
+
   const openModal = async () => {
     try {
       const companies = await fetchCompanyDirectory()
@@ -126,10 +157,14 @@ const focusField = form.register('focusAreaIds')
       form.reset({
         companyId: '',
         propertyId: '',
+        shopperId: '',
         focusAreaIds: [],
         scheduledFor: '',
         notes: '',
       })
+      setShopperQuery('')
+      setShopperResults([])
+      setSelectedShopper(null)
     } catch {
       // ignore for now
     }
@@ -142,12 +177,19 @@ const focusField = form.register('focusAreaIds')
       selectedCompanyId: null,
       selectedSnapshot: null,
     }))
+    setShopperQuery('')
+    setShopperResults([])
+    setSelectedShopper(null)
   }
 
   const handleCompanyChange = async (companyId: string) => {
     form.setValue('companyId', companyId, { shouldValidate: true })
     form.setValue('propertyId', '', { shouldValidate: true })
     form.setValue('focusAreaIds', [], { shouldValidate: true })
+    form.setValue('shopperId', '', { shouldValidate: true })
+    setShopperQuery('')
+    setShopperResults([])
+    setSelectedShopper(null)
     setModalState((prev) => ({
       ...prev,
       selectedCompanyId: companyId,
@@ -165,6 +207,7 @@ const focusField = form.register('focusAreaIds')
     await createVisit({
       companyId: values.companyId,
       propertyId: values.propertyId,
+      shopperId: values.shopperId,
       focusAreaIds: values.focusAreaIds,
       scheduledFor: values.scheduledFor,
       notes: values.notes ?? '',
@@ -223,6 +266,7 @@ const focusField = form.register('focusAreaIds')
             <span>{t('superAdmin.visits.table.company')}</span>
             <span>{t('superAdmin.visits.table.property')}</span>
             <span>{t('superAdmin.visits.table.date')}</span>
+            <span>{t('superAdmin.visits.table.shopper')}</span>
             <span>{t('superAdmin.visits.table.focusAreas')}</span>
             <span>{t('superAdmin.visits.table.notes')}</span>
           </div>
@@ -352,6 +396,62 @@ const focusField = form.register('focusAreaIds')
               )}
             </>
           )}
+
+          <FormField
+            id="visit-shopper"
+            label={t('superAdmin.visits.forms.shopper')}
+            error={form.formState.errors.shopperId?.message}
+          >
+            <input type="hidden" {...shopperField} />
+            {!selectedSnapshot ? (
+              <p>{t('superAdmin.selectCompany')}</p>
+            ) : (
+              <>
+                <Input
+                  id="visit-shopper"
+                  placeholder={t('superAdmin.visits.forms.shopper')}
+                  value={selectedShopper?.fullName ?? shopperQuery}
+                  onChange={(event) => {
+                    setSelectedShopper(null)
+                    setShopperQuery(event.target.value)
+                    form.setValue('shopperId', '', { shouldValidate: true })
+                  }}
+                />
+                {selectedShopper && (
+                  <p className="shopper-selected">
+                    {selectedShopper.fullName} ({selectedShopper.email})
+                  </p>
+                )}
+                {isSearchingShoppers && <p>{t('superAdmin.loading')}</p>}
+                {!isSearchingShoppers && shopperQuery && (
+                  <ul className="shopper-results">
+                    {shopperResults.map((shopper) => (
+                      <li key={shopper.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedShopper(shopper)
+                            setShopperQuery('')
+                            form.setValue('shopperId', shopper.id, {
+                              shouldValidate: true,
+                            })
+                          }}
+                        >
+                          <strong>{shopper.fullName}</strong>
+                          <span>{shopper.email}</span>
+                        </button>
+                      </li>
+                    ))}
+                    {shopperResults.length === 0 && (
+                      <li className="shopper-results__empty">
+                        {t('superAdmin.shoppers.empty')}
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </>
+            )}
+          </FormField>
 
           <FormField
             id="visit-date"

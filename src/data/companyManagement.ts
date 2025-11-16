@@ -72,6 +72,20 @@ export type CompanyDirectoryItem = {
   propertyCount: number
 }
 
+type ShopperRecord = {
+  id: string
+  full_name: string
+  email: string
+  created_at: string
+}
+
+export type Shopper = {
+  id: string
+  fullName: string
+  email: string
+  createdAt: string
+}
+
 type VisitRecord = {
   id: string
   scheduled_for: string
@@ -87,6 +101,11 @@ type VisitRecord = {
     country: string
   } | null
   focus_areas?: SupabaseVisitFocusArea[] | null
+  shopper: {
+    id: string
+    full_name: string
+    email: string
+  } | null
 }
 
 export type Visit = {
@@ -103,6 +122,11 @@ export type Visit = {
     city: string
     country: string
   }
+  shopper: {
+    id: string
+    fullName: string
+    email: string
+  } | null
   focusAreas: {
     id: string
     name: string
@@ -127,9 +151,15 @@ export type CreateFocusAreaInput = {
 export type CreateVisitInput = {
   companyId: string
   propertyId: string
+  shopperId: string
   scheduledFor: string
   focusAreaIds: string[]
   notes?: string
+}
+
+export type CreateShopperInput = {
+  fullName: string
+  email: string
 }
 
 export const fetchCompanySnapshot = async (
@@ -224,6 +254,11 @@ export const fetchVisits = async (): Promise<Visit[]> => {
             id,
             name
           )
+        ),
+        shopper:shoppers (
+          id,
+          full_name,
+          email
         )
       `,
     )
@@ -261,12 +296,20 @@ export const fetchVisits = async (): Promise<Visit[]> => {
           .filter(
             (focus): focus is { id: string; name: string } => Boolean(focus),
           ) ?? [],
+      shopper: record.shopper
+        ? {
+            id: record.shopper.id,
+            fullName: record.shopper.full_name,
+            email: record.shopper.email,
+          }
+        : null,
     }))
 }
 
 export const createVisit = async ({
   companyId,
   propertyId,
+  shopperId,
   scheduledFor,
   focusAreaIds,
   notes,
@@ -278,6 +321,7 @@ export const createVisit = async ({
     .insert({
       company_id: companyId,
       property_id: propertyId,
+      shopper_id: shopperId,
       scheduled_for: scheduledFor,
       notes: notes?.trim() ? notes.trim() : null,
       created_by: userData.user?.id ?? null,
@@ -303,6 +347,97 @@ export const createVisit = async ({
       throw focusError
     }
   }
+}
+
+export const fetchShoppers = async (): Promise<Shopper[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('shoppers')
+    .select(
+      `
+        id,
+        full_name,
+        email,
+        created_at,
+        company:companies (
+          id,
+          name
+        )
+      `,
+    )
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  const records = data as unknown as ShopperRecord[]
+  return records.map((record) => ({
+    id: record.id,
+    fullName: record.full_name,
+    email: record.email,
+    createdAt: record.created_at,
+  }))
+}
+
+export const searchShoppers = async (
+  query: string,
+  limit = 20,
+): Promise<Shopper[]> => {
+  const supabase = getSupabaseClient()
+  const builder = supabase
+    .from('shoppers')
+    .select('id, full_name, email, created_at')
+    .order('full_name', { ascending: true })
+    .limit(limit)
+
+  if (query.trim()) {
+    const sanitized = query.trim()
+    builder.or(
+      `full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`,
+    )
+  }
+
+  const { data, error } = await builder
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  const records = data as unknown as ShopperRecord[]
+  return records.map((record) => ({
+    id: record.id,
+    fullName: record.full_name,
+    email: record.email,
+    createdAt: record.created_at,
+  }))
+}
+
+export const createShopper = async ({
+  fullName,
+  email,
+}: CreateShopperInput) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.functions.invoke('create-shopper', {
+    body: {
+      fullName,
+      email,
+    },
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data as { authUserId: string; tempPassword: string }
 }
 
 export const fetchPropertyDetails = async (

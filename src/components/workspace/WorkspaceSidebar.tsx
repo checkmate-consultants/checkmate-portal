@@ -32,6 +32,11 @@ export function WorkspaceSidebar({
             to: '/workspace/admin/companies',
           },
           {
+            id: 'shoppers',
+            labelKey: 'workspace.sidebar.shoppers',
+            to: '/workspace/admin/shoppers',
+          },
+          {
             id: 'visits',
             labelKey: 'workspace.sidebar.visits',
             to: '/workspace/admin/visits',
