@@ -19,10 +19,40 @@ import {
   type CompanyDirectoryItem,
   type CompanySnapshot,
   type Visit,
+  type VisitStatus,
+  updateVisitStatus,
   type Shopper,
 } from '../data/companyManagement.ts'
+// Lightweight styled select just for status in this page
+type StatusSelectProps = {
+  value: string
+  disabled?: boolean
+  onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void
+  children: React.ReactNode
+}
+
+function StatusSelect({
+  value,
+  disabled,
+  onChange,
+  children,
+}: StatusSelectProps) {
+  return (
+    <span className="ui-select ui-select--sm visits-status-select">
+      <select
+        className="ui-select__field"
+        value={value}
+        disabled={disabled}
+        onChange={onChange}
+      >
+        {children}
+      </select>
+    </span>
+  )
+}
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import './super-admin-visits-page.css'
+import '../components/ui/select.css'
 
 type VisitState = {
   status: 'loading' | 'ready' | 'error'
@@ -66,6 +96,7 @@ export function SuperAdminVisitsPage() {
   const [shopperResults, setShopperResults] = useState<Shopper[]>([])
   const [selectedShopper, setSelectedShopper] = useState<Shopper | null>(null)
   const [isSearchingShoppers, setIsSearchingShoppers] = useState(false)
+  const [updatingVisitId, setUpdatingVisitId] = useState<string | null>(null)
 
   const visitSchema = useMemo(
     () =>
@@ -112,6 +143,16 @@ export function SuperAdminVisitsPage() {
             ? error.message
             : t('superAdmin.errors.generic'),
       })
+    }
+  }
+
+  const handleStatusChange = async (visitId: string, status: VisitStatus) => {
+    try {
+      setUpdatingVisitId(visitId)
+      await updateVisitStatus(visitId, status)
+      await refreshVisits()
+    } finally {
+      setUpdatingVisitId(null)
     }
   }
 
@@ -266,6 +307,7 @@ export function SuperAdminVisitsPage() {
             <span>{t('superAdmin.visits.table.company')}</span>
             <span>{t('superAdmin.visits.table.property')}</span>
             <span>{t('superAdmin.visits.table.date')}</span>
+            <span>{t('superAdmin.visits.table.status')}</span>
             <span>{t('superAdmin.visits.table.shopper')}</span>
             <span>{t('superAdmin.visits.table.focusAreas')}</span>
             <span>{t('superAdmin.visits.table.notes')}</span>
@@ -282,6 +324,28 @@ export function SuperAdminVisitsPage() {
                   month: 'short',
                   day: 'numeric',
                 })}
+              </span>
+              <span>
+                <StatusSelect
+                  value={visit.status}
+                  disabled={updatingVisitId === visit.id}
+                  onChange={(event) =>
+                    handleStatusChange(
+                      visit.id,
+                      event.target.value as VisitStatus,
+                    )
+                  }
+                >
+                  {(['scheduled',
+                    'under_review',
+                    'report_submitted',
+                    'feedback_requested',
+                    'done'] as VisitStatus[]).map((status) => (
+                    <option key={status} value={status}>
+                      {t(`superAdmin.visits.status.${status}`)}
+                    </option>
+                  ))}
+                </StatusSelect>
               </span>
               <span>
                 {visit.focusAreas.length === 0

@@ -90,6 +90,7 @@ type VisitRecord = {
   id: string
   scheduled_for: string
   notes: string | null
+  status: string | null
   company: {
     id: string
     name: string
@@ -108,10 +109,18 @@ type VisitRecord = {
   } | null
 }
 
+export type VisitStatus =
+  | 'scheduled'
+  | 'under_review'
+  | 'report_submitted'
+  | 'feedback_requested'
+  | 'done'
+
 export type Visit = {
   id: string
   scheduledFor: string
   notes: string | null
+  status: VisitStatus
   company: {
     id: string
     name: string
@@ -237,6 +246,7 @@ export const fetchVisits = async (): Promise<Visit[]> => {
     .select(
       `
         id,
+        status,
         company:companies (
           id,
           name
@@ -280,6 +290,7 @@ export const fetchVisits = async (): Promise<Visit[]> => {
       id: record.id,
       scheduledFor: record.scheduled_for,
       notes: record.notes,
+      status: (record.status as VisitStatus | null) ?? 'scheduled',
       company: {
         id: record.company!.id,
         name: record.company!.name,
@@ -325,6 +336,7 @@ export const createVisit = async ({
       scheduled_for: scheduledFor,
       notes: notes?.trim() ? notes.trim() : null,
       created_by: userData.user?.id ?? null,
+      status: 'scheduled',
     })
     .select('id')
     .single()
@@ -346,6 +358,23 @@ export const createVisit = async ({
     if (focusError) {
       throw focusError
     }
+  }
+}
+
+export const updateVisitStatus = async (
+  visitId: string,
+  status: VisitStatus,
+) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visits')
+    .update({ status })
+    .eq('id', visitId)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    throw error ?? new Error('Unable to update visit status')
   }
 }
 

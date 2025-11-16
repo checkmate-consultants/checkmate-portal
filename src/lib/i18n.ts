@@ -175,6 +175,7 @@ const resources = {
             property: 'Property',
             company: 'Company',
             date: 'Scheduled for',
+            status: 'Status',
             shopper: 'Shopper',
             focusAreas: 'Focus areas',
             notes: 'Notes',
@@ -192,6 +193,13 @@ const resources = {
             submit: 'Create visit',
             cancel: 'Cancel',
             focusAreasHelper: 'Select at least one focus area',
+          },
+          status: {
+            scheduled: 'Scheduled',
+            under_review: 'Report under review',
+            report_submitted: 'Report submitted',
+            feedback_requested: 'Feedback requested',
+            done: 'Done',
           },
         },
         shoppers: {
@@ -401,6 +409,7 @@ const resources = {
             property: 'العقار',
             company: 'الشركة',
             date: 'تاريخ الزيارة',
+            status: 'الحالة',
             shopper: 'المتسوّق',
             focusAreas: 'نطاقات التركيز',
             notes: 'ملاحظات',
@@ -418,6 +427,13 @@ const resources = {
             submit: 'إنشاء الزيارة',
             cancel: 'إلغاء',
             focusAreasHelper: 'اختر نطاق تركيز واحد على الأقل',
+          },
+          status: {
+            scheduled: 'مجدولة',
+            under_review: 'التقرير قيد المراجعة',
+            report_submitted: 'تم تسليم التقرير',
+            feedback_requested: 'مطلوب ملاحظات إضافية',
+            done: 'مكتملة',
           },
         },
         shoppers: {
