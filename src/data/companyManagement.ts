@@ -17,9 +17,19 @@ export type CompanyProperty = {
   focusAreas: FocusArea[]
 }
 
+export type AccountManagerProfile = {
+  id: string
+  email: string | null
+  fullName: string | null
+}
+
 export type CompanySnapshot = {
   id: string
   name: string
+  email: string | null
+  address: string | null
+  phone: string | null
+  accountManager: AccountManagerProfile | null
   properties: CompanyProperty[]
 }
 
@@ -76,6 +86,11 @@ export type CompanyDirectoryItem = {
   name: string
   createdAt: string
   propertyCount: number
+  accountManager: {
+    id: string
+    email: string | null
+    fullName: string | null
+  } | null
 }
 
 type ShopperRecord = {
@@ -193,6 +208,10 @@ export const fetchCompanySnapshot = async (
       `
         id,
         name,
+        email,
+        address,
+        phone,
+        account_manager_id,
         properties:company_properties (
           id,
           name,
@@ -219,10 +238,109 @@ export const fetchCompanySnapshot = async (
     return null
   }
 
+  let accountManager: AccountManagerProfile | null = null
+  const accountManagerId = (data as { account_manager_id?: string })
+    .account_manager_id
+  if (accountManagerId) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .eq('id', accountManagerId)
+      .maybeSingle()
+    if (profile) {
+      accountManager = {
+        id: profile.id,
+        email: profile.email ?? null,
+        fullName: profile.full_name ?? null,
+      }
+    }
+  }
+
+  const row = data as {
+    id: string
+    name: string
+    email?: string | null
+    address?: string | null
+    phone?: string | null
+    properties?: SupabasePropertyRecord[] | null
+  }
   return {
-    id: data.id,
-    name: data.name,
-    properties: mapProperties(data.properties),
+    id: row.id,
+    name: row.name,
+    email: row.email ?? null,
+    address: row.address ?? null,
+    phone: row.phone ?? null,
+    accountManager,
+    properties: mapProperties(row.properties),
+  }
+}
+
+export const fetchAccountManagers = async (): Promise<
+  AccountManagerProfile[]
+> => {
+  const supabase = getSupabaseClient()
+  const { data: amRows, error: amError } = await supabase
+    .from('account_managers')
+    .select('user_id')
+
+  if (amError) {
+    throw amError
+  }
+  if (!amRows?.length) {
+    return []
+  }
+
+  const userIds = amRows.map((r: { user_id: string }) => r.user_id)
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', userIds)
+
+  if (profileError) {
+    throw profileError
+  }
+  if (!profiles) {
+    return []
+  }
+
+  return profiles.map((p: { id: string; email: string | null; full_name: string | null }) => ({
+    id: p.id,
+    email: p.email ?? null,
+    fullName: p.full_name ?? null,
+  }))
+}
+
+export const updateCompanyAccountManager = async (
+  companyId: string,
+  accountManagerId: string | null,
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('companies')
+    .update({ account_manager_id: accountManagerId })
+    .eq('id', companyId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export const updateCompanyProfile = async (
+  companyId: string,
+  profile: { email?: string | null; address?: string | null; phone?: string | null },
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('companies')
+    .update({
+      ...(profile.email !== undefined && { email: profile.email }),
+      ...(profile.address !== undefined && { address: profile.address }),
+      ...(profile.phone !== undefined && { phone: profile.phone }),
+    })
+    .eq('id', companyId)
+
+  if (error) {
+    throw new Error(error.message)
   }
 }
 
@@ -232,7 +350,7 @@ export const fetchCompanyDirectory = async (): Promise<
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('companies')
-    .select('id, name, created_at, company_properties(count)')
+    .select('id, name, created_at, account_manager_id, company_properties(count)')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -243,12 +361,48 @@ export const fetchCompanyDirectory = async (): Promise<
     return []
   }
 
-  return data.map((record: CompanyDirectoryRecord) => ({
-    id: record.id,
-    name: record.name,
-    createdAt: record.created_at,
-    propertyCount: record.company_properties?.[0]?.count ?? 0,
-  }))
+  const records = data as (CompanyDirectoryRecord & { account_manager_id?: string | null })[]
+  const managerIds = [
+    ...new Set(
+      records
+        .map((r) => r.account_manager_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  let profileMap = new Map<string, { email: string | null; fullName: string | null }>()
+  if (managerIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .in('id', managerIds)
+    if (profiles) {
+      profileMap = new Map(
+        profiles.map((p: { id: string; email: string | null; full_name: string | null }) => [
+          p.id,
+          { email: p.email ?? null, fullName: p.full_name ?? null },
+        ]),
+      )
+    }
+  }
+
+  return records.map((record) => {
+    const manager = record.account_manager_id
+      ? profileMap.get(record.account_manager_id)
+      : undefined
+    return {
+      id: record.id,
+      name: record.name,
+      createdAt: record.created_at,
+      propertyCount: record.company_properties?.[0]?.count ?? 0,
+      accountManager: record.account_manager_id
+        ? {
+            id: record.account_manager_id,
+            email: manager?.email ?? null,
+            fullName: manager?.fullName ?? null,
+          }
+        : null,
+    }
+  })
 }
 
 export const fetchVisits = async (): Promise<Visit[]> => {

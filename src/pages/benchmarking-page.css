@@ -1,0 +1,198 @@
+.benchmarking {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem 2.5rem;
+  color: var(--color-text);
+}
+
+.benchmarking__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.benchmarking__header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 2.6vw, 2.75rem);
+}
+
+/* ── Summary cards row ── */
+
+.benchmarking__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.benchmarking__summary-card {
+  padding: 1.25rem 1.5rem;
+}
+
+.benchmarking__summary-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-accent-strong);
+  font-weight: 600;
+}
+
+.benchmarking__score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.benchmarking__score-primary {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.benchmarking__score-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.benchmarking__score-value {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.benchmarking__ranking-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.benchmarking__trend-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+/* ── Category comparisons table ── */
+
+.benchmarking__section-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.benchmarking__table-card {
+  overflow-x: auto;
+}
+
+.benchmarking__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.benchmarking__table th {
+  text-align: start;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.benchmarking__table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+}
+
+.benchmarking__trend--up {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.benchmarking__trend--down {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* ── Charts row ── */
+
+.benchmarking__charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.benchmarking__chart-card {
+  padding: 1.5rem;
+}
+
+.benchmarking__chart-card h3 {
+  margin: 0 0 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* ── Weaknesses donut row ── */
+
+.benchmarking__donuts {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.benchmarking__donut-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.benchmarking__donut-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.benchmarking__donut-label strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.benchmarking__donut-related {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.benchmarking__donut-related span {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 860px) {
+  .benchmarking__charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .benchmarking {
+    padding: 1.5rem;
+  }
+}

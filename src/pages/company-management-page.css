@@ -30,6 +30,13 @@
   max-width: 640px;
 }
 
+.company-management__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .company-management__eyebrow,
 .company-management__section-eyebrow {
   text-transform: uppercase;
@@ -37,6 +44,33 @@
   font-size: 0.75rem;
   color: var(--color-text-muted);
   margin: 0;
+}
+
+.company-management__overview-card {
+  padding: 1.5rem;
+}
+
+.company-management__overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem 2rem;
+}
+
+.company-management__overview-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.company-management__overview-grid p:not(.company-management__overview-label) {
+  margin: 0;
+}
+
+.company-management__overview-email {
+  color: var(--color-text-muted);
+  font-size: 0.9em;
 }
 
 .company-management__section-header {

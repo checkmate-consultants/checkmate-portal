@@ -74,6 +74,68 @@ export function CompanyVisitsPage() {
     )
   }
 
+  const startOfToday = (() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d.getTime()
+  })()
+
+  const validVisits = state.visits.filter(Boolean) as Visit[]
+  const upcomingVisits = validVisits
+    .filter((v) => new Date(v.scheduledFor).getTime() >= startOfToday)
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime(),
+    )
+  const pastVisits = validVisits
+    .filter((v) => new Date(v.scheduledFor).getTime() < startOfToday)
+    .sort(
+      (a, b) =>
+        new Date(b.scheduledFor).getTime() - new Date(a.scheduledFor).getTime(),
+    )
+
+  function renderVisitRow(visit: Visit) {
+    const canViewReport =
+      visit.status !== 'scheduled' && visit.status !== 'under_review'
+    return (
+      <div
+        key={visit.id}
+        className="super-admin-table__row visits-table__row"
+      >
+        <span>
+          {new Date(visit.scheduledFor).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          })}
+        </span>
+        <span>
+          {visit.property.name} · {visit.property.city},{' '}
+          {visit.property.country}
+        </span>
+        <span>
+          {visit.focusAreas.length === 0
+            ? t('companyManagement.property.emptyFocusAreas')
+            : visit.focusAreas.map((area) => area.name).join(', ')}
+        </span>
+        <span>{t(`superAdmin.visits.status.${visit.status}`)}</span>
+        <span>
+          {canViewReport ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate(`/workspace/visits/${visit.id}`)}
+            >
+              {t('companyVisits.viewReport')}
+            </Button>
+          ) : (
+            '—'
+          )}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div className="super-admin-page">
       <header className="super-admin-header">
@@ -84,63 +146,56 @@ export function CompanyVisitsPage() {
         </div>
       </header>
 
-      {state.visits.length === 0 ? (
+      {validVisits.length === 0 ? (
         <Card className="super-admin-card">
           <p>{t('companyVisits.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table visits-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.visits.table.date')}</span>
-            <span>{t('superAdmin.visits.table.property')}</span>
-            <span>{t('superAdmin.visits.table.focusAreas')}</span>
-            <span>{t('superAdmin.visits.table.status')}</span>
-            <span>{t('companyVisits.table.actions')}</span>
-          </div>
-          {state.visits.filter(Boolean).map((visit) => {
-            // Extra guard against any malformed data
-            if (!visit) return null
-            const canViewReport =
-              visit.status !== 'scheduled' && visit.status !== 'under_review'
-            return (
-              <div
-                key={visit.id}
-                className="super-admin-table__row visits-table__row"
-              >
-                <span>
-                  {new Date(visit.scheduledFor).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-                <span>
-                  {visit.property.name} · {visit.property.city},{' '}
-                  {visit.property.country}
-                </span>
-                <span>
-                  {visit.focusAreas.length === 0
-                    ? t('companyManagement.property.emptyFocusAreas')
-                    : visit.focusAreas.map((area) => area.name).join(', ')}
-                </span>
-                <span>{t(`superAdmin.visits.status.${visit.status}`)}</span>
-                <span>
-                  {canViewReport ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => navigate(`/workspace/visits/${visit.id}`)}
-                    >
-                      {t('companyVisits.viewReport')}
-                    </Button>
-                  ) : (
-                    '—'
-                  )}
-                </span>
+        <>
+          <section className="company-visits-page__section">
+            <h2 className="company-visits-page__section-title">
+              {t('companyVisits.upcomingVisits')}
+            </h2>
+            {upcomingVisits.length === 0 ? (
+              <Card className="super-admin-card">
+                <p>{t('companyVisits.upcomingEmpty')}</p>
+              </Card>
+            ) : (
+              <div className="super-admin-table visits-table">
+                <div className="super-admin-table__head">
+                  <span>{t('superAdmin.visits.table.date')}</span>
+                  <span>{t('superAdmin.visits.table.property')}</span>
+                  <span>{t('superAdmin.visits.table.focusAreas')}</span>
+                  <span>{t('superAdmin.visits.table.status')}</span>
+                  <span>{t('companyVisits.table.actions')}</span>
+                </div>
+                {upcomingVisits.map(renderVisitRow)}
               </div>
-            )
-          })}
-        </div>
+            )}
+          </section>
+
+          <section className="company-visits-page__section">
+            <h2 className="company-visits-page__section-title">
+              {t('companyVisits.pastVisits')}
+            </h2>
+            {pastVisits.length === 0 ? (
+              <Card className="super-admin-card">
+                <p>{t('companyVisits.pastEmpty')}</p>
+              </Card>
+            ) : (
+              <div className="super-admin-table visits-table">
+                <div className="super-admin-table__head">
+                  <span>{t('superAdmin.visits.table.date')}</span>
+                  <span>{t('superAdmin.visits.table.property')}</span>
+                  <span>{t('superAdmin.visits.table.focusAreas')}</span>
+                  <span>{t('superAdmin.visits.table.status')}</span>
+                  <span>{t('companyVisits.table.actions')}</span>
+                </div>
+                {pastVisits.map(renderVisitRow)}
+              </div>
+            )}
+          </section>
+        </>
       )}
     </div>
   )

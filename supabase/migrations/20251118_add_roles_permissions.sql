@@ -115,3 +115,4 @@ $$;
 grant execute on function public.create_company_with_owner(text) to authenticated;
 
 
+

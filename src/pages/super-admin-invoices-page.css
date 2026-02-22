@@ -1,0 +1,26 @@
+.invoices-table.super-admin-table__head,
+.invoices-table.super-admin-table__row {
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr 1fr 0.8fr;
+}
+
+.invoices-status-select {
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  min-width: 8rem;
+}
+
+.invoices-status-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .invoices-table.super-admin-table__head,
+  .invoices-table.super-admin-table__row {
+    grid-template-columns: 1fr;
+  }
+}

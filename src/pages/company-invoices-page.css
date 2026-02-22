@@ -1,0 +1,41 @@
+.company-invoices-page__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.company-invoices-page__card {
+  padding: 1.25rem 1.5rem;
+  text-align: left;
+}
+
+.company-invoices-page__card-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.company-invoices-page__card-value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.company-invoices-table.super-admin-table__head,
+.company-invoices-table.super-admin-table__row {
+  grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+}
+
+@media (max-width: 720px) {
+  .company-invoices-page__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .company-invoices-table.super-admin-table__head,
+  .company-invoices-table.super-admin-table__row {
+    grid-template-columns: 1fr;
+  }
+}

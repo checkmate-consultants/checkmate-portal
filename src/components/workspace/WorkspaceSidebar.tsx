@@ -8,6 +8,7 @@ type WorkspaceSidebarProps = {
   onNavigate?: () => void
   onClose?: () => void
   isSuperAdmin?: boolean
+  isAccountManager?: boolean
 }
 
 type NavItem = {
@@ -22,11 +23,12 @@ export function WorkspaceSidebar({
   onNavigate,
   onClose,
   isSuperAdmin = false,
+  isAccountManager = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
+  const showAdminNav = isSuperAdmin || isAccountManager
   const navItems: NavItem[] = [
-    { id: 'overview', labelKey: 'workspace.sidebar.overview', to: '/workspace' },
-    ...(!isSuperAdmin
+    ...(!showAdminNav
       ? [
           {
             id: 'company',
@@ -38,24 +40,48 @@ export function WorkspaceSidebar({
             labelKey: 'workspace.sidebar.companyVisits',
             to: '/workspace/visits',
           },
+          {
+            id: 'invoices',
+            labelKey: 'workspace.sidebar.invoices',
+            to: '/workspace/invoices',
+          },
+          {
+            id: 'benchmarking',
+            labelKey: 'workspace.sidebar.benchmarking',
+            to: '/workspace/benchmarking',
+          },
+          {
+            id: 'action-plans',
+            labelKey: 'workspace.sidebar.actionPlans',
+            to: '/workspace/action-plans',
+          },
         ]
       : []),
-    ...(isSuperAdmin
+    ...(showAdminNav
       ? [
           {
             id: 'companies',
             labelKey: 'workspace.sidebar.companies',
             to: '/workspace/admin/companies',
           },
-          {
-            id: 'shoppers',
-            labelKey: 'workspace.sidebar.shoppers',
-            to: '/workspace/admin/shoppers',
-          },
+          ...(isSuperAdmin
+            ? [
+                {
+                  id: 'shoppers',
+                  labelKey: 'workspace.sidebar.shoppers',
+                  to: '/workspace/admin/shoppers',
+                },
+              ]
+            : []),
           {
             id: 'visits',
             labelKey: 'workspace.sidebar.visits',
             to: '/workspace/admin/visits',
+          },
+          {
+            id: 'admin-invoices',
+            labelKey: 'workspace.sidebar.invoices',
+            to: '/workspace/admin/invoices',
           },
         ]
       : []),
@@ -88,6 +114,7 @@ export function WorkspaceSidebar({
           <NavLink
             key={item.id}
             to={item.to}
+            end={item.to === '/workspace'}
             onClick={() => {
               if (!item.disabled) {
                 onNavigate?.()

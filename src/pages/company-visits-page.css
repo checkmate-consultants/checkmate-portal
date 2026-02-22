@@ -1,6 +1,22 @@
-.company-visits-page .super-admin-table__head,
-.company-visits-page .super-admin-table__row {
+.company-visits-page__section {
+  margin-top: 2rem;
+}
+
+.company-visits-page__section:first-of-type {
+  margin-top: 0;
+}
+
+.company-visits-page__section-title {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.super-admin-page .super-admin-table__head,
+.super-admin-page .super-admin-table__row {
   grid-template-columns: 1fr 1.5fr 1.5fr 1fr 1fr;
 }
+
 
 

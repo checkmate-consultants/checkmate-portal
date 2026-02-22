@@ -11,6 +11,10 @@ import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
 import { SuperAdminVisitReportPage } from './pages/SuperAdminVisitReportPage.tsx'
 import { CompanyVisitsPage } from './pages/CompanyVisitsPage.tsx'
 import { CompanyVisitReportPage } from './pages/CompanyVisitReportPage.tsx'
+import { CompanyInvoicesPage } from './pages/CompanyInvoicesPage.tsx'
+import { BenchmarkingPage } from './pages/BenchmarkingPage.tsx'
+import { ActionPlansPage } from './pages/ActionPlansPage.tsx'
+import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
 
 function App() {
   return (
@@ -28,10 +32,17 @@ function App() {
         />
         <Route path="visits" element={<CompanyVisitsPage />} />
         <Route path="visits/:visitId" element={<CompanyVisitReportPage />} />
+        <Route path="invoices" element={<CompanyInvoicesPage />} />
+        <Route path="benchmarking" element={<BenchmarkingPage />} />
+        <Route path="action-plans" element={<ActionPlansPage />} />
         <Route path="admin/companies" element={<SuperAdminCompaniesPage />} />
         <Route
           path="admin/companies/:companyId"
           element={<CompanyManagementPage />}
+        />
+        <Route
+          path="admin/companies/:companyId/action-plans"
+          element={<ActionPlansPage />}
         />
         <Route
           path="admin/properties/:propertyId"
@@ -43,6 +54,7 @@ function App() {
           element={<SuperAdminVisitReportPage />}
         />
         <Route path="admin/shoppers" element={<SuperAdminShoppersPage />} />
+        <Route path="admin/invoices" element={<SuperAdminInvoicesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/signup" replace />} />
     </Routes>

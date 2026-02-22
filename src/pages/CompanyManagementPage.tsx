@@ -14,6 +14,7 @@ import { Modal } from '../components/ui/Modal.tsx'
 import {
   fetchCompanySnapshot,
   createCompanyProperty,
+  updateCompanyProfile,
   type CompanyProperty,
   type CompanySnapshot,
 } from '../data/companyManagement.ts'
@@ -34,6 +35,12 @@ type PropertyFormValues = {
   longitude: string
 }
 
+type OverviewFormValues = {
+  email: string
+  address: string
+  phone: string
+}
+
 export function CompanyManagementPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -41,13 +48,14 @@ export function CompanyManagementPage() {
   const { companyId: routeCompanyId } = useParams<{ companyId?: string }>()
   const [reloadKey, setReloadKey] = useState(0)
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false)
+  const [isOverviewModalOpen, setOverviewModalOpen] = useState(false)
   const [state, setState] = useState<LoadState>({
     status: 'loading',
     company: null,
     errorMessage: null,
   })
   const targetCompanyId = routeCompanyId ?? session.membership?.company_id ?? null
-  const isSuperAdminView = session.isSuperAdmin && Boolean(routeCompanyId)
+  const isAdminView = (session.isSuperAdmin || session.isAccountManager) && Boolean(routeCompanyId)
   const propertyPathPrefix = routeCompanyId
     ? '/workspace/admin/properties'
     : '/workspace/company/properties'
@@ -131,6 +139,52 @@ export function CompanyManagementPage() {
     propertyMutation.mutate(values)
   }
 
+  const overviewSchema = useMemo(
+    () =>
+      z.object({
+        email: z.string(),
+        address: z.string(),
+        phone: z.string(),
+      }),
+    [],
+  )
+  const overviewForm = useForm<OverviewFormValues>({
+    resolver: zodResolver(overviewSchema),
+    defaultValues: {
+      email: '',
+      address: '',
+      phone: '',
+    },
+    mode: 'onChange',
+  })
+  const overviewMutation = useMutation({
+    mutationFn: async (values: OverviewFormValues) => {
+      if (!state.company) throw new Error('Company not found')
+      await updateCompanyProfile(state.company.id, {
+        email: values.email.trim() || null,
+        address: values.address.trim() || null,
+        phone: values.phone.trim() || null,
+      })
+    },
+    onSuccess: () => {
+      setOverviewModalOpen(false)
+      setReloadKey((k) => k + 1)
+    },
+  })
+  const handleOverviewSubmit: SubmitHandler<OverviewFormValues> = (values) => {
+    overviewMutation.mutate(values)
+  }
+  const openOverviewModal = () => {
+    if (state.company) {
+      overviewForm.reset({
+        email: state.company.email ?? '',
+        address: state.company.address ?? '',
+        phone: state.company.phone ?? '',
+      })
+      setOverviewModalOpen(true)
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
     const loadCompany = async () => {
@@ -184,7 +238,7 @@ export function CompanyManagementPage() {
   }
 
   if (state.status === 'error' || !state.company) {
-    const showAdminRedirect = session.isSuperAdmin
+    const showAdminRedirect = session.isSuperAdmin || session.isAccountManager
     return (
       <div className="company-management company-management--centered">
         <Card className="company-management__state-card">
@@ -221,16 +275,87 @@ export function CompanyManagementPage() {
           <h1>{t('companyManagement.title')}</h1>
           <p>{t('companyManagement.description')}</p>
         </div>
-        {isSuperAdminView && (
+        {isAdminView && (
+          <div className="company-management__header-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                navigate(`/workspace/admin/companies/${routeCompanyId}/action-plans`)
+              }
+            >
+              {t('actionPlans.title')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate(adminListPath)}
+            >
+              {t('superAdmin.back')}
+            </Button>
+          </div>
+        )}
+      </header>
+
+      <section className="company-management__section company-management__overview">
+        <div className="company-management__section-header">
+          <p className="company-management__section-eyebrow">
+            {t('companyManagement.overviewLabel')}
+          </p>
           <Button
             type="button"
             variant="ghost"
-            onClick={() => navigate(adminListPath)}
+            onClick={openOverviewModal}
+            disabled={!state.company}
           >
-            {t('superAdmin.back')}
+            {t('companyManagement.editOverview')}
           </Button>
-        )}
-      </header>
+        </div>
+        <Card className="company-management__overview-card">
+          <div className="company-management__overview-grid">
+            <div>
+              <p className="company-management__overview-label">
+                {t('companyManagement.overview.email')}
+              </p>
+              <p>{company.email || '—'}</p>
+            </div>
+            <div>
+              <p className="company-management__overview-label">
+                {t('companyManagement.overview.address')}
+              </p>
+              <p>{company.address || '—'}</p>
+            </div>
+            <div>
+              <p className="company-management__overview-label">
+                {t('companyManagement.overview.phone')}
+              </p>
+              <p>{company.phone || '—'}</p>
+            </div>
+            <div>
+              <p className="company-management__overview-label">
+                {t('companyManagement.overview.accountManager')}
+              </p>
+              <p>
+                {company.accountManager ? (
+                  <>
+                    {company.accountManager.fullName ||
+                      company.accountManager.email ||
+                      t('companyManagement.overview.accountManagerUnknown')}
+                    {company.accountManager.email && (
+                      <span className="company-management__overview-email">
+                        {' '}
+                        ({company.accountManager.email})
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  t('companyManagement.overview.notAssigned')
+                )}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </section>
 
       <section className="company-management__section">
         <div className="company-management__section-header">
@@ -364,6 +489,76 @@ export function CompanyManagementPage() {
               disabled={!propertyForm.formState.isValid}
             >
               {t('companyManagement.forms.property.submit')}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        open={isOverviewModalOpen}
+        onClose={() => setOverviewModalOpen(false)}
+        title={t('companyManagement.forms.overview.title')}
+        description={t('companyManagement.forms.overview.description')}
+      >
+        <form
+          className="modal-form"
+          onSubmit={overviewForm.handleSubmit(handleOverviewSubmit)}
+        >
+          <FormField
+            id="overview-email"
+            label={t('companyManagement.overview.email')}
+            error={overviewForm.formState.errors.email?.message}
+          >
+            <Input
+              id="overview-email"
+              type="email"
+              {...overviewForm.register('email')}
+              hasError={Boolean(overviewForm.formState.errors.email)}
+            />
+          </FormField>
+          <FormField
+            id="overview-address"
+            label={t('companyManagement.overview.address')}
+            error={overviewForm.formState.errors.address?.message}
+          >
+            <Input
+              id="overview-address"
+              {...overviewForm.register('address')}
+              hasError={Boolean(overviewForm.formState.errors.address)}
+            />
+          </FormField>
+          <FormField
+            id="overview-phone"
+            label={t('companyManagement.overview.phone')}
+            error={overviewForm.formState.errors.phone?.message}
+          >
+            <Input
+              id="overview-phone"
+              type="tel"
+              {...overviewForm.register('phone')}
+              hasError={Boolean(overviewForm.formState.errors.phone)}
+            />
+          </FormField>
+          {overviewMutation.isError && (
+            <p className="form-error">
+              {overviewMutation.error instanceof Error
+                ? overviewMutation.error.message
+                : t('validation.generic')}
+            </p>
+          )}
+          <div className="modal-form__actions">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOverviewModalOpen(false)}
+            >
+              {t('companyManagement.forms.overview.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              loading={overviewMutation.isPending}
+            >
+              {t('companyManagement.forms.overview.submit')}
             </Button>
           </div>
         </form>

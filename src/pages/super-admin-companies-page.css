@@ -64,6 +64,11 @@
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
 }
 
+.super-admin-table__assign-btn {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+}
+
 .super-admin-table__name {
   margin: 0;
   font-weight: 600;

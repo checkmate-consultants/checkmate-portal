@@ -31,7 +31,7 @@ export function SuperAdminVisitReportPage() {
 
   useEffect(() => {
     if (!visitId) return
-    if (!session.isSuperAdmin) {
+    if (!session.isSuperAdmin && !session.isAccountManager) {
       setError(t('superAdmin.errors.unauthorized'))
       setLoading(false)
       return
@@ -51,7 +51,7 @@ export function SuperAdminVisitReportPage() {
     }
 
     load()
-  }, [visitId, session.isSuperAdmin, t])
+  }, [visitId, session.isSuperAdmin, session.isAccountManager, t])
 
   const applyCommand = (command: string, value?: string) => {
     // eslint-disable-next-line no-restricted-globals

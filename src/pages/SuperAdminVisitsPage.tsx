@@ -159,7 +159,7 @@ export function SuperAdminVisitsPage() {
   }
 
   useEffect(() => {
-    if (!session.isSuperAdmin) {
+    if (!session.isSuperAdmin && !session.isAccountManager) {
       setVisitState({
         status: 'error',
         visits: [],
@@ -168,7 +168,7 @@ export function SuperAdminVisitsPage() {
       return
     }
     refreshVisits()
-  }, [session.isSuperAdmin, t])
+  }, [session.isSuperAdmin, session.isAccountManager, t])
 
   useEffect(() => {
     if (shopperQuery.trim().length < 2) {

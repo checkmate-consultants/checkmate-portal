@@ -1,0 +1,73 @@
+{
+  "overall": {
+    "yourScore": 96,
+    "chainAvg": 93,
+    "industryAvg": 90,
+    "industryRank": 8
+  },
+  "ranking": {
+    "percentile": 10,
+    "starRating": 4
+  },
+  "performanceTrend": "Your service quality has consistently outperformed the regional average since Q2.",
+  "categories": [
+    {
+      "key": "cleanliness",
+      "yourScore": 92,
+      "chainAvg": 83,
+      "industryAvg": 86,
+      "trend": 8
+    },
+    {
+      "key": "foodBeverage",
+      "yourScore": 84,
+      "chainAvg": 82,
+      "industryAvg": 80,
+      "trend": 8
+    },
+    {
+      "key": "staffCourtesy",
+      "yourScore": 89,
+      "chainAvg": 85,
+      "industryAvg": 78,
+      "trend": -2
+    },
+    {
+      "key": "responseTime",
+      "yourScore": 78,
+      "chainAvg": 31,
+      "industryAvg": -2,
+      "trend": -2
+    }
+  ],
+  "scoreHistory": [
+    { "period": "70", "yourHotel": 90, "chainAvg": 83, "industryAvg": 80 },
+    { "period": "72", "yourHotel": 89, "chainAvg": 84, "industryAvg": 80 },
+    { "period": "74", "yourHotel": 88, "chainAvg": 85, "industryAvg": 80 },
+    { "period": "76", "yourHotel": 88, "chainAvg": 86, "industryAvg": 80 },
+    { "period": "78", "yourHotel": 89, "chainAvg": 86, "industryAvg": 80 },
+    { "period": "80", "yourHotel": 87, "chainAvg": 85, "industryAvg": 80 },
+    { "period": "82", "yourHotel": 88, "chainAvg": 86, "industryAvg": 80 },
+    { "period": "14", "yourHotel": 92, "chainAvg": 87, "industryAvg": 80 }
+  ],
+  "weaknesses": [
+    {
+      "key": "responseTime",
+      "score": 78,
+      "innerPercent": 48,
+      "relatedCategories": [
+        { "key": "staffCourtesy", "value": 78 },
+        { "key": "foodBeverage", "value": 94 }
+      ]
+    },
+    {
+      "key": "foodBeverage",
+      "score": 78,
+      "innerPercent": 44,
+      "relatedCategories": [
+        { "key": "staffCourtesy", "value": 84 },
+        { "key": "staffCourtesy", "value": 64 }
+      ]
+    }
+  ]
+}

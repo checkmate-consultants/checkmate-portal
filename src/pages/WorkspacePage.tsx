@@ -36,7 +36,7 @@ export function WorkspacePage() {
           return
         }
         if (!context.membership) {
-          if (context.isSuperAdmin) {
+          if (context.isSuperAdmin || context.isAccountManager) {
             if (!cancelled) {
               setSession(context)
               setStatus('ready')
@@ -113,6 +113,7 @@ export function WorkspacePage() {
         onNavigate={closeSidebar}
         onClose={isSidebarOpen ? closeSidebar : undefined}
         isSuperAdmin={session?.isSuperAdmin ?? false}
+        isAccountManager={session?.isAccountManager ?? false}
       />
       <main className="workspace-main">
         <header className="workspace-topbar">
