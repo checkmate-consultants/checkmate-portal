@@ -53,6 +53,7 @@ function StatusSelect({
   )
 }
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-visits-page.css'
 import '../components/ui/select.css'
 
@@ -83,6 +84,10 @@ type VisitFormValues = {
 
 export function SuperAdminVisitsPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminVisits.title')} | ${t('brand.name')}`,
+    t('meta.superAdminVisits.description'),
+  )
   const navigate = useNavigate()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [visitState, setVisitState] = useState<VisitState>({

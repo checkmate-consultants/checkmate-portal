@@ -19,6 +19,7 @@ import {
   type PropertyDetailsResult,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './property-details-page.css'
 
 type LoadState = {
@@ -38,6 +39,10 @@ export function PropertyDetailsPage() {
   const location = useLocation()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.propertyDetails.title')} | ${t('brand.name')}`,
+    t('meta.propertyDetails.description'),
+  )
   const [reloadKey, setReloadKey] = useState(0)
   const [isFocusModalOpen, setFocusModalOpen] = useState(false)
   const [focusAreaToDeleteId, setFocusAreaToDeleteId] = useState<string | null>(null)

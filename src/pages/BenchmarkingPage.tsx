@@ -14,6 +14,7 @@ import {
 } from 'recharts'
 import { Card } from '../components/ui/Card.tsx'
 import benchmarkingData from '../data/benchmarking-data.json'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './benchmarking-page.css'
 
 const CHART_COLORS = {
@@ -26,6 +27,10 @@ const DONUT_COLORS = ['#1a3a5c', '#d9e6f2']
 
 export function BenchmarkingPage() {
   const { t, i18n } = useTranslation()
+  usePageMetadata(
+    `${t('meta.benchmarking.title')} | ${t('brand.name')}`,
+    t('meta.benchmarking.description'),
+  )
   const isRtl = i18n.dir() === 'rtl'
 
   const { overall, ranking, categories, scoreHistory, weaknesses } =

@@ -9,6 +9,7 @@ import {
   type Visit,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-visits-page.css'
 
 type CompanyVisitState = {
@@ -19,6 +20,10 @@ type CompanyVisitState = {
 
 export function CompanyVisitsPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.visits.title')} | ${t('brand.name')}`,
+    t('meta.visits.description'),
+  )
   const navigate = useNavigate()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [state, setState] = useState<CompanyVisitState>({

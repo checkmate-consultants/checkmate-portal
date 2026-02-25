@@ -23,6 +23,7 @@ import {
   type InvoiceStatus,
 } from '../data/invoices.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-invoices-page.css'
 
 type InvoiceState = {
@@ -63,6 +64,10 @@ function formatAmount(cents: number, currency: string): string {
 
 export function SuperAdminInvoicesPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminInvoices.title')} | ${t('brand.name')}`,
+    t('meta.superAdminInvoices.description'),
+  )
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [invoiceState, setInvoiceState] = useState<InvoiceState>({
     status: 'loading',

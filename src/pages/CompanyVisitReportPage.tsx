@@ -14,11 +14,16 @@ import {
   type VisitStatus,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-visit-report-page.css'
 import './super-admin-visit-report-page.css'
 
 export function CompanyVisitReportPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.visitReport.title')} | ${t('brand.name')}`,
+    t('meta.visitReport.description'),
+  )
   const navigate = useNavigate()
   const { visitId } = useParams<{ visitId: string }>()
   const { session } = useOutletContext<WorkspaceOutletContext>()

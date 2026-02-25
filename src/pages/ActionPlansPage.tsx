@@ -20,6 +20,7 @@ import {
   type ActionPlanStatus,
 } from '../data/actionPlans.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './action-plans-page.css'
 
 type ActionPlansState = {
@@ -38,6 +39,10 @@ type ItemFormValues = {
 
 export function ActionPlansPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.actionPlans.title')} | ${t('brand.name')}`,
+    t('meta.actionPlans.description'),
+  )
   const navigate = useNavigate()
   const { companyId: routeCompanyId } = useParams<{ companyId?: string }>()
   const { session } = useOutletContext<WorkspaceOutletContext>()

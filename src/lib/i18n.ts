@@ -8,6 +8,76 @@ const resources = {
       brand: {
         name: 'Checkmate Portal',
       },
+      meta: {
+        signup: {
+          title: 'Sign up',
+          description: 'Create your Checkmate Portal account to orchestrate customer success.',
+        },
+        signin: {
+          title: 'Sign in',
+          description: 'Sign in to Checkmate Portal to manage your workspace and customer milestones.',
+        },
+        updatePassword: {
+          title: 'Set new password',
+          description: 'Enter a new password to complete your account recovery.',
+        },
+        onboarding: {
+          title: 'Create your tenant',
+          description: 'Set up your company workspace on Checkmate Portal.',
+        },
+        company: {
+          title: 'Company management',
+          description: 'Manage your company properties and mystery shopping focus areas.',
+        },
+        propertyDetails: {
+          title: 'Property details',
+          description: 'View and manage property location and focus areas.',
+        },
+        visits: {
+          title: 'Visits',
+          description: 'Plan and track mystery shop visits across your properties.',
+        },
+        visitReport: {
+          title: 'Visit report',
+          description: 'Review and complete the narrative for each focus area.',
+        },
+        invoices: {
+          title: 'Invoices',
+          description: 'View and track invoices for your company.',
+        },
+        benchmarking: {
+          title: 'Benchmarking',
+          description: 'Compare your performance with chain and industry benchmarks.',
+        },
+        actionPlans: {
+          title: 'Action plans',
+          description: 'Manage action plans and follow-up on visit findings.',
+        },
+        superAdminCompanies: {
+          title: 'Companies directory',
+          description: 'Super admin: manage all tenant companies and workspaces.',
+        },
+        superAdminVisits: {
+          title: 'Visits log',
+          description: 'Super admin: plan and track visits across all companies.',
+        },
+        superAdminVisitReport: {
+          title: 'Visit report',
+          description: 'Super admin: review visit report and focus area narratives.',
+        },
+        superAdminShoppers: {
+          title: 'Shoppers directory',
+          description: 'Super admin: manage mystery shoppers.',
+        },
+        superAdminAccountManagers: {
+          title: 'Account managers',
+          description: 'Super admin: manage account managers and assignments.',
+        },
+        superAdminInvoices: {
+          title: 'Invoices',
+          description: 'Super admin: manage customer invoices.',
+        },
+      },
       ui: {
         toggleTheme: 'Toggle theme',
         changeLanguage: 'Change language',
@@ -479,6 +549,76 @@ const resources = {
     translation: {
       brand: {
         name: 'Checkmate Portal',
+      },
+      meta: {
+        signup: {
+          title: 'إنشاء حساب',
+          description: 'أنشئ حسابك في Checkmate Portal لإدارة نجاح العملاء.',
+        },
+        signin: {
+          title: 'تسجيل الدخول',
+          description: 'سجّل الدخول إلى Checkmate Portal لإدارة مساحة العمل والزيارات.',
+        },
+        updatePassword: {
+          title: 'تعيين كلمة مرور جديدة',
+          description: 'أدخل كلمة مرور جديدة لإكمال استرداد حسابك.',
+        },
+        onboarding: {
+          title: 'إنشاء المستأجر',
+          description: 'إعداد مساحة عمل شركتك على Checkmate Portal.',
+        },
+        company: {
+          title: 'إدارة الشركة',
+          description: 'إدارة عقارات الشركة ونطاقات التسوق السري.',
+        },
+        propertyDetails: {
+          title: 'تفاصيل العقار',
+          description: 'عرض وإدارة موقع العقار ونطاقات التركيز.',
+        },
+        visits: {
+          title: 'الزيارات',
+          description: 'تخطيط وتتبع زيارات التسوق السري لعقاراتك.',
+        },
+        visitReport: {
+          title: 'تقرير الزيارة',
+          description: 'مراجعة وإكمال الوصف لكل نطاق تركيز.',
+        },
+        invoices: {
+          title: 'الفواتير',
+          description: 'عرض وتتبع فواتير شركتك.',
+        },
+        benchmarking: {
+          title: 'المقارنة المعيارية',
+          description: 'مقارنة أدائك مع معايير السلسلة والقطاع.',
+        },
+        actionPlans: {
+          title: 'خطط العمل',
+          description: 'إدارة خطط العمل ومتابعة نتائج الزيارات.',
+        },
+        superAdminCompanies: {
+          title: 'دليل الشركات',
+          description: 'المشرف: إدارة جميع شركات المستأجرين ومساحات العمل.',
+        },
+        superAdminVisits: {
+          title: 'سجل الزيارات',
+          description: 'المشرف: تخطيط وتتبع الزيارات لجميع الشركات.',
+        },
+        superAdminVisitReport: {
+          title: 'تقرير الزيارة',
+          description: 'المشرف: مراجعة تقرير الزيارة ووصف نطاقات التركيز.',
+        },
+        superAdminShoppers: {
+          title: 'دليل المتسوقين',
+          description: 'المشرف: إدارة المتسوقين السريين.',
+        },
+        superAdminAccountManagers: {
+          title: 'مديرو الحسابات',
+          description: 'المشرف: إدارة مديري الحسابات والتعيينات.',
+        },
+        superAdminInvoices: {
+          title: 'الفواتير',
+          description: 'المشرف: إدارة فواتير العملاء.',
+        },
       },
       ui: {
         toggleTheme: 'تبديل الوضع',

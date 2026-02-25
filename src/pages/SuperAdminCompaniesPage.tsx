@@ -14,6 +14,7 @@ import {
   type AccountManagerProfile,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-companies-page.css'
 
 type DirectoryState = {
@@ -25,6 +26,10 @@ type DirectoryState = {
 
 export function SuperAdminCompaniesPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminCompanies.title')} | ${t('brand.name')}`,
+    t('meta.superAdminCompanies.description'),
+  )
   const navigate = useNavigate()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [state, setState] = useState<DirectoryState>({

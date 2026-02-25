@@ -13,6 +13,7 @@ import { Logo } from '../components/Logo.tsx'
 import { ThemeToggle } from '../components/ThemeToggle.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './signup-page.css'
 
 type SignUpValues = {
@@ -35,6 +36,10 @@ const passwordScore = (password: string) => {
 
 export function SignUpPage() {
   const { t, i18n } = useTranslation()
+  usePageMetadata(
+    `${t('meta.signup.title')} | ${t('brand.name')}`,
+    t('meta.signup.description'),
+  )
 
   const validationSchema = useMemo(
     () =>

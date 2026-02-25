@@ -13,6 +13,7 @@ import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './signin-page.css'
 
 type UpdatePasswordValues = {
@@ -22,6 +23,10 @@ type UpdatePasswordValues = {
 
 export function UpdatePasswordPage() {
   const { t, i18n } = useTranslation()
+  usePageMetadata(
+    `${t('meta.updatePassword.title')} | ${t('brand.name')}`,
+    t('meta.updatePassword.description'),
+  )
   const navigate = useNavigate()
   const dir = i18n.dir()
 

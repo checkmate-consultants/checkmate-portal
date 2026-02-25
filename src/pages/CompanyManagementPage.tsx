@@ -20,6 +20,7 @@ import {
   type CompanySnapshot,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-management-page.css'
 
 type LoadState = {
@@ -44,6 +45,10 @@ type OverviewFormValues = {
 
 export function CompanyManagementPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.company.title')} | ${t('brand.name')}`,
+    t('meta.company.description'),
+  )
   const navigate = useNavigate()
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const { companyId: routeCompanyId } = useParams<{ companyId?: string }>()

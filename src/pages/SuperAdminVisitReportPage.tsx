@@ -12,10 +12,15 @@ import {
   type VisitFocusAreaReport,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-visit-report-page.css'
 
 export function SuperAdminVisitReportPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminVisitReport.title')} | ${t('brand.name')}`,
+    t('meta.superAdminVisitReport.description'),
+  )
   const navigate = useNavigate()
   const { visitId } = useParams<{ visitId: string }>()
   const { session } = useOutletContext<WorkspaceOutletContext>()

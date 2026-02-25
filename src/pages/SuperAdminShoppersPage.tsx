@@ -15,6 +15,7 @@ import {
   type Shopper,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-shoppers-page.css'
 
 type ShopperState = {
@@ -30,6 +31,10 @@ type ShopperFormValues = {
 
 export function SuperAdminShoppersPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminShoppers.title')} | ${t('brand.name')}`,
+    t('meta.superAdminShoppers.description'),
+  )
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [shopperState, setShopperState] = useState<ShopperState>({
     status: 'loading',

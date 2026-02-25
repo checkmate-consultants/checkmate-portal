@@ -16,6 +16,7 @@ import {
   type AccountManagerProfile,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-account-managers-page.css'
 
 type PageState = {
@@ -31,6 +32,10 @@ type FormValues = {
 
 export function SuperAdminAccountManagersPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.superAdminAccountManagers.title')} | ${t('brand.name')}`,
+    t('meta.superAdminAccountManagers.description'),
+  )
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [state, setState] = useState<PageState>({
     status: 'loading',

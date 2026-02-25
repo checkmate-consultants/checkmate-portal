@@ -10,6 +10,7 @@ import {
   type CompanyInvoiceSummary,
 } from '../data/invoices.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-invoices-page.css'
 
 type PageState = {
@@ -28,6 +29,10 @@ function formatAmount(cents: number, currency: string): string {
 
 export function CompanyInvoicesPage() {
   const { t } = useTranslation()
+  usePageMetadata(
+    `${t('meta.invoices.title')} | ${t('brand.name')}`,
+    t('meta.invoices.description'),
+  )
   const { session } = useOutletContext<WorkspaceOutletContext>()
   const [state, setState] = useState<PageState>({
     status: 'loading',

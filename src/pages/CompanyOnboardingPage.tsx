@@ -14,6 +14,7 @@ import { Input } from '../components/ui/Input.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
 import { getSessionContext } from '../lib/session.ts'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-onboarding-page.css'
 
 type CompanyFormValues = {
@@ -22,6 +23,10 @@ type CompanyFormValues = {
 
 export function CompanyOnboardingPage() {
   const { t, i18n } = useTranslation()
+  usePageMetadata(
+    `${t('meta.onboarding.title')} | ${t('brand.name')}`,
+    t('meta.onboarding.description'),
+  )
   const navigate = useNavigate()
   const [initializing, setInitializing] = useState(true)
   const dir = i18n.dir()

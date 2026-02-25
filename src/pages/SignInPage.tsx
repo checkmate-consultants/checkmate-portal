@@ -14,6 +14,7 @@ import { Input } from '../components/ui/Input.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
 import { getSessionContext } from '../lib/session.ts'
+import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './signin-page.css'
 
 type SignInValues = {
@@ -24,6 +25,10 @@ type SignInValues = {
 
 export function SignInPage() {
   const { t, i18n } = useTranslation()
+  usePageMetadata(
+    `${t('meta.signin.title')} | ${t('brand.name')}`,
+    t('meta.signin.description'),
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const dir = i18n.dir()
