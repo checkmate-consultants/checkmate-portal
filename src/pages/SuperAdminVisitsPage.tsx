@@ -16,6 +16,7 @@ import {
   fetchCompanySnapshot,
   fetchVisits,
   createVisit,
+  updateVisit,
   searchShoppers,
   type CompanyDirectoryItem,
   type CompanySnapshot,
@@ -69,6 +70,8 @@ type ModalState = {
   loadingSnapshot: boolean
 }
 
+type EditingVisit = Visit | null
+
 type VisitFormValues = {
   companyId: string
   propertyId: string
@@ -99,6 +102,7 @@ export function SuperAdminVisitsPage() {
   const [selectedShopper, setSelectedShopper] = useState<Shopper | null>(null)
   const [isSearchingShoppers, setIsSearchingShoppers] = useState(false)
   const [updatingVisitId, setUpdatingVisitId] = useState<string | null>(null)
+  const [editingVisit, setEditingVisit] = useState<EditingVisit>(null)
 
   const visitSchema = useMemo(
     () =>
@@ -190,6 +194,7 @@ export function SuperAdminVisitsPage() {
   }, [shopperQuery])
 
   const openModal = async () => {
+    setEditingVisit(null)
     try {
       const companies = await fetchCompanyDirectory()
       setModalState((prev) => ({
@@ -213,7 +218,47 @@ export function SuperAdminVisitsPage() {
     }
   }
 
+  const openEditModal = async (visit: Visit) => {
+    setEditingVisit(visit)
+    try {
+      const companies = await fetchCompanyDirectory()
+      const snapshot = await fetchCompanySnapshot(visit.company.id)
+      setModalState((prev) => ({
+        ...prev,
+        open: true,
+        companies,
+        selectedCompanyId: visit.company.id,
+        selectedSnapshot: snapshot ?? null,
+        loadingSnapshot: false,
+      }))
+      const scheduledFor = visit.scheduledFor.slice(0, 10)
+      form.reset({
+        companyId: visit.company.id,
+        propertyId: visit.property.id,
+        shopperId: visit.shopper?.id ?? '',
+        focusAreaIds: visit.focusAreas.map((a) => a.id),
+        scheduledFor,
+        notes: visit.notes ?? '',
+      })
+      setShopperQuery('')
+      setShopperResults([])
+      setSelectedShopper(
+        visit.shopper
+          ? {
+              id: visit.shopper.id,
+              fullName: visit.shopper.fullName,
+              email: visit.shopper.email,
+              createdAt: '',
+            }
+          : null,
+      )
+    } catch {
+      setEditingVisit(null)
+    }
+  }
+
   const closeModal = () => {
+    setEditingVisit(null)
     setModalState((prev) => ({
       ...prev,
       open: false,
@@ -247,14 +292,24 @@ export function SuperAdminVisitsPage() {
   }
 
   const onSubmit: SubmitHandler<VisitFormValues> = async (values) => {
-    await createVisit({
-      companyId: values.companyId,
-      propertyId: values.propertyId,
-      shopperId: values.shopperId,
-      focusAreaIds: values.focusAreaIds,
-      scheduledFor: values.scheduledFor,
-      notes: values.notes ?? '',
-    })
+    if (editingVisit) {
+      await updateVisit(editingVisit.id, {
+        propertyId: values.propertyId,
+        shopperId: values.shopperId,
+        focusAreaIds: values.focusAreaIds,
+        scheduledFor: values.scheduledFor,
+        notes: values.notes ?? '',
+      })
+    } else {
+      await createVisit({
+        companyId: values.companyId,
+        propertyId: values.propertyId,
+        shopperId: values.shopperId,
+        focusAreaIds: values.focusAreaIds,
+        scheduledFor: values.scheduledFor,
+        notes: values.notes ?? '',
+      })
+    }
     closeModal()
     refreshVisits()
   }
@@ -313,6 +368,7 @@ export function SuperAdminVisitsPage() {
             <span>{t('superAdmin.visits.table.shopper')}</span>
             <span>{t('superAdmin.visits.table.focusAreas')}</span>
             <span>{t('superAdmin.visits.table.notes')}</span>
+            <span>{t('superAdmin.visits.table.actions')}</span>
           </div>
           {visitState.visits.map((visit) => (
             <div key={visit.id} className="super-admin-table__row visits-table__row">
@@ -355,8 +411,15 @@ export function SuperAdminVisitsPage() {
                   : visit.focusAreas.map((area) => area.name).join(', ')}
               </span>
               <span>{visit.notes?.trim() ? visit.notes : '—'}</span>
-              {visit.status !== 'done' && (
-                <span>
+              <span className="visits-table__actions">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => openEditModal(visit)}
+                >
+                  {t('superAdmin.visits.editVisit')}
+                </Button>
+                {visit.status !== 'done' && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -366,8 +429,8 @@ export function SuperAdminVisitsPage() {
                   >
                     {t('superAdmin.visitReport.open')}
                   </Button>
-                </span>
-              )}
+                )}
+              </span>
             </div>
           ))}
         </div>
@@ -376,8 +439,16 @@ export function SuperAdminVisitsPage() {
       <Modal
         open={modalState.open}
         onClose={closeModal}
-        title={t('superAdmin.visits.forms.title')}
-        description={t('superAdmin.visits.forms.description')}
+        title={
+          editingVisit
+            ? t('superAdmin.visits.forms.editTitle')
+            : t('superAdmin.visits.forms.title')
+        }
+        description={
+          editingVisit
+            ? t('superAdmin.visits.forms.editDescription')
+            : t('superAdmin.visits.forms.description')
+        }
       >
         <form className="modal-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
@@ -396,6 +467,7 @@ export function SuperAdminVisitsPage() {
                 companyField.onChange(event)
                 handleCompanyChange(event.target.value)
               }}
+              disabled={Boolean(editingVisit)}
             >
               <option value="">{t('superAdmin.selectCompany')}</option>
               {modalState.companies.map((company) => (
@@ -554,7 +626,9 @@ export function SuperAdminVisitsPage() {
               {t('superAdmin.visits.forms.cancel')}
             </Button>
             <Button type="submit" disabled={!form.formState.isValid}>
-              {t('superAdmin.visits.forms.submit')}
+              {editingVisit
+                ? t('superAdmin.visits.forms.submitEdit')
+                : t('superAdmin.visits.forms.submit')}
             </Button>
           </div>
         </form>

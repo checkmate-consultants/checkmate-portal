@@ -574,6 +574,58 @@ export const createVisit = async ({
   }
 }
 
+export type UpdateVisitInput = {
+  propertyId: string
+  shopperId: string
+  scheduledFor: string
+  focusAreaIds: string[]
+  notes?: string
+}
+
+export const updateVisit = async (
+  visitId: string,
+  { propertyId, shopperId, scheduledFor, focusAreaIds, notes }: UpdateVisitInput,
+) => {
+  const supabase = getSupabaseClient()
+  const { error: updateError } = await supabase
+    .from('visits')
+    .update({
+      property_id: propertyId,
+      shopper_id: shopperId,
+      scheduled_for: scheduledFor,
+      notes: notes?.trim() ? notes.trim() : null,
+    })
+    .eq('id', visitId)
+
+  if (updateError) {
+    throw updateError
+  }
+
+  const { error: deleteError } = await supabase
+    .from('visit_focus_areas')
+    .delete()
+    .eq('visit_id', visitId)
+
+  if (deleteError) {
+    throw deleteError
+  }
+
+  if (focusAreaIds.length > 0) {
+    const { error: insertError } = await supabase
+      .from('visit_focus_areas')
+      .insert(
+        focusAreaIds.map((focusAreaId) => ({
+          visit_id: visitId,
+          focus_area_id: focusAreaId,
+        })),
+      )
+
+    if (insertError) {
+      throw insertError
+    }
+  }
+}
+
 export const updateVisitStatus = async (
   visitId: string,
   status: VisitStatus,

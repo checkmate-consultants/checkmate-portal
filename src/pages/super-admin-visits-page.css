@@ -2,6 +2,13 @@
   display: block;
 }
 
+.visits-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .visits-table .super-admin-table__head,
 .visits-table .super-admin-table__row {
   grid-template-columns: 1.5fr 1.5fr 1fr 1fr 1.2fr 1.5fr 1fr 1.1fr;
