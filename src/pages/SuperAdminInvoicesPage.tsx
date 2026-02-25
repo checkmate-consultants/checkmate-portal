@@ -115,7 +115,7 @@ export function SuperAdminInvoicesPage() {
   }
 
   useEffect(() => {
-    if (!session.isSuperAdmin) {
+    if (!session.isSuperAdmin && !session.isAccountManager) {
       setInvoiceState({
         status: 'error',
         invoices: [],
@@ -124,7 +124,7 @@ export function SuperAdminInvoicesPage() {
       return
     }
     refreshInvoices()
-  }, [session.isSuperAdmin, t])
+  }, [session.isSuperAdmin, session.isAccountManager, t])
 
   const openModal = async () => {
     try {
