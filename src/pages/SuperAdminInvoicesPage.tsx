@@ -43,7 +43,7 @@ type CreateInvoiceFormValues = {
   amount: string
   currency: string
   status: InvoiceStatus
-  dueDate: string
+  dueDate?: string
 }
 
 const STATUSES: InvoiceStatus[] = [
@@ -81,7 +81,7 @@ export function SuperAdminInvoicesPage() {
     invoiceNumber: z.string().min(1, t('validation.required')),
     amount: z.string().min(1, t('validation.required')),
     currency: z.string().min(1),
-    status: z.enum(STATUSES as unknown as [string, ...string[]]),
+    status: z.enum(STATUSES as [InvoiceStatus, ...InvoiceStatus[]]),
     dueDate: z.string().optional(),
   })
 

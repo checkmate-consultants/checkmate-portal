@@ -101,7 +101,7 @@ export function ActionPlansPage() {
         suggestedAction: z.string().min(1, t('validation.required')),
         responsible: z.string().min(1, t('validation.required')),
         deadline: z.string(),
-        status: z.enum(['pending', 'in_progress', 'completed']) as z.ZodType<ActionPlanStatus>,
+        status: z.enum(['pending', 'in_progress', 'completed']),
       }),
     [t],
   )

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card } from '../components/ui/Card.tsx'
@@ -253,7 +253,7 @@ export function SuperAdminCompaniesPage() {
               <Select
                 id="account-manager-select"
                 value={assignValue}
-                onChange={(e) => setAssignValue(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setAssignValue(e.target.value)}
               >
                 <option value="">{t('superAdmin.assignAccountManager.none')}</option>
                 {state.accountManagers.map((am) => (
