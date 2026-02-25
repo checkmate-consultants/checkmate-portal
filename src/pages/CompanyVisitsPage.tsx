@@ -122,6 +122,16 @@ export function CompanyVisitsPage() {
   function renderVisitRow(visit: Visit) {
     const canViewReport =
       visit.status !== 'scheduled' && visit.status !== 'under_review'
+    const canSubmitReport =
+      visit.status === 'scheduled' || visit.status === 'under_review'
+    const isShopper = session.isShopper
+    const showReportLink = isShopper ? true : canViewReport
+    const reportLabel = isShopper
+      ? canSubmitReport
+        ? t('superAdmin.visitReport.open')
+        : t('companyVisits.viewReport')
+      : t('companyVisits.viewReport')
+
     return (
       <div
         key={visit.id}
@@ -145,13 +155,13 @@ export function CompanyVisitsPage() {
         </span>
         <span>{t(`superAdmin.visits.status.${visit.status}`)}</span>
         <span>
-          {canViewReport ? (
+          {showReportLink ? (
             <Button
               type="button"
               variant="ghost"
               onClick={() => navigate(`/workspace/visits/${visit.id}`)}
             >
-              {t('companyVisits.viewReport')}
+              {reportLabel}
             </Button>
           ) : (
             '—'

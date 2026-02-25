@@ -643,6 +643,16 @@ export const updateVisitStatus = async (
   }
 }
 
+export const shopperSubmitVisitReport = async (visitId: string): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase.rpc('shopper_submit_visit_report', {
+    p_visit_id: visitId,
+  })
+  if (error) {
+    throw error
+  }
+}
+
 export const fetchVisitReports = async (
   visitId: string,
 ): Promise<VisitFocusAreaReport[]> => {
