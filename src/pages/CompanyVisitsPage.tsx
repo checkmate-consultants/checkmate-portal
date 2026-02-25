@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import {
   fetchCompanyVisits,
+  fetchVisitsAssignedToShopper,
   type Visit,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
@@ -28,6 +29,30 @@ export function CompanyVisitsPage() {
 
   useEffect(() => {
     const load = async () => {
+      if (session.isShopper) {
+        if (!session.shopperId) {
+          setState({
+            status: 'error',
+            visits: [],
+            errorMessage: t('superAdmin.errors.generic'),
+          })
+          return
+        }
+        try {
+          const visits = await fetchVisitsAssignedToShopper(session.shopperId)
+          setState({ status: 'ready', visits, errorMessage: null })
+        } catch (error) {
+          setState({
+            status: 'error',
+            visits: [],
+            errorMessage:
+              error instanceof Error
+                ? error.message
+                : t('superAdmin.errors.generic'),
+          })
+        }
+        return
+      }
       if (!session.membership) {
         setState({
           status: 'error',
@@ -52,7 +77,7 @@ export function CompanyVisitsPage() {
     }
 
     load()
-  }, [session.membership, t])
+  }, [session.membership, session.isShopper, session.shopperId, t])
 
   if (state.status === 'loading') {
     return (

@@ -9,6 +9,7 @@ type WorkspaceSidebarProps = {
   onClose?: () => void
   isSuperAdmin?: boolean
   isAccountManager?: boolean
+  isShopper?: boolean
 }
 
 type NavItem = {
@@ -24,11 +25,21 @@ export function WorkspaceSidebar({
   onClose,
   isSuperAdmin = false,
   isAccountManager = false,
+  isShopper = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
   const showAdminNav = isSuperAdmin || isAccountManager
   const navItems: NavItem[] = [
-    ...(!showAdminNav
+    ...(isShopper
+      ? [
+          {
+            id: 'visits',
+            labelKey: 'workspace.sidebar.companyVisits',
+            to: '/workspace/visits',
+          },
+        ]
+      : []),
+    ...(!showAdminNav && !isShopper
       ? [
           {
             id: 'company',

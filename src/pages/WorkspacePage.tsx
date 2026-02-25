@@ -47,6 +47,19 @@ export function WorkspacePage() {
             }
             return
           }
+          if (context.isShopper) {
+            if (!cancelled) {
+              setSession(context)
+              setStatus('ready')
+              const isVisitsRoute =
+                location.pathname === '/workspace/visits' ||
+                location.pathname.startsWith('/workspace/visits/')
+              if (!isVisitsRoute) {
+                navigate('/workspace/visits', { replace: true })
+              }
+            }
+            return
+          }
           navigate('/onboarding/company', { replace: true })
           return
         }
@@ -114,6 +127,7 @@ export function WorkspacePage() {
         onClose={isSidebarOpen ? closeSidebar : undefined}
         isSuperAdmin={session?.isSuperAdmin ?? false}
         isAccountManager={session?.isAccountManager ?? false}
+        isShopper={session?.isShopper ?? false}
       />
       <main className="workspace-main">
         <header className="workspace-topbar">

@@ -747,6 +747,87 @@ export const fetchCompanyVisits = async (
     }))
 }
 
+export const fetchVisitsAssignedToShopper = async (
+  shopperId: string,
+): Promise<Visit[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visits')
+    .select(
+      `
+        id,
+        status,
+        company:companies (
+          id,
+          name
+        ),
+        scheduled_for,
+        notes,
+        property:company_properties (
+          id,
+          name,
+          city,
+          country
+        ),
+        focus_areas:visit_focus_areas (
+          focus_area:property_focus_areas (
+            id,
+            name
+          )
+        ),
+        shopper:shoppers (
+          id,
+          full_name,
+          email
+        )
+      `,
+    )
+    .eq('shopper_id', shopperId)
+    .order('scheduled_for', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  const records = data as unknown as VisitRecord[]
+
+  return records
+    .filter((record) => Boolean(record.property && record.company))
+    .map((record) => ({
+      id: record.id,
+      scheduledFor: record.scheduled_for,
+      notes: record.notes,
+      status: (record.status as VisitStatus | null) ?? 'scheduled',
+      company: {
+        id: record.company!.id,
+        name: record.company!.name,
+      },
+      property: {
+        id: record.property!.id,
+        name: record.property!.name,
+        city: record.property!.city,
+        country: record.property!.country,
+      },
+      focusAreas:
+        record.focus_areas
+          ?.map((wrapper) => wrapper?.focus_area)
+          .filter(
+            (focus): focus is { id: string; name: string } => Boolean(focus),
+          ) ?? [],
+      shopper: record.shopper
+        ? {
+            id: record.shopper.id,
+            fullName: record.shopper.full_name,
+            email: record.shopper.email,
+          }
+        : null,
+    }))
+}
+
 export const fetchShoppers = async (): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase

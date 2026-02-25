@@ -43,7 +43,7 @@ export function CompanyOnboardingPage() {
     let cancelled = false
     const bootstrap = async () => {
       try {
-        const { user, membership } = await getSessionContext({
+        const { user, membership, isShopper } = await getSessionContext({
           autoProvision: false,
         })
         if (!user) {
@@ -52,6 +52,10 @@ export function CompanyOnboardingPage() {
         }
         if (membership) {
           navigate('/workspace', { replace: true })
+          return
+        }
+        if (isShopper) {
+          navigate('/workspace/visits', { replace: true })
           return
         }
         if (!cancelled) {

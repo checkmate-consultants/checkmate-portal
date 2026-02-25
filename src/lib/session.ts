@@ -11,6 +11,8 @@ export type SessionContext = {
   membership: CompanyMembership | null
   isSuperAdmin: boolean
   isAccountManager: boolean
+  isShopper: boolean
+  shopperId: string | null
 }
 
 type SessionOptions = {
@@ -31,13 +33,21 @@ export const getSessionContext = async (
   const user = userResult.user ?? null
 
   if (!user) {
-    return { user: null, membership: null, isSuperAdmin: false, isAccountManager: false }
+    return {
+      user: null,
+      membership: null,
+      isSuperAdmin: false,
+      isAccountManager: false,
+      isShopper: false,
+      shopperId: null,
+    }
   }
 
   let membership = await fetchMembership(user.id)
-  const [isSuperAdmin, isAccountManager] = await Promise.all([
+  const [isSuperAdmin, isAccountManager, shopperRow] = await Promise.all([
     fetchSuperAdminFlag(user.id),
     fetchAccountManagerFlag(user.id),
+    fetchShopperRow(user.id),
   ])
 
   if (!membership && autoProvision) {
@@ -49,6 +59,8 @@ export const getSessionContext = async (
     membership,
     isSuperAdmin,
     isAccountManager,
+    isShopper: Boolean(shopperRow),
+    shopperId: shopperRow?.id ?? null,
   }
 }
 
@@ -95,6 +107,21 @@ const fetchAccountManagerFlag = async (userId: string) => {
   }
 
   return Boolean(data)
+}
+
+const fetchShopperRow = async (userId: string) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('shoppers')
+    .select('id')
+    .eq('auth_user_id', userId)
+    .maybeSingle()
+
+  if (error && !isNoRowsError(error)) {
+    throw error
+  }
+
+  return data as { id: string } | null
 }
 
 const maybeProvisionCompany = async (user: User) => {
