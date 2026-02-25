@@ -122,12 +122,11 @@ export function CompanyVisitsPage() {
   function renderVisitRow(visit: Visit) {
     const canViewReport =
       visit.status !== 'scheduled' && visit.status !== 'under_review'
-    const canSubmitReport =
-      visit.status === 'scheduled' || visit.status === 'under_review'
     const isShopper = session.isShopper
+    const shopperCanSubmit = visit.status === 'scheduled'
     const showReportLink = isShopper ? true : canViewReport
     const reportLabel = isShopper
-      ? canSubmitReport
+      ? shopperCanSubmit
         ? t('superAdmin.visitReport.open')
         : t('companyVisits.viewReport')
       : t('companyVisits.viewReport')
