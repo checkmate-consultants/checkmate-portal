@@ -15,6 +15,7 @@ import { CompanyInvoicesPage } from './pages/CompanyInvoicesPage.tsx'
 import { BenchmarkingPage } from './pages/BenchmarkingPage.tsx'
 import { ActionPlansPage } from './pages/ActionPlansPage.tsx'
 import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
+import { UpdatePasswordPage } from './pages/UpdatePasswordPage.tsx'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       <Route path="/" element={<Navigate to="/signup" replace />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/signin" element={<SignInPage />} />
+      <Route path="/account/update-password" element={<UpdatePasswordPage />} />
       <Route path="/onboarding/company" element={<CompanyOnboardingPage />} />
       <Route path="/workspace" element={<WorkspacePage />}>
         <Route index element={<Navigate to="company" replace />} />

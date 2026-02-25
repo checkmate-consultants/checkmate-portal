@@ -26,6 +26,15 @@ const resources = {
         createAccount: 'Create one',
         resetSuccess: 'Password reset link sent! Check your inbox.',
       },
+      updatePassword: {
+        title: 'Set new password',
+        subtitle: 'Enter a new password below. You were sent here from your reset link.',
+        newPassword: 'New password',
+        confirmPassword: 'Confirm password',
+        submit: 'Update password',
+        backToSignIn: 'Back to sign in',
+        success: 'Your password has been updated. Sign in with your new password.',
+      },
       signup: {
         title: 'Create your account',
         subtitle: 'Join Checkmate Portal to orchestrate customer success',
@@ -453,6 +462,15 @@ const resources = {
         noAccount: 'لا تملك حساباً؟',
         createAccount: 'أنشئ حساباً',
         resetSuccess: 'تم إرسال رابط إعادة التعيين. تفقد بريدك.',
+      },
+      updatePassword: {
+        title: 'تعيين كلمة مرور جديدة',
+        subtitle: 'أدخل كلمة مرور جديدة أدناه. تم إرسالك إلى هنا من رابط إعادة التعيين.',
+        newPassword: 'كلمة المرور الجديدة',
+        confirmPassword: 'تأكيد كلمة المرور',
+        submit: 'تحديث كلمة المرور',
+        backToSignIn: 'العودة لتسجيل الدخول',
+        success: 'تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.',
       },
       signup: {
         title: 'أنشئ حسابك',

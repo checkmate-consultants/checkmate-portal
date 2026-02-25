@@ -3,7 +3,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { Logo } from '../components/Logo.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
@@ -25,7 +25,10 @@ type SignInValues = {
 export function SignInPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const dir = i18n.dir()
+  const successMessage =
+    (location.state as { message?: string } | null)?.message ?? null
   const [resetFeedback, setResetFeedback] = useState<{
     type: 'success' | 'error'
     message: string
@@ -104,7 +107,7 @@ export function SignInPage() {
     try {
       const supabase = getSupabaseClient()
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/signin`,
+        redirectTo: `${window.location.origin}/account/update-password`,
       })
       if (error) throw new Error(error.message)
       setResetFeedback({
@@ -187,11 +190,13 @@ export function SignInPage() {
               </button>
             </div>
 
-            {resetFeedback && (
+            {(successMessage || resetFeedback) && (
               <p
-                className={`reset-feedback reset-feedback--${resetFeedback.type}`}
+                className={`reset-feedback reset-feedback--${
+                  successMessage ? 'success' : resetFeedback!.type
+                }`}
               >
-                {resetFeedback.message}
+                {successMessage ?? resetFeedback!.message}
               </p>
             )}
 
