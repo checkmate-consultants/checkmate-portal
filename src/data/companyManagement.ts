@@ -310,6 +310,53 @@ export const fetchAccountManagers = async (): Promise<
   }))
 }
 
+export type CreateAccountManagerInput = {
+  email: string
+  fullName?: string
+}
+
+export const createAccountManager = async ({
+  email,
+  fullName,
+}: CreateAccountManagerInput): Promise<{ authUserId: string; tempPassword?: string }> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.functions.invoke('create-account-manager', {
+    body: {
+      email: email.trim().toLowerCase(),
+      fullName: fullName?.trim() ?? undefined,
+    },
+  })
+
+  if (error) {
+    const message =
+      error.message ||
+      (error as { context?: { msg?: string } })?.context?.msg ||
+      'Failed to create account manager.'
+    throw new Error(message)
+  }
+
+  if (!data?.authUserId) {
+    throw new Error(data?.error ?? 'No data returned from create-account-manager')
+  }
+
+  return {
+    authUserId: data.authUserId,
+    ...(data.tempPassword && { tempPassword: data.tempPassword }),
+  }
+}
+
+export const removeAccountManager = async (userId: string): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('account_managers')
+    .delete()
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
 export const updateCompanyAccountManager = async (
   companyId: string,
   accountManagerId: string | null,
@@ -872,6 +919,30 @@ export const createFocusArea = async ({
     name: name.trim(),
     description: description.trim(),
   })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export const deleteCompanyProperty = async (propertyId: string): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('company_properties')
+    .delete()
+    .eq('id', propertyId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export const deleteFocusArea = async (focusAreaId: string): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('property_focus_areas')
+    .delete()
+    .eq('id', focusAreaId)
 
   if (error) {
     throw new Error(error.message)

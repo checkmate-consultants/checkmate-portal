@@ -71,6 +71,11 @@ export function WorkspaceSidebar({
                   labelKey: 'workspace.sidebar.shoppers',
                   to: '/workspace/admin/shoppers',
                 },
+                {
+                  id: 'account-managers',
+                  labelKey: 'workspace.sidebar.accountManagers',
+                  to: '/workspace/admin/account-managers',
+                },
               ]
             : []),
           {

@@ -15,6 +15,7 @@ import { CompanyInvoicesPage } from './pages/CompanyInvoicesPage.tsx'
 import { BenchmarkingPage } from './pages/BenchmarkingPage.tsx'
 import { ActionPlansPage } from './pages/ActionPlansPage.tsx'
 import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
+import { SuperAdminAccountManagersPage } from './pages/SuperAdminAccountManagersPage.tsx'
 import { UpdatePasswordPage } from './pages/UpdatePasswordPage.tsx'
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
           element={<SuperAdminVisitReportPage />}
         />
         <Route path="admin/shoppers" element={<SuperAdminShoppersPage />} />
+        <Route path="admin/account-managers" element={<SuperAdminAccountManagersPage />} />
         <Route path="admin/invoices" element={<SuperAdminInvoicesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/signup" replace />} />

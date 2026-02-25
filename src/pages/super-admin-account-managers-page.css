@@ -1,0 +1,21 @@
+.account-managers-table__row span {
+  display: block;
+}
+
+.account-managers-table .super-admin-table__head,
+.account-managers-table .super-admin-table__row {
+  grid-template-columns: 2fr 2fr 1fr;
+}
+
+.account-managers-table__remove {
+  font-size: 0.9rem;
+}
+
+.account-manager-result-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
