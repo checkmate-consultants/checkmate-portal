@@ -7,9 +7,11 @@ import { Button } from '../components/ui/Button.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import {
   fetchVisitReports,
+  fetchVisitStatus,
   saveVisitFocusAreaReport,
   shopperSubmitVisitReport,
   type VisitFocusAreaReport,
+  type VisitStatus,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import './company-visit-report-page.css'
@@ -22,6 +24,7 @@ export function CompanyVisitReportPage() {
   const { session } = useOutletContext<WorkspaceOutletContext>()
 
   const [reports, setReports] = useState<VisitFocusAreaReport[]>([])
+  const [visitStatus, setVisitStatus] = useState<VisitStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
@@ -30,7 +33,8 @@ export function CompanyVisitReportPage() {
 
   const editorRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  const canEdit = Boolean(session.isShopper)
+  const canEdit =
+    Boolean(session.isShopper) && visitStatus === 'scheduled'
 
   useEffect(() => {
     if (!visitId) return
@@ -42,8 +46,12 @@ export function CompanyVisitReportPage() {
 
     const load = async () => {
       try {
-        const data = await fetchVisitReports(visitId)
+        const [data, status] = await Promise.all([
+          fetchVisitReports(visitId),
+          session.isShopper ? fetchVisitStatus(visitId) : Promise.resolve('scheduled' as VisitStatus),
+        ])
         setReports(data)
+        setVisitStatus(status)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : t('superAdmin.errors.generic'),

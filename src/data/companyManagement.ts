@@ -653,6 +653,23 @@ export const shopperSubmitVisitReport = async (visitId: string): Promise<void> =
   }
 }
 
+export const fetchVisitStatus = async (
+  visitId: string,
+): Promise<VisitStatus> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visits')
+    .select('status')
+    .eq('id', visitId)
+    .single()
+
+  if (error || !data) {
+    throw error ?? new Error('Visit not found')
+  }
+
+  return (data.status as VisitStatus) ?? 'scheduled'
+}
+
 export const fetchVisitReports = async (
   visitId: string,
 ): Promise<VisitFocusAreaReport[]> => {
