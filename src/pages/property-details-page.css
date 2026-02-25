@@ -55,6 +55,12 @@
   margin-top: 0.2rem;
 }
 
+.property-details__hero-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .property-details__section-head {
   display: flex;
   justify-content: space-between;
@@ -88,6 +94,10 @@
 .property-details__card-head p {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.property-details__card-delete {
+  margin-top: 0.75rem;
 }
 
 .property-details__error {

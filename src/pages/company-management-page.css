@@ -130,6 +130,13 @@
   font-weight: 600;
 }
 
+.company-management__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .company-management__state-card {
   padding: 1.75rem;
   text-align: center;

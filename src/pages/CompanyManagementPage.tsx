@@ -14,6 +14,7 @@ import { Modal } from '../components/ui/Modal.tsx'
 import {
   fetchCompanySnapshot,
   createCompanyProperty,
+  deleteCompanyProperty,
   updateCompanyProfile,
   type CompanyProperty,
   type CompanySnapshot,
@@ -49,6 +50,7 @@ export function CompanyManagementPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const [isPropertyModalOpen, setPropertyModalOpen] = useState(false)
   const [isOverviewModalOpen, setOverviewModalOpen] = useState(false)
+  const [propertyToDeleteId, setPropertyToDeleteId] = useState<string | null>(null)
   const [state, setState] = useState<LoadState>({
     status: 'loading',
     company: null,
@@ -106,6 +108,14 @@ export function CompanyManagementPage() {
       longitude: '',
     },
     mode: 'onChange',
+  })
+
+  const deletePropertyMutation = useMutation({
+    mutationFn: deleteCompanyProperty,
+    onSuccess: () => {
+      setPropertyToDeleteId(null)
+      setReloadKey((k) => k + 1)
+    },
   })
 
   const propertyMutation = useMutation({
@@ -389,6 +399,8 @@ export function CompanyManagementPage() {
                 t={t}
                 propertyPathPrefix={propertyPathPrefix}
                 backToPath={backToPath}
+                canDeleteProperty={session.isSuperAdmin && Boolean(routeCompanyId)}
+                onDeleteProperty={setPropertyToDeleteId}
               />
             ))}
           </div>
@@ -494,6 +506,36 @@ export function CompanyManagementPage() {
         </form>
       </Modal>
 
+      {propertyToDeleteId && (
+        <Modal
+          open={true}
+          onClose={() => !deletePropertyMutation.isPending && setPropertyToDeleteId(null)}
+          title={t('companyManagement.confirmDeleteProperty')}
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPropertyToDeleteId(null)}
+                disabled={deletePropertyMutation.isPending}
+              >
+                {t('companyManagement.forms.property.cancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => deletePropertyMutation.mutate(propertyToDeleteId)}
+                loading={deletePropertyMutation.isPending}
+              >
+                {t('companyManagement.confirmDeleteYes')}
+              </Button>
+            </>
+          }
+        >
+          <p>{t('companyManagement.confirmDeleteProperty')}</p>
+        </Modal>
+      )}
+
       <Modal
         open={isOverviewModalOpen}
         onClose={() => setOverviewModalOpen(false)}
@@ -573,6 +615,8 @@ type PropertyCardProps = {
   t: TFunction
   propertyPathPrefix: string
   backToPath: string
+  canDeleteProperty: boolean
+  onDeleteProperty: (id: string) => void
 }
 
 const PropertyCard = ({
@@ -581,6 +625,8 @@ const PropertyCard = ({
   t,
   propertyPathPrefix,
   backToPath,
+  canDeleteProperty,
+  onDeleteProperty,
 }: PropertyCardProps) => {
   const hasCoordinates =
     property.latitude !== null && property.longitude !== null
@@ -613,16 +659,27 @@ const PropertyCard = ({
             count: property.focusAreas.length,
           })}
         </p>
-        <Button
-          type="button"
-          onClick={() => {
-            navigate(`${propertyPathPrefix}/${property.id}`, {
-              state: { backTo: backToPath },
-            })
-          }}
-        >
-          {t('companyManagement.viewProperty')}
-        </Button>
+        <div className="company-management__card-actions">
+          <Button
+            type="button"
+            onClick={() => {
+              navigate(`${propertyPathPrefix}/${property.id}`, {
+                state: { backTo: backToPath },
+              })
+            }}
+          >
+            {t('companyManagement.viewProperty')}
+          </Button>
+          {canDeleteProperty && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onDeleteProperty(property.id)}
+            >
+              {t('companyManagement.deleteProperty')}
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   )

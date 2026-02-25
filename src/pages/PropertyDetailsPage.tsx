@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
@@ -14,8 +14,11 @@ import { Modal } from '../components/ui/Modal.tsx'
 import {
   fetchPropertyDetails,
   createFocusArea,
+  deleteCompanyProperty,
+  deleteFocusArea,
   type PropertyDetailsResult,
 } from '../data/companyManagement.ts'
+import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import './property-details-page.css'
 
 type LoadState = {
@@ -33,9 +36,12 @@ export function PropertyDetailsPage() {
   const { propertyId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { session } = useOutletContext<WorkspaceOutletContext>()
   const { t } = useTranslation()
   const [reloadKey, setReloadKey] = useState(0)
   const [isFocusModalOpen, setFocusModalOpen] = useState(false)
+  const [focusAreaToDeleteId, setFocusAreaToDeleteId] = useState<string | null>(null)
+  const [propertyDeleteConfirmOpen, setPropertyDeleteConfirmOpen] = useState(false)
   const [state, setState] = useState<LoadState>({
     status: 'loading',
     data: null,
@@ -78,6 +84,28 @@ export function PropertyDetailsPage() {
   const handleFocusSubmit: SubmitHandler<FocusAreaFormValues> = (values) => {
     focusAreaMutation.mutate(values)
   }
+
+  const backTo =
+    (location.state as { backTo?: string } | null)?.backTo ?? '/workspace/company'
+  const isAdminView =
+    Boolean(session?.isSuperAdmin) &&
+    location.pathname.startsWith('/workspace/admin')
+
+  const deleteFocusAreaMutation = useMutation({
+    mutationFn: deleteFocusArea,
+    onSuccess: () => {
+      setFocusAreaToDeleteId(null)
+      setReloadKey((k) => k + 1)
+    },
+  })
+
+  const deletePropertyMutation = useMutation({
+    mutationFn: deleteCompanyProperty,
+    onSuccess: () => {
+      setPropertyDeleteConfirmOpen(false)
+      navigate(backTo)
+    },
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -122,9 +150,6 @@ export function PropertyDetailsPage() {
       </div>
     )
   }
-
-  const backTo =
-    (location.state as { backTo?: string } | null)?.backTo ?? '/workspace/company'
 
   if (state.status === 'error' || !state.data) {
     return (
@@ -171,13 +196,24 @@ export function PropertyDetailsPage() {
             </button>
           )}
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => navigate(backTo)}
-        >
-          {t('companyManagement.backToList')}
-        </Button>
+        <div className="property-details__hero-actions">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate(backTo)}
+          >
+            {t('companyManagement.backToList')}
+          </Button>
+          {isAdminView && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setPropertyDeleteConfirmOpen(true)}
+            >
+              {t('companyManagement.deleteProperty')}
+            </Button>
+          )}
+        </div>
       </header>
 
       <section className="property-details__section">
@@ -204,6 +240,16 @@ export function PropertyDetailsPage() {
                 <div className="property-details__card-head">
                   <h3>{area.name}</h3>
                   <p>{area.description}</p>
+                  {isAdminView && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="property-details__card-delete"
+                      onClick={() => setFocusAreaToDeleteId(area.id)}
+                    >
+                      {t('companyManagement.deleteFocusArea')}
+                    </Button>
+                  )}
                 </div>
               </Card>
             ))}
@@ -268,6 +314,70 @@ export function PropertyDetailsPage() {
           </div>
         </form>
       </Modal>
+
+      {propertyDeleteConfirmOpen && (
+        <Modal
+          open={true}
+          onClose={() =>
+            !deletePropertyMutation.isPending && setPropertyDeleteConfirmOpen(false)
+          }
+          title={t('companyManagement.confirmDeleteProperty')}
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPropertyDeleteConfirmOpen(false)}
+                disabled={deletePropertyMutation.isPending}
+              >
+                {t('companyManagement.forms.focusArea.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={() =>
+                  propertyId && deletePropertyMutation.mutate(propertyId)
+                }
+                loading={deletePropertyMutation.isPending}
+              >
+                {t('companyManagement.confirmDeleteYes')}
+              </Button>
+            </>
+          }
+        >
+          <p>{t('companyManagement.confirmDeleteProperty')}</p>
+        </Modal>
+      )}
+
+      {focusAreaToDeleteId && (
+        <Modal
+          open={true}
+          onClose={() =>
+            !deleteFocusAreaMutation.isPending && setFocusAreaToDeleteId(null)
+          }
+          title={t('companyManagement.confirmDeleteFocusArea')}
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setFocusAreaToDeleteId(null)}
+                disabled={deleteFocusAreaMutation.isPending}
+              >
+                {t('companyManagement.forms.focusArea.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => deleteFocusAreaMutation.mutate(focusAreaToDeleteId)}
+                loading={deleteFocusAreaMutation.isPending}
+              >
+                {t('companyManagement.confirmDeleteYes')}
+              </Button>
+            </>
+          }
+        >
+          <p>{t('companyManagement.confirmDeleteFocusArea')}</p>
+        </Modal>
+      )}
     </div>
   )
 }
