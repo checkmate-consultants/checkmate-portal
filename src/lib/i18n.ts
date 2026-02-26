@@ -295,6 +295,16 @@ const resources = {
           cancel: 'Cancel',
           submit: 'Save',
         },
+        createCompany: {
+          button: 'Create company',
+          title: 'Create company',
+          description:
+            'Add a new company with no owner. You can assign an account manager and add members later.',
+          nameLabel: 'Company name',
+          namePlaceholder: 'e.g. Acme Hospitality',
+          cancel: 'Cancel',
+          submit: 'Create company',
+        },
         errors: {
           unauthorized: 'You are not authorized to view this page.',
           generic: 'We could not load the data. Please try again.',
@@ -855,6 +865,16 @@ const resources = {
           none: 'بدون',
           cancel: 'إلغاء',
           submit: 'حفظ',
+        },
+        createCompany: {
+          button: 'إنشاء شركة',
+          title: 'إنشاء شركة',
+          description:
+            'إضافة شركة جديدة بدون مالك. يمكنك تعيين مدير حساب وإضافة أعضاء لاحقاً.',
+          nameLabel: 'اسم الشركة',
+          namePlaceholder: 'مثال: شركة الضيافة',
+          cancel: 'إلغاء',
+          submit: 'إنشاء الشركة',
         },
         errors: {
           unauthorized: 'ليست لديك صلاحية رؤية هذه الصفحة.',

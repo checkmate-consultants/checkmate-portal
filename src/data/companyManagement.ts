@@ -357,6 +357,26 @@ export const removeAccountManager = async (userId: string): Promise<void> => {
   }
 }
 
+export const createCompanyAsSuperAdmin = async (
+  name: string,
+): Promise<{ id: string }> => {
+  const supabase = getSupabaseClient()
+  const trimmed = name.trim()
+  if (trimmed.length < 2) {
+    throw new Error('Company name must be at least 2 characters.')
+  }
+  const { data, error } = await supabase.rpc('create_company_as_super_admin', {
+    company_name: trimmed,
+  })
+  if (error) {
+    throw new Error(error.message)
+  }
+  if (!data) {
+    throw new Error('No company id returned')
+  }
+  return { id: data as string }
+}
+
 export const updateCompanyAccountManager = async (
   companyId: string,
   accountManagerId: string | null,

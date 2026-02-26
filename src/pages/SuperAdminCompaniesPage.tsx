@@ -5,11 +5,13 @@ import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
+import { Input } from '../components/ui/Input.tsx'
 import { Select } from '../components/ui/Select.tsx'
 import {
   fetchCompanyDirectory,
   fetchAccountManagers,
   updateCompanyAccountManager,
+  createCompanyAsSuperAdmin,
   type CompanyDirectoryItem,
   type AccountManagerProfile,
 } from '../data/companyManagement.ts'
@@ -45,6 +47,9 @@ export function SuperAdminCompaniesPage() {
   } | null>(null)
   const [assignValue, setAssignValue] = useState<string>('')
   const [assignSaving, setAssignSaving] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createName, setCreateName] = useState('')
+  const [createSaving, setCreateSaving] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -119,15 +124,28 @@ export function SuperAdminCompaniesPage() {
           <h1>{t('superAdmin.title')}</h1>
           <p>{t('superAdmin.description')}</p>
         </div>
-        {session.membership && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => navigate('/workspace/company')}
-          >
-            {t('superAdmin.goToMyCompany')}
-          </Button>
-        )}
+        <div className="super-admin-header__actions">
+          {session.isSuperAdmin && (
+            <Button
+              type="button"
+              onClick={() => {
+                setCreateModalOpen(true)
+                setCreateName('')
+              }}
+            >
+              {t('superAdmin.createCompany.button')}
+            </Button>
+          )}
+          {session.membership && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate('/workspace/company')}
+            >
+              {t('superAdmin.goToMyCompany')}
+            </Button>
+          )}
+        </div>
       </header>
 
       {state.companies.length === 0 ? (
@@ -199,6 +217,73 @@ export function SuperAdminCompaniesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {session.isSuperAdmin && createModalOpen && (
+        <Modal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          title={t('superAdmin.createCompany.title')}
+          description={t('superAdmin.createCompany.description')}
+        >
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const trimmed = createName.trim()
+              if (trimmed.length < 2) return
+              setCreateSaving(true)
+              try {
+                const { id } = await createCompanyAsSuperAdmin(trimmed)
+                const [directory, accountManagers] = await Promise.all([
+                  fetchCompanyDirectory(),
+                  fetchAccountManagers(),
+                ])
+                setState((prev) => ({
+                  ...prev,
+                  companies: directory,
+                  accountManagers,
+                }))
+                setCreateModalOpen(false)
+                setCreateName('')
+                navigate(`/workspace/admin/companies/${id}`)
+              } catch (err) {
+                console.error(err)
+              } finally {
+                setCreateSaving(false)
+              }
+            }}
+          >
+            <FormField
+              id="create-company-name"
+              label={t('superAdmin.createCompany.nameLabel')}
+            >
+              <Input
+                id="create-company-name"
+                value={createName}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setCreateName(e.target.value)
+                }
+                placeholder={t('superAdmin.createCompany.namePlaceholder')}
+              />
+            </FormField>
+            <div className="modal-form__actions" style={{ marginTop: '1rem' }}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setCreateModalOpen(false)}
+              >
+                {t('superAdmin.createCompany.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                loading={createSaving}
+                disabled={createName.trim().length < 2}
+              >
+                {t('superAdmin.createCompany.submit')}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {session.isSuperAdmin && assignModal && (
