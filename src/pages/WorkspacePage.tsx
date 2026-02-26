@@ -56,6 +56,21 @@ export function WorkspacePage() {
             }
             return
           }
+          // No membership yet: try once to create company from signup metadata (in case it wasn't available on first load)
+          const pendingName = (context.user?.user_metadata?.pending_company_name as string | undefined)?.trim() ?? ''
+          if (pendingName.length >= 2) {
+            const supabase = getSupabaseClient()
+            const { error } = await supabase.rpc('create_company_with_owner', {
+              company_name: pendingName,
+            })
+            if (!cancelled && !error) {
+              await supabase.auth.updateUser({ data: { pending_company_name: null } })
+              const next = await getSessionContext()
+              setSession(next)
+              setStatus('ready')
+              return
+            }
+          }
           if (!cancelled) {
             setSession(context)
             setStatus('needsCompany')

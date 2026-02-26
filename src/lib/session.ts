@@ -24,6 +24,8 @@ export const getSessionContext = async (
 ): Promise<SessionContext> => {
   const { autoProvision = true } = options
   const supabase = getSupabaseClient()
+  // Refresh session so we have latest user_metadata (e.g. pending_company_name, signup_type) after email confirm
+  await supabase.auth.refreshSession()
   const { data: userResult, error: userError } = await supabase.auth.getUser()
 
   if (userError) {
