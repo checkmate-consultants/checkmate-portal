@@ -124,9 +124,8 @@ export function SignUpPage() {
               ? { pending_company_name: values.companyName ?? '' }
               : { signup_type: 'shopper' }),
           },
-          emailRedirectTo: isCompanySignup
-            ? `${window.location.origin}/onboarding/company`
-            : `${window.location.origin}/workspace`,
+          // Everyone lands on workspace after email confirm; session auto-creates company or shopper row
+          emailRedirectTo: `${window.location.origin}/workspace`,
         },
       })
       if (error) throw new Error(error.message)

@@ -88,15 +88,10 @@ export function SignInPage() {
       if (context.isShopper) {
         return 'workspace'
       }
-      return context.membership ? 'workspace' : 'onboarding'
+      return 'workspace'
     },
-    onSuccess: (destination) => {
-      if (destination === 'workspace') {
-        // Shoppers land on visits; WorkspacePage will redirect them to /workspace/visits
-        navigate('/workspace', { replace: true })
-      } else {
-        navigate('/onboarding/company', { replace: true })
-      }
+    onSuccess: () => {
+      navigate('/workspace', { replace: true })
     },
   })
 

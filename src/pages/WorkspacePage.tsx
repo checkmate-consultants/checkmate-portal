@@ -1,34 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Card } from '../components/ui/Card.tsx'
-import { Button } from '../components/ui/Button.tsx'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
+import { getSessionContext, type SessionContext } from '../lib/session.ts'
 import {
-  getSessionContext,
-  type SessionContext,
-} from '../lib/session.ts'
-import { WorkspaceSidebar } from '../components/workspace/WorkspaceSidebar.tsx'
-import { ThemeToggle } from '../components/ThemeToggle.tsx'
-import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
+  WorkspaceLoadingView,
+  WorkspaceErrorView,
+  WorkspaceCreateCompanyView,
+  WorkspaceShell,
+} from './workspace/index.ts'
 import './workspace-page.css'
 
-export type WorkspaceOutletContext = {
-  session: SessionContext
-}
+export type { WorkspaceOutletContext } from './workspace/index.ts'
 
 export function WorkspacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'needsCompany'>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [session, setSession] = useState<SessionContext | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    const ensureCompany = async () => {
+    const ensureSession = async () => {
       try {
         const context = await getSessionContext()
         if (!context.user) {
@@ -60,7 +56,10 @@ export function WorkspacePage() {
             }
             return
           }
-          navigate('/onboarding/company', { replace: true })
+          if (!cancelled) {
+            setSession(context)
+            setStatus('needsCompany')
+          }
           return
         }
         if (!cancelled) {
@@ -76,7 +75,7 @@ export function WorkspacePage() {
         }
       }
     }
-    ensureCompany()
+    ensureSession()
     return () => {
       cancelled = true
     }
@@ -93,70 +92,35 @@ export function WorkspacePage() {
     }
   }
 
+  const handleCompanyCreated = async () => {
+    const context = await getSessionContext()
+    setSession(context)
+    setStatus('ready')
+  }
+
   if (status === 'loading') {
-    return (
-      <div className="workspace-page">
-        <Card className="workspace-card">
-          <p className="workspace-subtitle">{t('onboarding.loading')}</p>
-        </Card>
-      </div>
-    )
+    return <WorkspaceLoadingView />
   }
 
-  if (status === 'error') {
-    return (
-      <div className="workspace-page">
-        <Card className="workspace-card">
-          <p className="workspace-subtitle">{errorMessage}</p>
-          <Button type="button" onClick={() => navigate('/signin')}>
-            {t('workspace.back')}
-          </Button>
-        </Card>
-      </div>
-    )
+  if (status === 'error' && errorMessage) {
+    return <WorkspaceErrorView message={errorMessage} />
   }
 
-  const closeSidebar = () => setSidebarOpen(false)
-  const openSidebar = () => setSidebarOpen(true)
+  if (status === 'needsCompany') {
+    return <WorkspaceCreateCompanyView onSuccess={handleCompanyCreated} />
+  }
 
-  return (
-    <div className="workspace-shell" data-sidebar-open={isSidebarOpen}>
-      <WorkspaceSidebar
+  if (status === 'ready' && session) {
+    return (
+      <WorkspaceShell
+        session={session}
+        isSidebarOpen={isSidebarOpen}
+        onOpenSidebar={() => setSidebarOpen(true)}
+        onCloseSidebar={() => setSidebarOpen(false)}
         onSignOut={handleSignOut}
-        onNavigate={closeSidebar}
-        onClose={isSidebarOpen ? closeSidebar : undefined}
-        isSuperAdmin={session?.isSuperAdmin ?? false}
-        isAccountManager={session?.isAccountManager ?? false}
-        isShopper={session?.isShopper ?? false}
       />
-      <main className="workspace-main">
-        <header className="workspace-topbar">
-          <button
-            type="button"
-            className="workspace-menu-button"
-            aria-label={t('workspace.sidebar.open')}
-            onClick={openSidebar}
-          >
-            <span />
-          </button>
-          <div className="workspace-topbar__actions">
-            <ThemeToggle />
-            <LanguageSwitcher />
-          </div>
-        </header>
-        <div className="workspace-content">
-          {session && <Outlet context={{ session }} />}
-        </div>
-      </main>
-      {isSidebarOpen && (
-        <button
-          type="button"
-          className="workspace-sidebar-overlay"
-          aria-label={t('workspace.sidebar.close')}
-          onClick={closeSidebar}
-        />
-      )}
-    </div>
-  )
-}
+    )
+  }
 
+  return <WorkspaceLoadingView />
+}
