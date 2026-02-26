@@ -5,9 +5,9 @@ const DESCRIPTION_META_ID = 'meta-page-description'
 /** Default image path for Open Graph / Twitter (must exist in public/). PNG 1200×630 for Facebook compatibility. */
 export const OG_IMAGE_PATH = '/og-image.png'
 
-/** Recommended OG image dimensions for Facebook/LinkedIn (min 600×315). */
+/** OG image dimensions (matches icon aspect ratio ~2970:2299). */
 export const OG_IMAGE_WIDTH = 1200
-export const OG_IMAGE_HEIGHT = 630
+export const OG_IMAGE_HEIGHT = 929
 
 const SITE_NAME = 'Checkmate Portal'
 
