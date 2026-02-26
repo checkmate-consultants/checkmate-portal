@@ -81,6 +81,8 @@ const resources = {
       ui: {
         toggleTheme: 'Toggle theme',
         changeLanguage: 'Change language',
+        showPassword: 'Show password',
+        hidePassword: 'Hide password',
       },
       signin: {
         title: 'Welcome back',
@@ -638,6 +640,8 @@ const resources = {
       ui: {
         toggleTheme: 'تبديل الوضع',
         changeLanguage: 'تغيير اللغة',
+        showPassword: 'إظهار كلمة المرور',
+        hidePassword: 'إخفاء كلمة المرور',
       },
       signin: {
         title: 'مرحباً بعودتك',
