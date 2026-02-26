@@ -13,11 +13,17 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
 }
 
 export const Input = forwardRef(function Input(
-  { className, hasError = false, leadingIcon, ...props }: InputProps,
+  { className, hasError = false, leadingIcon, disabled, ...props }: InputProps,
   ref: ForwardedRef<HTMLInputElement>,
 ) {
   return (
-    <span className={clsx('ui-input', hasError && 'ui-input--error')}>
+    <span
+      className={clsx(
+        'ui-input',
+        hasError && 'ui-input--error',
+        disabled && 'ui-input--disabled',
+      )}
+    >
       {leadingIcon && (
         <span className="ui-input__icon" aria-hidden="true">
           {leadingIcon}
@@ -26,6 +32,7 @@ export const Input = forwardRef(function Input(
       <input
         ref={ref}
         className={clsx('ui-input__field', className)}
+        disabled={disabled}
         {...props}
       />
     </span>

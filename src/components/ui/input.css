@@ -24,6 +24,23 @@
   border-color: var(--color-danger);
 }
 
+.ui-input--disabled {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.ui-input--disabled .ui-input__field {
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+.ui-input--disabled:focus-within {
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
 .ui-input__field {
   border: none;
   outline: none;
