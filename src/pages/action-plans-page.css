@@ -93,10 +93,6 @@
   -webkit-mask-position: center;
 }
 
-.action-plans-page__table .ui-table {
-  table-layout: fixed;
-}
-
 .action-plans-page__cell-actions {
   width: 48px;
 }
