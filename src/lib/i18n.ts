@@ -163,6 +163,7 @@ const resources = {
         back: 'Back to onboarding',
         signOut: 'Sign out',
         noCompany: "You don't have a company workspace. Please contact support.",
+        shopperSetupError: "We're having trouble setting up your shopper account. Please try again later or contact support.",
         sidebar: {
           tenant: 'Tenant operations',
           overview: 'Overview',
@@ -720,6 +721,7 @@ const resources = {
         back: 'العودة إلى الترحيب',
         signOut: 'تسجيل الخروج',
         noCompany: 'ليس لديك مساحة عمل لشركة. يرجى التواصل مع الدعم.',
+        shopperSetupError: 'واجهنا مشكلة في إعداد حساب المتسوق. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
         sidebar: {
           tenant: 'تشغيل المستأجر',
           overview: 'نظرة عامة',

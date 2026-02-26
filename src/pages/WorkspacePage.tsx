@@ -18,7 +18,7 @@ export function WorkspacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'noCompany'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'noCompany' | 'shopperSetupError'>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [session, setSession] = useState<SessionContext | null>(null)
@@ -54,6 +54,27 @@ export function WorkspacePage() {
               if (!isVisitsRoute) {
                 navigate('/workspace/visits', { replace: true })
               }
+            }
+            return
+          }
+          // Shopper signup but shopper row not provisioned yet: retry session (provision shopper) so we never show "no company" to shoppers
+          const isShopperSignup = context.user?.user_metadata?.signup_type === 'shopper'
+          if (isShopperSignup) {
+            const retry = await getSessionContext()
+            if (!cancelled && retry.isShopper) {
+              setSession(retry)
+              setStatus('ready')
+              const isVisitsRoute =
+                location.pathname === '/workspace/visits' ||
+                location.pathname.startsWith('/workspace/visits/')
+              if (!isVisitsRoute) {
+                navigate('/workspace/visits', { replace: true })
+              }
+              return
+            }
+            if (!cancelled) {
+              setSession(retry)
+              setStatus('shopperSetupError')
             }
             return
           }
@@ -106,6 +127,19 @@ export function WorkspacePage() {
       <div className="workspace-page">
         <Card className="workspace-card">
           <p className="workspace-subtitle">{t('workspace.noCompany')}</p>
+          <Button type="button" onClick={handleSignOut}>
+            {t('workspace.signOut')}
+          </Button>
+        </Card>
+      </div>
+    )
+  }
+
+  if (status === 'shopperSetupError') {
+    return (
+      <div className="workspace-page">
+        <Card className="workspace-card">
+          <p className="workspace-subtitle">{t('workspace.shopperSetupError')}</p>
           <Button type="button" onClick={handleSignOut}>
             {t('workspace.signOut')}
           </Button>
