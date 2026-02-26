@@ -162,6 +162,7 @@ const resources = {
         subtitle: 'You are authenticated. Replace this view with your dashboard.',
         back: 'Back to onboarding',
         signOut: 'Sign out',
+        noCompany: "You don't have a company workspace. Please contact support.",
         sidebar: {
           tenant: 'Tenant operations',
           overview: 'Overview',
@@ -718,6 +719,7 @@ const resources = {
         subtitle: 'أنت مسجل الدخول. استبدل هذه الصفحة بلوحة التحكم لاحقاً.',
         back: 'العودة إلى الترحيب',
         signOut: 'تسجيل الخروج',
+        noCompany: 'ليس لديك مساحة عمل لشركة. يرجى التواصل مع الدعم.',
         sidebar: {
           tenant: 'تشغيل المستأجر',
           overview: 'نظرة عامة',

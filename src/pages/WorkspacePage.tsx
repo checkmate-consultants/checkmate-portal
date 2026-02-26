@@ -6,9 +6,10 @@ import { getSessionContext, type SessionContext } from '../lib/session.ts'
 import {
   WorkspaceLoadingView,
   WorkspaceErrorView,
-  WorkspaceCreateCompanyView,
   WorkspaceShell,
 } from './workspace/index.ts'
+import { Card } from '../components/ui/Card.tsx'
+import { Button } from '../components/ui/Button.tsx'
 import './workspace-page.css'
 
 export type { WorkspaceOutletContext } from './workspace/index.ts'
@@ -17,7 +18,7 @@ export function WorkspacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'needsCompany'>('loading')
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'noCompany'>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSidebarOpen, setSidebarOpen] = useState(false)
   const [session, setSession] = useState<SessionContext | null>(null)
@@ -56,24 +57,9 @@ export function WorkspacePage() {
             }
             return
           }
-          // No membership yet: try once to create company from signup metadata (in case it wasn't available on first load)
-          const pendingName = (context.user?.user_metadata?.pending_company_name as string | undefined)?.trim() ?? ''
-          if (pendingName.length >= 2) {
-            const supabase = getSupabaseClient()
-            const { error } = await supabase.rpc('create_company_with_owner', {
-              company_name: pendingName,
-            })
-            if (!cancelled && !error) {
-              await supabase.auth.updateUser({ data: { pending_company_name: null } })
-              const next = await getSessionContext()
-              setSession(next)
-              setStatus('ready')
-              return
-            }
-          }
           if (!cancelled) {
             setSession(context)
-            setStatus('needsCompany')
+            setStatus('noCompany')
           }
           return
         }
@@ -107,12 +93,6 @@ export function WorkspacePage() {
     }
   }
 
-  const handleCompanyCreated = async () => {
-    const context = await getSessionContext()
-    setSession(context)
-    setStatus('ready')
-  }
-
   if (status === 'loading') {
     return <WorkspaceLoadingView />
   }
@@ -121,8 +101,17 @@ export function WorkspacePage() {
     return <WorkspaceErrorView message={errorMessage} />
   }
 
-  if (status === 'needsCompany') {
-    return <WorkspaceCreateCompanyView onSuccess={handleCompanyCreated} />
+  if (status === 'noCompany') {
+    return (
+      <div className="workspace-page">
+        <Card className="workspace-card">
+          <p className="workspace-subtitle">{t('workspace.noCompany')}</p>
+          <Button type="button" onClick={handleSignOut}>
+            {t('workspace.signOut')}
+          </Button>
+        </Card>
+      </div>
+    )
   }
 
   if (status === 'ready' && session) {

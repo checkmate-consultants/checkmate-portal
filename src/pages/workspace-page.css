@@ -1,15 +1,3 @@
-.workspace-create-company-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin-top: 1rem;
-}
-
-.workspace-create-company-form .form-error {
-  color: var(--color-danger);
-  font-size: 0.9rem;
-}
-
 .workspace-page {
   min-height: 100vh;
   background: radial-gradient(

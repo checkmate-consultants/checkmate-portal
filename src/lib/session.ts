@@ -22,7 +22,7 @@ type SessionOptions = {
 export const getSessionContext = async (
   options: SessionOptions = {},
 ): Promise<SessionContext> => {
-  const { autoProvision = true } = options
+  const { autoProvision: _autoProvision = true } = options
   const supabase = getSupabaseClient()
   // Refresh session so we have latest user_metadata (e.g. pending_company_name, signup_type) after email confirm
   await supabase.auth.refreshSession()
@@ -45,16 +45,12 @@ export const getSessionContext = async (
     }
   }
 
-  let membership = await fetchMembership(user.id)
+  const membership = await fetchMembership(user.id)
   let [isSuperAdmin, isAccountManager, shopperRow] = await Promise.all([
     fetchSuperAdminFlag(user.id),
     fetchAccountManagerFlag(user.id),
     fetchShopperRow(user.id),
   ])
-
-  if (!membership && autoProvision) {
-    membership = await maybeProvisionCompany(user)
-  }
 
   // Self-signup shoppers: create shoppers row on first load after email confirm if not yet present
   const signupType = user.user_metadata?.signup_type as string | undefined
@@ -135,39 +131,6 @@ const fetchShopperRow = async (userId: string) => {
 
   return data as { id: string } | null
 }
-
-const maybeProvisionCompany = async (user: User) => {
-  const pendingName = sanitizeCompanyName(
-    (user.user_metadata?.pending_company_name as string | undefined) ?? '',
-  )
-
-  if (!pendingName) {
-    return null
-  }
-
-  const supabase = getSupabaseClient()
-
-  const { error } = await supabase.rpc('create_company_with_owner', {
-    company_name: pendingName,
-  })
-
-  if (error) {
-    // If the RPC failed because the company already exists, try to fetch membership again.
-    const membership = await fetchMembership(user.id)
-    if (membership) {
-      return membership
-    }
-    throw error
-  }
-
-  await supabase.auth.updateUser({
-    data: { pending_company_name: null },
-  })
-
-  return fetchMembership(user.id)
-}
-
-const sanitizeCompanyName = (value: string) => value.trim()
 
 const isNoRowsError = (error: PostgrestError) =>
   error.code === 'PGRST116' || error.details?.includes('Results contain 0 rows')
