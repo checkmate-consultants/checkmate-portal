@@ -1,6 +1,8 @@
 import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import logoAsset from '../assets/brand/logo.webp'
+import logoLightAsset from '../assets/brand/logo-light.webp'
+import { useTheme } from '../theme/useTheme.ts'
 import './logo.css'
 
 type LogoProps = {
@@ -22,15 +24,17 @@ export function Logo({
   loading = 'lazy',
 }: LogoProps) {
   const { t } = useTranslation()
+  const { mode } = useTheme()
   const brandName = t('brand.name')
   const scale = SIZE_SCALE[size] ?? SIZE_SCALE.md
   const width = Math.round(BASE_WIDTH * scale)
   const height = Math.round(BASE_HEIGHT * scale)
+  const src = mode === 'light' ? logoLightAsset : logoAsset
 
   return (
     <span className={clsx('logo', `logo--${size}`, className)}>
       <img
-        src={logoAsset}
+        src={src}
         alt={brandName}
         width={width}
         height={height}
