@@ -108,6 +108,9 @@ const resources = {
       signup: {
         title: 'Create your account',
         subtitle: 'Join Checkmate Portal to orchestrate customer success',
+        accountType: 'I am signing up as',
+        asCompany: 'A company',
+        asShopper: 'A shopper',
         name: 'Full name',
         namePlaceholder: 'Taylor Founder',
         company: 'Company name',
@@ -126,6 +129,14 @@ const resources = {
           'We sent you a verification email. Confirm it to access your workspace.',
         alreadyHaveAccount: 'Already have an account?',
         signIn: 'Sign in',
+      },
+      profile: {
+        shopper: {
+          title: 'My profile',
+          description: 'Update your name and email. Only you can see and edit this information.',
+          save: 'Save changes',
+          saved: 'Your profile has been updated.',
+        },
       },
       validation: {
         required: 'This field is required',
@@ -156,6 +167,7 @@ const resources = {
           overview: 'Overview',
           company: 'Company management',
           companyVisits: 'Visits',
+          profile: 'My profile',
           invoices: 'Invoices',
           companies: 'Companies',
           shoppers: 'Shoppers',
@@ -651,6 +663,9 @@ const resources = {
         title: 'أنشئ حسابك',
         subtitle:
           'انضم إلى Checkmate Portal لتقود تجارب ترحيب متسقة وموثوقة',
+        accountType: 'أنا أسجّل كـ',
+        asCompany: 'شركة',
+        asShopper: 'متسوق',
         name: 'الاسم الكامل',
         namePlaceholder: 'عمر المؤسس',
         company: 'اسم الشركة',
@@ -669,6 +684,14 @@ const resources = {
           'أرسلنا لك رسالة تأكيد. فعّلها للوصول إلى مساحة العمل.',
         alreadyHaveAccount: 'هل لديك حساب؟',
         signIn: 'تسجيل الدخول',
+      },
+      profile: {
+        shopper: {
+          title: 'ملفي',
+          description: 'حدّث اسمك وبريدك. أنت فقط من يمكنه رؤية وتعديل هذه المعلومات.',
+          save: 'حفظ التغييرات',
+          saved: 'تم تحديث ملفك.',
+        },
       },
       validation: {
         required: 'هذا الحقل مطلوب',
@@ -700,6 +723,7 @@ const resources = {
           overview: 'نظرة عامة',
           company: 'إدارة الشركة',
           companyVisits: 'الزيارات',
+          profile: 'ملفي',
           invoices: 'الفواتير',
           companies: 'الشركات',
           shoppers: 'المتسوقون',

@@ -44,7 +44,7 @@ export const getSessionContext = async (
   }
 
   let membership = await fetchMembership(user.id)
-  const [isSuperAdmin, isAccountManager, shopperRow] = await Promise.all([
+  let [isSuperAdmin, isAccountManager, shopperRow] = await Promise.all([
     fetchSuperAdminFlag(user.id),
     fetchAccountManagerFlag(user.id),
     fetchShopperRow(user.id),
@@ -52,6 +52,16 @@ export const getSessionContext = async (
 
   if (!membership && autoProvision) {
     membership = await maybeProvisionCompany(user)
+  }
+
+  // Self-signup shoppers: create shoppers row on first load after email confirm if not yet present
+  const signupType = user.user_metadata?.signup_type as string | undefined
+  if (!shopperRow && signupType === 'shopper') {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase.rpc('create_shopper_self')
+    if (!error) {
+      shopperRow = await fetchShopperRow(user.id)
+    }
   }
 
   return {

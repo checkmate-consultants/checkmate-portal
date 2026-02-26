@@ -16,9 +16,12 @@ import { getSupabaseClient } from '../lib/supabaseClient.ts'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './signup-page.css'
 
+export type SignUpAccountType = 'company' | 'shopper'
+
 type SignUpValues = {
+  accountType: SignUpAccountType
   name: string
-  companyName: string
+  companyName?: string
   email: string
   password: string
   confirmPassword: string
@@ -45,6 +48,7 @@ export function SignUpPage() {
     () =>
       z
         .object({
+          accountType: z.enum(['company', 'shopper']),
           name: z
             .string()
             .min(2, t('validation.nameLength'))
@@ -52,7 +56,8 @@ export function SignUpPage() {
           companyName: z
             .string()
             .min(2, t('validation.companyLength'))
-            .nonempty(t('validation.required')),
+            .optional()
+            .or(z.literal('')),
           email: z
             .string()
             .nonempty(t('validation.required'))
@@ -70,13 +75,24 @@ export function SignUpPage() {
         .refine((data) => data.password === data.confirmPassword, {
           message: t('validation.passwordMismatch'),
           path: ['confirmPassword'],
-        }),
+        })
+        .refine(
+          (data) =>
+            data.accountType !== 'company' ||
+            (typeof data.companyName === 'string' &&
+              data.companyName.trim().length >= 2),
+          {
+            message: t('validation.companyLength'),
+            path: ['companyName'],
+          },
+        ),
     [t],
   )
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
+      accountType: 'company',
       name: '',
       companyName: '',
       email: '',
@@ -87,18 +103,30 @@ export function SignUpPage() {
     mode: 'onChange',
   })
 
+  const accountType = useWatch({
+    control: form.control,
+    name: 'accountType',
+    defaultValue: 'company',
+  })
+  const isCompany = accountType === 'company'
+
   const mutation = useMutation({
     mutationFn: async (values: SignUpValues) => {
       const supabase = getSupabaseClient()
+      const isCompanySignup = values.accountType === 'company'
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
             full_name: values.name,
-            pending_company_name: values.companyName,
+            ...(isCompanySignup
+              ? { pending_company_name: values.companyName ?? '' }
+              : { signup_type: 'shopper' }),
           },
-          emailRedirectTo: `${window.location.origin}/onboarding/company`,
+          emailRedirectTo: isCompanySignup
+            ? `${window.location.origin}/onboarding/company`
+            : `${window.location.origin}/workspace`,
         },
       })
       if (error) throw new Error(error.message)
@@ -157,6 +185,31 @@ export function SignUpPage() {
               className="signup-form"
             >
               <FormField
+                id="accountType"
+                label={t('signup.accountType')}
+                error={form.formState.errors.accountType?.message}
+              >
+                <div className="signup-account-type" role="group" aria-label={t('signup.accountType')}>
+                  <label className="signup-account-type__option">
+                    <input
+                      type="radio"
+                      value="company"
+                      {...form.register('accountType')}
+                    />
+                    <span>{t('signup.asCompany')}</span>
+                  </label>
+                  <label className="signup-account-type__option">
+                    <input
+                      type="radio"
+                      value="shopper"
+                      {...form.register('accountType')}
+                    />
+                    <span>{t('signup.asShopper')}</span>
+                  </label>
+                </div>
+              </FormField>
+
+              <FormField
                 id="name"
                 label={t('signup.name')}
                 error={form.formState.errors.name?.message}
@@ -170,20 +223,22 @@ export function SignUpPage() {
                 />
               </FormField>
 
-              <FormField
-                id="company"
-                label={t('signup.company')}
-                helperText={t('signup.companyHelper')}
-                error={form.formState.errors.companyName?.message}
-              >
-                <Input
+              {isCompany && (
+                <FormField
                   id="company"
-                  placeholder={t('signup.companyPlaceholder')}
-                  {...form.register('companyName')}
-                  hasError={Boolean(form.formState.errors.companyName)}
-                  aria-invalid={Boolean(form.formState.errors.companyName)}
-                />
-              </FormField>
+                  label={t('signup.company')}
+                  helperText={t('signup.companyHelper')}
+                  error={form.formState.errors.companyName?.message}
+                >
+                  <Input
+                    id="company"
+                    placeholder={t('signup.companyPlaceholder')}
+                    {...form.register('companyName')}
+                    hasError={Boolean(form.formState.errors.companyName)}
+                    aria-invalid={Boolean(form.formState.errors.companyName)}
+                  />
+                </FormField>
+              )}
 
               <FormField
                 id="email"

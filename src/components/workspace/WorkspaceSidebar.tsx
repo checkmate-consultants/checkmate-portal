@@ -33,6 +33,11 @@ export function WorkspaceSidebar({
     ...(isShopper
       ? [
           {
+            id: 'profile',
+            labelKey: 'workspace.sidebar.profile',
+            to: '/workspace/profile',
+          },
+          {
             id: 'visits',
             labelKey: 'workspace.sidebar.companyVisits',
             to: '/workspace/visits',
