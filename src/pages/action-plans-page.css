@@ -1,5 +1,6 @@
 .action-plans-page__section {
   margin-top: 2rem;
+  min-width: 0; /* allow flex child to shrink so table can scroll horizontally */
 }
 
 .action-plans-page__section:first-of-type {

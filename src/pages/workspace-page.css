@@ -103,7 +103,8 @@
 
 .workspace-content {
   flex: 1;
-  overflow-y: auto;
+  min-width: 0; /* allow flex child to shrink so wide content can scroll */
+  overflow: auto;
 }
 
 .workspace-sidebar-overlay {

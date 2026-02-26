@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: 2rem;
   color: var(--color-text);
+  min-width: 0; /* allow flex child to shrink so table can scroll horizontally */
 }
 
 .super-admin-header {
