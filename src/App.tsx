@@ -17,6 +17,7 @@ import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
 import { SuperAdminAccountManagersPage } from './pages/SuperAdminAccountManagersPage.tsx'
 import { UpdatePasswordPage } from './pages/UpdatePasswordPage.tsx'
 import { ShopperProfilePage } from './pages/ShopperProfilePage.tsx'
+import { WorkspaceIndexRedirect } from './pages/workspace/WorkspaceIndexRedirect.tsx'
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/account/update-password" element={<UpdatePasswordPage />} />
       <Route path="/workspace" element={<WorkspacePage />}>
-        <Route index element={<Navigate to="company" replace />} />
+        <Route index element={<WorkspaceIndexRedirect />} />
         <Route path="company" element={<CompanyManagementPage />} />
         <Route
           path="company/properties/:propertyId"

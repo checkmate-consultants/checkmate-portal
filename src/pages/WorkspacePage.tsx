@@ -48,10 +48,11 @@ export function WorkspacePage() {
             if (!cancelled) {
               setSession(context)
               setStatus('ready')
-              const isVisitsRoute =
+              const isShopperRoute =
                 location.pathname === '/workspace/visits' ||
-                location.pathname.startsWith('/workspace/visits/')
-              if (!isVisitsRoute) {
+                location.pathname.startsWith('/workspace/visits/') ||
+                location.pathname === '/workspace/profile'
+              if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
               }
             }
@@ -64,10 +65,11 @@ export function WorkspacePage() {
             if (!cancelled && retry.isShopper) {
               setSession(retry)
               setStatus('ready')
-              const isVisitsRoute =
+              const isShopperRoute =
                 location.pathname === '/workspace/visits' ||
-                location.pathname.startsWith('/workspace/visits/')
-              if (!isVisitsRoute) {
+                location.pathname.startsWith('/workspace/visits/') ||
+                location.pathname === '/workspace/profile'
+              if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
               }
               return
