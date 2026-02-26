@@ -82,10 +82,7 @@ export function ShopperProfilePage() {
       const supabase = getSupabaseClient()
       const { error: e } = await supabase
         .from('shoppers')
-        .update({
-          full_name: values.fullName.trim(),
-          email: values.email.trim().toLowerCase(),
-        })
+        .update({ full_name: values.fullName.trim() })
         .eq('id', shopperId)
       if (e) throw new Error(e.message)
     },
@@ -148,12 +145,13 @@ export function ShopperProfilePage() {
           <FormField
             id="profileEmail"
             label={t('signup.email')}
-            error={form.formState.errors.email?.message}
+            helperText={t('profile.shopper.emailReadOnly')}
           >
             <Input
               id="profileEmail"
               type="email"
               placeholder={t('signup.emailPlaceholder')}
+              disabled
               {...form.register('email')}
               hasError={Boolean(form.formState.errors.email)}
               aria-invalid={Boolean(form.formState.errors.email)}

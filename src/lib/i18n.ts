@@ -133,7 +133,8 @@ const resources = {
       profile: {
         shopper: {
           title: 'My profile',
-          description: 'Update your name and email. Only you can see and edit this information.',
+          description: 'Update your name. Only you can see this information.',
+          emailReadOnly: 'Email cannot be changed.',
           save: 'Save changes',
           saved: 'Your profile has been updated.',
         },
@@ -690,7 +691,8 @@ const resources = {
       profile: {
         shopper: {
           title: 'ملفي',
-          description: 'حدّث اسمك وبريدك. أنت فقط من يمكنه رؤية وتعديل هذه المعلومات.',
+          description: 'حدّث اسمك. أنت فقط من يمكنه رؤية هذه المعلومات.',
+          emailReadOnly: 'لا يمكن تغيير البريد الإلكتروني.',
           save: 'حفظ التغييرات',
           saved: 'تم تحديث ملفك.',
         },
