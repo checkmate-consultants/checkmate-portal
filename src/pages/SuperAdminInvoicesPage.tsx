@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Table } from '../components/ui/Table.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
@@ -231,21 +232,25 @@ export function SuperAdminInvoicesPage() {
           <p>{t('superAdmin.invoices.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table invoices-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.invoices.table.company')}</span>
-            <span>{t('superAdmin.invoices.table.number')}</span>
-            <span>{t('superAdmin.invoices.table.amount')}</span>
-            <span>{t('superAdmin.invoices.table.status')}</span>
-            <span>{t('superAdmin.invoices.table.dueDate')}</span>
-            <span>{t('superAdmin.invoices.table.actions')}</span>
-          </div>
-          {invoiceState.invoices.map((inv) => (
-            <div key={inv.id} className="super-admin-table__row">
-              <span>{inv.companyName}</span>
-              <span>{inv.invoiceNumber}</span>
-              <span>{formatAmount(inv.amountCents, inv.currency)}</span>
-              <span>
+        <Table<Invoice>
+          columns={[
+            {
+              key: 'companyName',
+              header: t('superAdmin.invoices.table.company'),
+            },
+            {
+              key: 'invoiceNumber',
+              header: t('superAdmin.invoices.table.number'),
+            },
+            {
+              key: 'amount',
+              header: t('superAdmin.invoices.table.amount'),
+              render: (inv) => formatAmount(inv.amountCents, inv.currency),
+            },
+            {
+              key: 'status',
+              header: t('superAdmin.invoices.table.status'),
+              render: (inv) => (
                 <select
                   className="invoices-status-select"
                   value={inv.status}
@@ -263,20 +268,29 @@ export function SuperAdminInvoicesPage() {
                     </option>
                   ))}
                 </select>
-              </span>
-              <span>
-                {inv.dueDate
+              ),
+            },
+            {
+              key: 'dueDate',
+              header: t('superAdmin.invoices.table.dueDate'),
+              render: (inv) =>
+                inv.dueDate
                   ? new Date(inv.dueDate).toLocaleDateString(undefined, {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                     })
-                  : '—'}
-              </span>
-              <span />
-            </div>
-          ))}
-        </div>
+                  : '—',
+            },
+            {
+              key: 'actions',
+              header: t('superAdmin.invoices.table.actions'),
+              render: () => null,
+            },
+          ]}
+          data={invoiceState.invoices}
+          getRowKey={(inv) => inv.id}
+        />
       )}
 
       <Modal

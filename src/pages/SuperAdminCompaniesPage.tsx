@@ -7,6 +7,7 @@ import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
 import { Select } from '../components/ui/Select.tsx'
+import { Table } from '../components/ui/Table.tsx'
 import {
   fetchCompanyDirectory,
   fetchAccountManagers,
@@ -153,57 +154,69 @@ export function SuperAdminCompaniesPage() {
           <p>{t('superAdmin.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.table.company')}</span>
-            <span>{t('superAdmin.table.accountManager')}</span>
-            <span>{t('superAdmin.table.created')}</span>
-            <span>{t('superAdmin.table.properties')}</span>
-            <span>{t('superAdmin.table.actions')}</span>
-          </div>
-          {state.companies.map((company) => (
-            <div key={company.id} className="super-admin-table__row">
-              <div className="super-admin-table__cell">
-                <p className="super-admin-table__name">{company.name}</p>
-                <p className="super-admin-table__meta">
-                  {t('superAdmin.table.idLabel', { id: company.id })}
-                </p>
-              </div>
-              <span>
-                {company.accountManager
-                  ? company.accountManager.fullName ||
-                    company.accountManager.email ||
-                    '—'
-                  : '—'}
-                {session.isSuperAdmin && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="super-admin-table__assign-btn"
-                    onClick={() => {
-                      setAssignModal({
-                        companyId: company.id,
-                        companyName: company.name,
-                        currentManagerId: company.accountManager?.id ?? null,
-                      })
-                      setAssignValue(
-                        company.accountManager?.id ?? '',
-                      )
-                    }}
-                  >
-                    {t('superAdmin.table.assignAccountManager')}
-                  </Button>
-                )}
-              </span>
-              <span>
-                {new Date(company.createdAt).toLocaleDateString(undefined, {
+        <Table<CompanyDirectoryItem>
+          columns={[
+            {
+              key: 'company',
+              header: t('superAdmin.table.company'),
+              render: (company) => (
+                <div>
+                  <p className="super-admin-table__name">{company.name}</p>
+                  <p className="super-admin-table__meta">
+                    {t('superAdmin.table.idLabel', { id: company.id })}
+                  </p>
+                </div>
+              ),
+            },
+            {
+              key: 'accountManager',
+              header: t('superAdmin.table.accountManager'),
+              render: (company) => (
+                <>
+                  {company.accountManager
+                    ? company.accountManager.fullName ||
+                      company.accountManager.email ||
+                      '—'
+                    : '—'}
+                  {session.isSuperAdmin && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="super-admin-table__assign-btn"
+                      onClick={() => {
+                        setAssignModal({
+                          companyId: company.id,
+                          companyName: company.name,
+                          currentManagerId: company.accountManager?.id ?? null,
+                        })
+                        setAssignValue(company.accountManager?.id ?? '')
+                      }}
+                    >
+                      {t('superAdmin.table.assignAccountManager')}
+                    </Button>
+                  )}
+                </>
+              ),
+            },
+            {
+              key: 'createdAt',
+              header: t('superAdmin.table.created'),
+              render: (company) =>
+                new Date(company.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
-                })}
-              </span>
-              <span>{company.propertyCount}</span>
-              <span>
+                }),
+            },
+            {
+              key: 'propertyCount',
+              header: t('superAdmin.table.properties'),
+              render: (company) => company.propertyCount,
+            },
+            {
+              key: 'actions',
+              header: t('superAdmin.table.actions'),
+              render: (company) => (
                 <Button
                   type="button"
                   variant="ghost"
@@ -213,10 +226,12 @@ export function SuperAdminCompaniesPage() {
                 >
                   {t('superAdmin.table.open')}
                 </Button>
-              </span>
-            </div>
-          ))}
-        </div>
+              ),
+            },
+          ]}
+          data={state.companies}
+          getRowKey={(company) => company.id}
+        />
       )}
 
       {session.isSuperAdmin && createModalOpen && (

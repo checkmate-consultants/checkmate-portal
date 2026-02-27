@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Table } from '../components/ui/Table.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
@@ -364,31 +365,33 @@ export function SuperAdminVisitsPage() {
           <p>{t('superAdmin.visits.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table visits-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.visits.table.company')}</span>
-            <span>{t('superAdmin.visits.table.property')}</span>
-            <span>{t('superAdmin.visits.table.date')}</span>
-            <span>{t('superAdmin.visits.table.status')}</span>
-            <span>{t('superAdmin.visits.table.shopper')}</span>
-            <span>{t('superAdmin.visits.table.focusAreas')}</span>
-            <span>{t('superAdmin.visits.table.notes')}</span>
-            <span>{t('superAdmin.visits.table.actions')}</span>
-          </div>
-          {visitState.visits.map((visit) => (
-            <div key={visit.id} className="super-admin-table__row visits-table__row">
-              <span>{visit.company.name}</span>
-              <span>
-                {visit.property.name} · {visit.property.city}, {visit.property.country}
-              </span>
-              <span>
-                {new Date(visit.scheduledFor).toLocaleDateString(undefined, {
+        <Table<Visit>
+          columns={[
+            {
+              key: 'company',
+              header: t('superAdmin.visits.table.company'),
+              render: (visit) => visit.company.name,
+            },
+            {
+              key: 'property',
+              header: t('superAdmin.visits.table.property'),
+              render: (visit) =>
+                `${visit.property.name} · ${visit.property.city}, ${visit.property.country}`,
+            },
+            {
+              key: 'date',
+              header: t('superAdmin.visits.table.date'),
+              render: (visit) =>
+                new Date(visit.scheduledFor).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
-                })}
-              </span>
-              <span>
+                }),
+            },
+            {
+              key: 'status',
+              header: t('superAdmin.visits.table.status'),
+              render: (visit) => (
                 <StatusSelect
                   value={visit.status}
                   disabled={updatingVisitId === visit.id}
@@ -409,36 +412,60 @@ export function SuperAdminVisitsPage() {
                     </option>
                   ))}
                 </StatusSelect>
-              </span>
-              <span>
-                {visit.focusAreas.length === 0
+              ),
+            },
+            {
+              key: 'shopper',
+              header: t('superAdmin.visits.table.shopper'),
+              render: (visit) =>
+                visit.shopper
+                  ? visit.shopper.fullName || visit.shopper.email || '—'
+                  : '—',
+            },
+            {
+              key: 'focusAreas',
+              header: t('superAdmin.visits.table.focusAreas'),
+              render: (visit) =>
+                visit.focusAreas.length === 0
                   ? t('companyManagement.property.emptyFocusAreas')
-                  : visit.focusAreas.map((area) => area.name).join(', ')}
-              </span>
-              <span>{visit.notes?.trim() ? visit.notes : '—'}</span>
-              <span className="visits-table__actions">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => openEditModal(visit)}
-                >
-                  {t('superAdmin.visits.editVisit')}
-                </Button>
-                {visit.status !== 'done' && (
+                  : visit.focusAreas.map((area) => area.name).join(', '),
+            },
+            {
+              key: 'notes',
+              header: t('superAdmin.visits.table.notes'),
+              render: (visit) => (visit.notes?.trim() ? visit.notes : '—'),
+            },
+            {
+              key: 'actions',
+              header: t('superAdmin.visits.table.actions'),
+              className: 'visits-table__actions',
+              render: (visit) => (
+                <>
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() =>
-                      navigate(`/workspace/admin/visits/${visit.id}/report`)
-                    }
+                    onClick={() => openEditModal(visit)}
                   >
-                    {t('superAdmin.visitReport.open')}
+                    {t('superAdmin.visits.editVisit')}
                   </Button>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
+                  {visit.status !== 'done' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        navigate(`/workspace/admin/visits/${visit.id}/report`)
+                      }
+                    >
+                      {t('superAdmin.visitReport.open')}
+                    </Button>
+                  )}
+                </>
+              ),
+            },
+          ]}
+          data={visitState.visits}
+          getRowKey={(visit) => visit.id}
+        />
       )}
 
       <Modal

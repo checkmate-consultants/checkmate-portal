@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Table } from '../components/ui/Table.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
@@ -154,26 +155,30 @@ export function SuperAdminShoppersPage() {
           <p>{t('superAdmin.shoppers.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table shoppers-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.shoppers.table.name')}</span>
-            <span>{t('superAdmin.shoppers.table.email')}</span>
-            <span>{t('superAdmin.shoppers.table.created')}</span>
-          </div>
-          {shopperState.shoppers.map((shopper) => (
-            <div key={shopper.id} className="super-admin-table__row shoppers-table__row">
-              <span>{shopper.fullName}</span>
-              <span>{shopper.email}</span>
-              <span>
-                {new Date(shopper.createdAt).toLocaleDateString(undefined, {
+        <Table<Shopper>
+          columns={[
+            {
+              key: 'fullName',
+              header: t('superAdmin.shoppers.table.name'),
+            },
+            {
+              key: 'email',
+              header: t('superAdmin.shoppers.table.email'),
+            },
+            {
+              key: 'createdAt',
+              header: t('superAdmin.shoppers.table.created'),
+              render: (shopper) =>
+                new Date(shopper.createdAt).toLocaleDateString(undefined, {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
-                })}
-              </span>
-            </div>
-          ))}
-        </div>
+                }),
+            },
+          ]}
+          data={shopperState.shoppers}
+          getRowKey={(shopper) => shopper.id}
+        />
       )}
 
       <Modal

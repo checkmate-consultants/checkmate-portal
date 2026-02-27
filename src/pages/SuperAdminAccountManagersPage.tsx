@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Table } from '../components/ui/Table.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
@@ -164,17 +165,22 @@ export function SuperAdminAccountManagersPage() {
           <p>{t('superAdmin.accountManagers.empty')}</p>
         </Card>
       ) : (
-        <div className="super-admin-table account-managers-table">
-          <div className="super-admin-table__head">
-            <span>{t('superAdmin.accountManagers.table.name')}</span>
-            <span>{t('superAdmin.accountManagers.table.email')}</span>
-            <span>{t('superAdmin.accountManagers.table.actions')}</span>
-          </div>
-          {state.list.map((am) => (
-            <div key={am.id} className="super-admin-table__row account-managers-table__row">
-              <span>{am.fullName || '—'}</span>
-              <span>{am.email || '—'}</span>
-              <span>
+        <Table<AccountManagerProfile>
+          columns={[
+            {
+              key: 'fullName',
+              header: t('superAdmin.accountManagers.table.name'),
+              render: (am) => am.fullName || '—',
+            },
+            {
+              key: 'email',
+              header: t('superAdmin.accountManagers.table.email'),
+              render: (am) => am.email || '—',
+            },
+            {
+              key: 'actions',
+              header: t('superAdmin.accountManagers.table.actions'),
+              render: (am) => (
                 <Button
                   type="button"
                   variant="ghost"
@@ -186,10 +192,12 @@ export function SuperAdminAccountManagersPage() {
                     ? t('superAdmin.accountManagers.removing')
                     : t('superAdmin.accountManagers.remove')}
                 </Button>
-              </span>
-            </div>
-          ))}
-        </div>
+              ),
+            },
+          ]}
+          data={state.list}
+          getRowKey={(am) => am.id}
+        />
       )}
 
       <Modal
