@@ -93,11 +93,14 @@ export type CompanyDirectoryItem = {
   } | null
 }
 
+export type ShopperStatus = 'pending' | 'under_review' | 'confirmed'
+
 type ShopperRecord = {
   id: string
   full_name: string
   email: string
   created_at: string
+  status: ShopperStatus
 }
 
 export type Shopper = {
@@ -105,6 +108,46 @@ export type Shopper = {
   fullName: string
   email: string
   createdAt: string
+  status: ShopperStatus
+}
+
+/** Full shopper profile as submitted (for super admin details view). */
+export type ShopperDetails = Shopper & {
+  dateOfBirth: string | null
+  gender: string | null
+  nationalities: string[]
+  locationCountry: string | null
+  locationCity: string | null
+  locationLat: number | null
+  locationLng: number | null
+  residentVisa: string | null
+  phone: string | null
+  nativeLanguage: string | null
+  languagesSpoken: { language: string; fluency: string }[]
+  maritalStatus: string | null
+  children: { date_of_birth: string }[]
+  accessibilityNeeds: boolean
+  accessibilityNotes: string | null
+  infoSubmittedAt: string | null
+}
+
+type ShopperDetailsRecord = ShopperRecord & {
+  date_of_birth: string | null
+  gender: string | null
+  nationalities: string[] | null
+  location_country: string | null
+  location_city: string | null
+  location_lat: number | null
+  location_lng: number | null
+  resident_visa: string | null
+  phone: string | null
+  native_language: string | null
+  languages_spoken: { language?: string; fluency?: string }[] | null
+  marital_status: string | null
+  children: { date_of_birth?: string }[] | null
+  accessibility_needs: boolean | null
+  accessibility_notes: string | null
+  info_submitted_at: string | null
 }
 
 type VisitRecord = {
@@ -983,7 +1026,7 @@ export const fetchShoppers = async (): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('shoppers')
-    .select('id, full_name, email, created_at')
+    .select('id, full_name, email, created_at, status')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -1000,23 +1043,29 @@ export const fetchShoppers = async (): Promise<Shopper[]> => {
     fullName: record.full_name,
     email: record.email,
     createdAt: record.created_at,
+    status: record.status,
   }))
 }
 
 export const searchShoppers = async (
   query: string,
   limit = 20,
+  options?: { status?: ShopperStatus },
 ): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
-  const builder = supabase
+  let builder = supabase
     .from('shoppers')
-    .select('id, full_name, email, created_at')
+    .select('id, full_name, email, created_at, status')
     .order('full_name', { ascending: true })
     .limit(limit)
 
+  if (options?.status) {
+    builder = builder.eq('status', options.status)
+  }
+
   if (query.trim()) {
     const sanitized = query.trim()
-    builder.or(
+    builder = builder.or(
       `full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`,
     )
   }
@@ -1037,7 +1086,66 @@ export const searchShoppers = async (
     fullName: record.full_name,
     email: record.email,
     createdAt: record.created_at,
+    status: record.status,
   }))
+}
+
+export const updateShopperStatus = async (
+  shopperId: string,
+  status: ShopperStatus,
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('shoppers')
+    .update({ status })
+    .eq('id', shopperId)
+  if (error) throw error
+}
+
+export const fetchShopperById = async (
+  shopperId: string,
+): Promise<ShopperDetails | null> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('shoppers')
+    .select(
+      'id, full_name, email, created_at, status, date_of_birth, gender, nationalities, location_country, location_city, location_lat, location_lng, resident_visa, phone, native_language, languages_spoken, marital_status, children, accessibility_needs, accessibility_notes, info_submitted_at',
+    )
+    .eq('id', shopperId)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  const r = data as unknown as ShopperDetailsRecord
+  return {
+    id: r.id,
+    fullName: r.full_name,
+    email: r.email,
+    createdAt: r.created_at,
+    status: r.status,
+    dateOfBirth: r.date_of_birth ?? null,
+    gender: r.gender ?? null,
+    nationalities: r.nationalities ?? [],
+    locationCountry: r.location_country ?? null,
+    locationCity: r.location_city ?? null,
+    locationLat: r.location_lat ?? null,
+    locationLng: r.location_lng ?? null,
+    residentVisa: r.resident_visa ?? null,
+    phone: r.phone ?? null,
+    nativeLanguage: r.native_language ?? null,
+    languagesSpoken: (r.languages_spoken ?? []).map((x) => ({
+      language: x?.language ?? '',
+      fluency: x?.fluency ?? '',
+    })),
+    maritalStatus: r.marital_status ?? null,
+    children: (r.children ?? []).map((x) => ({
+      date_of_birth: x?.date_of_birth ?? '',
+    })),
+    accessibilityNeeds: r.accessibility_needs ?? false,
+    accessibilityNotes: r.accessibility_notes ?? null,
+    infoSubmittedAt: r.info_submitted_at ?? null,
+  }
 }
 
 export const createShopper = async ({

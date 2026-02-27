@@ -8,6 +8,7 @@ import { SuperAdminOverviewPage } from './pages/SuperAdminOverviewPage.tsx'
 import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
 import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
 import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
+import { SuperAdminShopperDetailsPage } from './pages/SuperAdminShopperDetailsPage.tsx'
 import { SuperAdminVisitReportPage } from './pages/SuperAdminVisitReportPage.tsx'
 import { CompanyVisitsPage } from './pages/CompanyVisitsPage.tsx'
 import { CompanyVisitReportPage } from './pages/CompanyVisitReportPage.tsx'
@@ -18,6 +19,7 @@ import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
 import { SuperAdminAccountManagersPage } from './pages/SuperAdminAccountManagersPage.tsx'
 import { UpdatePasswordPage } from './pages/UpdatePasswordPage.tsx'
 import { ShopperProfilePage } from './pages/ShopperProfilePage.tsx'
+import { ShopperInfoPage } from './pages/ShopperInfoPage.tsx'
 import { AccountPage } from './pages/AccountPage.tsx'
 import { WorkspaceIndexRedirect } from './pages/workspace/WorkspaceIndexRedirect.tsx'
 
@@ -41,6 +43,7 @@ function App() {
         <Route path="benchmarking" element={<BenchmarkingPage />} />
         <Route path="action-plans" element={<ActionPlansPage />} />
         <Route path="profile" element={<ShopperProfilePage />} />
+        <Route path="shopper-info" element={<ShopperInfoPage />} />
         <Route path="account">
           <Route index element={<Navigate to="profile" replace />} />
           <Route path=":tab" element={<AccountPage />} />
@@ -65,6 +68,7 @@ function App() {
           element={<SuperAdminVisitReportPage />}
         />
         <Route path="admin/shoppers" element={<SuperAdminShoppersPage />} />
+        <Route path="admin/shoppers/:shopperId" element={<SuperAdminShopperDetailsPage />} />
         <Route path="admin/account-managers" element={<SuperAdminAccountManagersPage />} />
         <Route path="admin/invoices" element={<SuperAdminInvoicesPage />} />
       </Route>

@@ -49,13 +49,19 @@ export function WorkspacePage() {
             if (!cancelled) {
               setSession(context)
               setStatus('ready')
+              const isShopperInfoRoute = location.pathname === '/workspace/shopper-info'
               const isShopperRoute =
+                isShopperInfoRoute ||
                 location.pathname === '/workspace/visits' ||
                 location.pathname.startsWith('/workspace/visits/') ||
                 location.pathname === '/workspace/profile' ||
                 location.pathname.startsWith('/workspace/account')
               if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
+              }
+              // Pending = must complete info before using the app
+              if (context.shopperStatus === 'pending' && !isShopperInfoRoute) {
+                navigate('/workspace/shopper-info', { replace: true })
               }
             }
             return
@@ -67,13 +73,18 @@ export function WorkspacePage() {
             if (!cancelled && retry.isShopper) {
               setSession(retry)
               setStatus('ready')
+              const isShopperInfoRoute = location.pathname === '/workspace/shopper-info'
               const isShopperRoute =
+                isShopperInfoRoute ||
                 location.pathname === '/workspace/visits' ||
                 location.pathname.startsWith('/workspace/visits/') ||
                 location.pathname === '/workspace/profile' ||
                 location.pathname.startsWith('/workspace/account')
               if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
+              }
+              if (retry.shopperStatus === 'pending' && !isShopperInfoRoute) {
+                navigate('/workspace/shopper-info', { replace: true })
               }
               return
             }

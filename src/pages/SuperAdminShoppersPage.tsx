@@ -3,21 +3,62 @@ import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, Link } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { Table } from '../components/ui/Table.tsx'
 import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import { Input } from '../components/ui/Input.tsx'
+import { Select } from '../components/ui/Select.tsx'
 import {
   fetchShoppers,
   createShopper,
+  updateShopperStatus,
   type Shopper,
+  type ShopperStatus,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-shoppers-page.css'
+
+function ShopperStatusSelect({
+  shopperId,
+  value,
+  onUpdate,
+  t,
+}: {
+  shopperId: string
+  value: ShopperStatus
+  onUpdate: () => void
+  t: (key: string) => string
+}) {
+  const [updating, setUpdating] = useState(false)
+  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = e.target.value as ShopperStatus
+    if (next === value) return
+    setUpdating(true)
+    try {
+      await updateShopperStatus(shopperId, next)
+      onUpdate()
+    } finally {
+      setUpdating(false)
+    }
+  }
+  return (
+    <Select
+      value={value}
+      onChange={handleChange}
+      disabled={updating}
+      size="sm"
+      className="shopper-status-select"
+    >
+      <option value="pending">{t('shopperStatus.pending')}</option>
+      <option value="under_review">{t('shopperStatus.under_review')}</option>
+      <option value="confirmed">{t('shopperStatus.confirmed')}</option>
+    </Select>
+  )
+}
 
 type ShopperState = {
   status: 'loading' | 'ready' | 'error'
@@ -160,10 +201,23 @@ export function SuperAdminShoppersPage() {
             {
               key: 'fullName',
               header: t('superAdmin.shoppers.table.name'),
+              render: (shopper) => (
+                <Link
+                  to={`/workspace/admin/shoppers/${shopper.id}`}
+                  className="shopper-table__name-link"
+                >
+                  {shopper.fullName}
+                </Link>
+              ),
             },
             {
               key: 'email',
               header: t('superAdmin.shoppers.table.email'),
+            },
+            {
+              key: 'status',
+              header: t('superAdmin.shoppers.table.status'),
+              render: (shopper) => t(`shopperStatus.${shopper.status}`),
             },
             {
               key: 'createdAt',
@@ -174,6 +228,26 @@ export function SuperAdminShoppersPage() {
                   month: 'short',
                   day: 'numeric',
                 }),
+            },
+            {
+              key: 'actions',
+              header: t('superAdmin.shoppers.table.actions'),
+              render: (shopper) => (
+                <span className="shopper-table__actions">
+                  <Link
+                    to={`/workspace/admin/shoppers/${shopper.id}`}
+                    className="shopper-table__view-link"
+                  >
+                    {t('superAdmin.shoppers.details.viewProfile')}
+                  </Link>
+                  <ShopperStatusSelect
+                    shopperId={shopper.id}
+                    value={shopper.status}
+                    onUpdate={() => loadShoppers()}
+                    t={t}
+                  />
+                </span>
+              ),
             },
           ]}
           data={shopperState.shoppers}

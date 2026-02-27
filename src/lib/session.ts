@@ -1,5 +1,6 @@
 import type { PostgrestError, User } from '@supabase/supabase-js'
 import { getSupabaseClient } from './supabaseClient.ts'
+import type { ShopperStatus } from '../data/companyManagement.ts'
 
 export type CompanyMembership = {
   company_id: string
@@ -13,6 +14,8 @@ export type SessionContext = {
   isAccountManager: boolean
   isShopper: boolean
   shopperId: string | null
+  /** Only set when isShopper; used to gate visit access and redirect to complete-info when pending */
+  shopperStatus: ShopperStatus | null
 }
 
 type SessionOptions = {
@@ -42,6 +45,7 @@ export const getSessionContext = async (
       isAccountManager: false,
       isShopper: false,
       shopperId: null,
+      shopperStatus: null,
     }
   }
 
@@ -69,6 +73,7 @@ export const getSessionContext = async (
     isAccountManager,
     isShopper: Boolean(shopperRow),
     shopperId: shopperRow?.id ?? null,
+    shopperStatus: shopperRow?.status ?? null,
   }
 }
 
@@ -121,7 +126,7 @@ const fetchShopperRow = async (userId: string) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('shoppers')
-    .select('id')
+    .select('id, status')
     .eq('auth_user_id', userId)
     .maybeSingle()
 
@@ -129,7 +134,7 @@ const fetchShopperRow = async (userId: string) => {
     throw error
   }
 
-  return data as { id: string } | null
+  return data as { id: string; status: ShopperStatus } | null
 }
 
 const isNoRowsError = (error: PostgrestError) =>

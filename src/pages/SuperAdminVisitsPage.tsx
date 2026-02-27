@@ -188,7 +188,7 @@ export function SuperAdminVisitsPage() {
     setIsSearchingShoppers(true)
     const handle = setTimeout(async () => {
       try {
-        const results = await searchShoppers(shopperQuery.trim(), 20)
+        const results = await searchShoppers(shopperQuery.trim(), 20, { status: 'confirmed' })
         setShopperResults(results)
       } catch {
         setShopperResults([])
@@ -255,6 +255,7 @@ export function SuperAdminVisitsPage() {
               fullName: visit.shopper.fullName,
               email: visit.shopper.email,
               createdAt: '',
+              status: 'confirmed' as const,
             }
           : null,
       )

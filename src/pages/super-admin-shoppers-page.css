@@ -16,3 +16,30 @@
   text-align: left;
 }
 
+.shopper-table__name-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.shopper-table__name-link:hover {
+  text-decoration: underline;
+}
+
+.shopper-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.shopper-table__view-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.shopper-table__view-link:hover {
+  text-decoration: underline;
+}
+
