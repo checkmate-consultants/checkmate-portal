@@ -21,6 +21,10 @@ const resources = {
           title: 'Set new password',
           description: 'Enter a new password to complete your account recovery.',
         },
+        account: {
+          title: 'Account',
+          description: 'Update your name and password.',
+        },
         onboarding: {
           title: 'Create your tenant',
           description: 'Set up your company workspace on Checkmate Portal.',
@@ -141,6 +145,29 @@ const resources = {
           saved: 'Your profile has been updated.',
         },
       },
+      account: {
+        title: 'Account',
+        tabProfile: 'Profile',
+        tabSecurity: 'Security',
+        updateName: {
+          title: 'Your information',
+          description: 'Update the name associated with your account.',
+          nameLabel: 'Full name',
+          namePlaceholder: 'Your name',
+          save: 'Save changes',
+          saved: 'Your name has been updated.',
+        },
+        changePassword: {
+          title: 'Change password',
+          description: 'Enter your current password and choose a new one.',
+          currentPassword: 'Current password',
+          newPassword: 'New password',
+          confirmPassword: 'Confirm new password',
+          submit: 'Update password',
+          success: 'Your password has been updated.',
+          wrongPassword: 'Current password is incorrect.',
+        },
+      },
       validation: {
         required: 'This field is required',
         email: 'Enter a valid email',
@@ -165,6 +192,11 @@ const resources = {
         subtitle: 'You are authenticated. Replace this view with your dashboard.',
         back: 'Back to onboarding',
         signOut: 'Sign out',
+        accountMenu: {
+          label: 'Open account menu',
+          account: 'Account',
+          signOut: 'Sign out',
+        },
         noCompany: "You don't have a company workspace. Please contact support.",
         shopperSetupError: "We're having trouble setting up your shopper account. Please try again later or contact support.",
         sidebar: {
@@ -590,6 +622,10 @@ const resources = {
           title: 'تعيين كلمة مرور جديدة',
           description: 'أدخل كلمة مرور جديدة لإكمال استرداد حسابك.',
         },
+        account: {
+          title: 'الحساب',
+          description: 'حدّث اسمك وكلمة المرور.',
+        },
         onboarding: {
           title: 'إنشاء المستأجر',
           description: 'إعداد مساحة عمل شركتك على Checkmate Portal.',
@@ -711,6 +747,29 @@ const resources = {
           saved: 'تم تحديث ملفك.',
         },
       },
+      account: {
+        title: 'الحساب',
+        tabProfile: 'الملف الشخصي',
+        tabSecurity: 'الأمان',
+        updateName: {
+          title: 'معلوماتك',
+          description: 'حدّث الاسم المرتبط بحسابك.',
+          nameLabel: 'الاسم الكامل',
+          namePlaceholder: 'اسمك',
+          save: 'حفظ التغييرات',
+          saved: 'تم تحديث اسمك.',
+        },
+        changePassword: {
+          title: 'تغيير كلمة المرور',
+          description: 'أدخل كلمة المرور الحالية واختر كلمة جديدة.',
+          currentPassword: 'كلمة المرور الحالية',
+          newPassword: 'كلمة المرور الجديدة',
+          confirmPassword: 'تأكيد كلمة المرور الجديدة',
+          submit: 'تحديث كلمة المرور',
+          success: 'تم تحديث كلمة المرور.',
+          wrongPassword: 'كلمة المرور الحالية غير صحيحة.',
+        },
+      },
       validation: {
         required: 'هذا الحقل مطلوب',
         email: 'أدخل بريداً صحيحاً',
@@ -736,6 +795,11 @@ const resources = {
         subtitle: 'أنت مسجل الدخول. استبدل هذه الصفحة بلوحة التحكم لاحقاً.',
         back: 'العودة إلى الترحيب',
         signOut: 'تسجيل الخروج',
+        accountMenu: {
+          label: 'فتح قائمة الحساب',
+          account: 'الحساب',
+          signOut: 'تسجيل الخروج',
+        },
         noCompany: 'ليس لديك مساحة عمل لشركة. يرجى التواصل مع الدعم.',
         shopperSetupError: 'واجهنا مشكلة في إعداد حساب المتسوق. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
         sidebar: {

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router-dom'
 import type { SessionContext } from '../../lib/session.ts'
 import { WorkspaceSidebar } from '../../components/workspace/WorkspaceSidebar.tsx'
+import { UserAccountDropdown } from '../../components/workspace/UserAccountDropdown.tsx'
 import { ThemeToggle } from '../../components/ThemeToggle.tsx'
 import { LanguageSwitcher } from '../../components/LanguageSwitcher.tsx'
 
@@ -29,7 +30,6 @@ export function WorkspaceShell({
   return (
     <div className="workspace-shell" data-sidebar-open={isSidebarOpen}>
       <WorkspaceSidebar
-        onSignOut={onSignOut}
         onNavigate={onCloseSidebar}
         onClose={isSidebarOpen ? onCloseSidebar : undefined}
         isSuperAdmin={session.isSuperAdmin}
@@ -47,6 +47,9 @@ export function WorkspaceShell({
             <span />
           </button>
           <div className="workspace-topbar__actions">
+            {session.user && (
+              <UserAccountDropdown user={session.user} onSignOut={onSignOut} />
+            )}
             <ThemeToggle />
             <LanguageSwitcher />
           </div>

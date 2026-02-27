@@ -38,7 +38,8 @@ export function WorkspacePage() {
               setSession(context)
               setStatus('ready')
               const isAdminRoute = location.pathname.startsWith('/workspace/admin')
-              if (!isAdminRoute) {
+              const isAccountRoute = location.pathname.startsWith('/workspace/account')
+              if (!isAdminRoute && !isAccountRoute) {
                 navigate('/workspace/admin/companies', { replace: true })
               }
             }
@@ -51,7 +52,8 @@ export function WorkspacePage() {
               const isShopperRoute =
                 location.pathname === '/workspace/visits' ||
                 location.pathname.startsWith('/workspace/visits/') ||
-                location.pathname === '/workspace/profile'
+                location.pathname === '/workspace/profile' ||
+                location.pathname.startsWith('/workspace/account')
               if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
               }
@@ -68,7 +70,8 @@ export function WorkspacePage() {
               const isShopperRoute =
                 location.pathname === '/workspace/visits' ||
                 location.pathname.startsWith('/workspace/visits/') ||
-                location.pathname === '/workspace/profile'
+                location.pathname === '/workspace/profile' ||
+                location.pathname.startsWith('/workspace/account')
               if (!isShopperRoute) {
                 navigate('/workspace/visits', { replace: true })
               }

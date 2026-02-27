@@ -4,7 +4,6 @@ import brandIcon from '../../assets/brand/icon.webp'
 import './workspace-sidebar.css'
 
 type WorkspaceSidebarProps = {
-  onSignOut: () => void
   onNavigate?: () => void
   onClose?: () => void
   isSuperAdmin?: boolean
@@ -20,7 +19,6 @@ type NavItem = {
 }
 
 export function WorkspaceSidebar({
-  onSignOut,
   onNavigate,
   onClose,
   isSuperAdmin = false,
@@ -157,19 +155,6 @@ export function WorkspaceSidebar({
           </NavLink>
         ))}
       </nav>
-
-      <div className="workspace-sidebar__footer">
-        <button
-          type="button"
-          className="workspace-sidebar__signout"
-          onClick={() => {
-            onNavigate?.()
-            onSignOut()
-          }}
-        >
-          {t('workspace.signOut')}
-        </button>
-      </div>
     </aside>
   )
 }

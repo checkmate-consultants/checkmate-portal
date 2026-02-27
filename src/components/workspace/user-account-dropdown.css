@@ -1,0 +1,96 @@
+.user-account-dropdown {
+  position: relative;
+}
+
+.user-account-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 98%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.user-account-dropdown__trigger:hover {
+  background: color-mix(in srgb, var(--color-border) 25%, var(--color-bg));
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.user-account-dropdown__trigger[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--color-border) 30%, var(--color-bg));
+  border-color: var(--color-border);
+}
+
+.user-account-dropdown__name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-account-dropdown__chevron {
+  font-size: 0.65rem;
+  opacity: 0.8;
+  transition: transform 0.2s ease;
+}
+
+.user-account-dropdown__trigger[aria-expanded='true'] .user-account-dropdown__chevron {
+  transform: rotate(180deg);
+}
+
+.user-account-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  padding: 0.35rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-text) 12%, transparent);
+  z-index: 10;
+}
+
+.user-account-dropdown__item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  text-align: left;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.user-account-dropdown__item:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.user-account-dropdown__item:first-child {
+  margin-bottom: 2px;
+}
+
+@media (max-width: 960px) {
+  .user-account-dropdown__trigger {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .user-account-dropdown__name {
+    max-width: 120px;
+  }
+
+  .user-account-dropdown__menu {
+    z-index: 12;
+  }
+}
