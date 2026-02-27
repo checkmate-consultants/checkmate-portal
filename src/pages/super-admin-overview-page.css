@@ -1,14 +1,52 @@
-.super-admin-overview__section {
+.super-admin-overview__block {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.super-admin-overview__section-title {
+.super-admin-overview__block-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.super-admin-overview__block-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.super-admin-overview__subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.super-admin-overview__subsection-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.super-admin-overview__last28-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.super-admin-overview__by-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.super-admin-overview__by-status-label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
 .super-admin-overview__status-card {
@@ -41,10 +79,10 @@
   color: var(--color-text);
 }
 
-.super-admin-overview__stats {
+.super-admin-overview__cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
 }
 
 .super-admin-overview__card {

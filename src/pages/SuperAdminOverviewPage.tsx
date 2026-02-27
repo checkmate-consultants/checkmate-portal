@@ -5,19 +5,10 @@ import { Card } from '../components/ui/Card.tsx'
 import {
   fetchSuperAdminOverviewStats,
   type SuperAdminOverviewStats,
-  type VisitStatus,
 } from '../data/companyManagement.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-overview-page.css'
-
-const VISIT_STATUSES: VisitStatus[] = [
-  'scheduled',
-  'under_review',
-  'report_submitted',
-  'feedback_requested',
-  'done',
-]
 
 type OverviewState = {
   status: 'loading' | 'ready' | 'error'
@@ -105,63 +96,65 @@ export function SuperAdminOverviewPage() {
         </div>
       </header>
 
-      <section className="super-admin-overview__section">
-        <h2 className="super-admin-overview__section-title">
-          {t('superAdmin.overview.statusBreakdown')}
+      <section className="super-admin-overview__block">
+        <h2 className="super-admin-overview__block-title">
+          {t('superAdmin.overview.reportsSection')}
         </h2>
-        <Card className="super-admin-overview__status-card">
-          <ul className="super-admin-overview__status-list">
-            {VISIT_STATUSES.map((status) => (
-              <li key={status} className="super-admin-overview__status-row">
-                <span className="super-admin-overview__status-label">
-                  {t(`superAdmin.visits.status.${status}`)}
-                </span>
-                <span className="super-admin-overview__status-value">
-                  {stats.statusBreakdown[status] ?? 0}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <div className="super-admin-overview__block-body">
+          <div className="super-admin-overview__subsection">
+            <h3 className="super-admin-overview__subsection-title">
+              {t('superAdmin.overview.last28Days')}
+            </h3>
+            <div className="super-admin-overview__cards">
+                <Card className="super-admin-overview__card">
+                  <p className="super-admin-overview__label">
+                    {t('superAdmin.overview.submittedByShoppers')}
+                  </p>
+                  <p className="super-admin-overview__value">
+                    {stats.reportsSubmittedByShoppersLast28Days}
+                  </p>
+                </Card>
+                <Card className="super-admin-overview__card">
+                  <p className="super-admin-overview__label">
+                    {t('superAdmin.overview.reviewed')}
+                  </p>
+                  <p className="super-admin-overview__value">
+                    {stats.reportsReviewedLast28Days}
+                  </p>
+                </Card>
+                <Card className="super-admin-overview__card">
+                  <p className="super-admin-overview__label">
+                    {t('superAdmin.overview.submittedToClient')}
+                  </p>
+                  <p className="super-admin-overview__value">
+                    {stats.reportsSubmittedToClientLast28Days}
+                  </p>
+                </Card>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="super-admin-overview__section">
-        <h2 className="super-admin-overview__section-title">
-          {t('superAdmin.overview.last28DaysSection')}
+      <section className="super-admin-overview__block">
+        <h2 className="super-admin-overview__block-title">
+          {t('superAdmin.overview.shoppersSection')}
         </h2>
-        <div className="super-admin-overview__stats">
-          <Card className="super-admin-overview__card">
-            <p className="super-admin-overview__label">
-              {t('superAdmin.overview.reportsSubmittedByShoppersLast28Days')}
-            </p>
-            <p className="super-admin-overview__value">
-              {stats.reportsSubmittedByShoppersLast28Days}
-            </p>
-          </Card>
-          <Card className="super-admin-overview__card">
-            <p className="super-admin-overview__label">
-              {t('superAdmin.overview.reportsReviewedLast28Days')}
-            </p>
-            <p className="super-admin-overview__value">
-              {stats.reportsReviewedLast28Days}
-            </p>
-          </Card>
-          <Card className="super-admin-overview__card">
-            <p className="super-admin-overview__label">
-              {t('superAdmin.overview.reportsSubmittedToClientLast28Days')}
-            </p>
-            <p className="super-admin-overview__value">
-              {stats.reportsSubmittedToClientLast28Days}
-            </p>
-          </Card>
-          <Card className="super-admin-overview__card">
-            <p className="super-admin-overview__label">
-              {t('superAdmin.overview.shoppersCreatedLast28Days')}
-            </p>
-            <p className="super-admin-overview__value">
-              {stats.shoppersCreatedLast28Days}
-            </p>
-          </Card>
+        <div className="super-admin-overview__block-body">
+          <div className="super-admin-overview__subsection">
+            <h3 className="super-admin-overview__subsection-title">
+              {t('superAdmin.overview.last28Days')}
+            </h3>
+            <div className="super-admin-overview__cards">
+              <Card className="super-admin-overview__card">
+                <p className="super-admin-overview__label">
+                  {t('superAdmin.overview.created')}
+                </p>
+                <p className="super-admin-overview__value">
+                  {stats.shoppersCreatedLast28Days}
+                </p>
+              </Card>
+            </div>
+          </div>
         </div>
       </section>
     </div>
