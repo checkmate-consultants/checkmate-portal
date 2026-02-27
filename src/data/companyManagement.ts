@@ -927,6 +927,87 @@ export const fetchVisitsAssignedToShopper = async (
     }))
 }
 
+export type VisitStatusBreakdown = Partial<Record<VisitStatus, number>>
+
+export type SuperAdminOverviewStats = {
+  statusBreakdown: VisitStatusBreakdown
+  reportsSubmittedByShoppersLast28Days: number
+  reportsReviewedLast28Days: number
+  reportsSubmittedToClientLast28Days: number
+  shoppersCreatedLast28Days: number
+}
+
+const VISIT_STATUSES: VisitStatus[] = [
+  'scheduled',
+  'under_review',
+  'report_submitted',
+  'feedback_requested',
+  'done',
+]
+
+export const fetchSuperAdminOverviewStats =
+  async (): Promise<SuperAdminOverviewStats> => {
+    const supabase = getSupabaseClient()
+    const since = new Date()
+    since.setDate(since.getDate() - 28)
+    const sinceIso = since.toISOString()
+
+    const statusCountPromises = VISIT_STATUSES.map((status) =>
+      supabase
+        .from('visits')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', status),
+    )
+
+    const [
+      statusResults,
+      submittedByShoppersResult,
+      reviewedResult,
+      submittedToClientResult,
+      shoppersResult,
+    ] = await Promise.all([
+      Promise.all(statusCountPromises),
+      supabase
+        .from('visits')
+        .select('id', { count: 'exact', head: true })
+        .gte('under_review_at', sinceIso),
+      supabase
+        .from('visits')
+        .select('id', { count: 'exact', head: true })
+        .gte('reviewed_at', sinceIso),
+      supabase
+        .from('visits')
+        .select('id', { count: 'exact', head: true })
+        .gte('report_submitted_at', sinceIso),
+      supabase
+        .from('shoppers')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', sinceIso),
+    ])
+
+    statusResults.forEach((r) => {
+      if (r.error) throw r.error
+    })
+    if (submittedByShoppersResult.error) throw submittedByShoppersResult.error
+    if (reviewedResult.error) throw reviewedResult.error
+    if (submittedToClientResult.error) throw submittedToClientResult.error
+    if (shoppersResult.error) throw shoppersResult.error
+
+    const statusBreakdown: VisitStatusBreakdown = {}
+    VISIT_STATUSES.forEach((status, i) => {
+      statusBreakdown[status] = statusResults[i].count ?? 0
+    })
+
+    return {
+      statusBreakdown,
+      reportsSubmittedByShoppersLast28Days:
+        submittedByShoppersResult.count ?? 0,
+      reportsReviewedLast28Days: reviewedResult.count ?? 0,
+      reportsSubmittedToClientLast28Days: submittedToClientResult.count ?? 0,
+      shoppersCreatedLast28Days: shoppersResult.count ?? 0,
+    }
+  }
+
 export const fetchShoppers = async (): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase

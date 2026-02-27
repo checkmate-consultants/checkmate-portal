@@ -40,7 +40,7 @@ export function WorkspacePage() {
               const isAdminRoute = location.pathname.startsWith('/workspace/admin')
               const isAccountRoute = location.pathname.startsWith('/workspace/account')
               if (!isAdminRoute && !isAccountRoute) {
-                navigate('/workspace/admin/companies', { replace: true })
+                navigate('/workspace/admin/overview', { replace: true })
               }
             }
             return

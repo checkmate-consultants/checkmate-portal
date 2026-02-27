@@ -57,6 +57,10 @@ const resources = {
           title: 'Action plans',
           description: 'Manage action plans and follow-up on visit findings.',
         },
+        superAdminOverview: {
+          title: 'Overview',
+          description: 'Super admin: platform statistics and key metrics.',
+        },
         superAdminCompanies: {
           title: 'Companies directory',
           description: 'Super admin: manage all tenant companies and workspaces.',
@@ -302,6 +306,16 @@ const resources = {
       superAdmin: {
         selectCompany: 'Select a company',
         eyebrow: 'Global oversight',
+        overview: {
+          title: 'Overview',
+          subtitle: 'Report status breakdown and key statistics for the last 28 days.',
+          statusBreakdown: 'Report statuses',
+          reportsSubmittedByShoppersLast28Days: 'Reports submitted by shoppers (last 28 days)',
+          reportsReviewedLast28Days: 'Reports reviewed (last 28 days)',
+          reportsSubmittedToClientLast28Days: 'Reports submitted to client (last 28 days)',
+          shoppersCreatedLast28Days: 'Shoppers created (last 28 days)',
+          last28DaysSection: 'Last 28 days',
+        },
         title: 'Companies directory',
         description:
           'Switch into any tenant workspace to inspect their properties and focus areas.',
@@ -658,6 +672,10 @@ const resources = {
           title: 'خطط العمل',
           description: 'إدارة خطط العمل ومتابعة نتائج الزيارات.',
         },
+        superAdminOverview: {
+          title: 'نظرة عامة',
+          description: 'المشرف: إحصائيات المنصة والمؤشرات الرئيسية.',
+        },
         superAdminCompanies: {
           title: 'دليل الشركات',
           description: 'المشرف: إدارة جميع شركات المستأجرين ومساحات العمل.',
@@ -904,6 +922,16 @@ const resources = {
       },
       superAdmin: {
         eyebrow: 'إشراف عام',
+        overview: {
+          title: 'نظرة عامة',
+          subtitle: 'توزيع حالات التقارير وأهم الإحصائيات خلال آخر 28 يوماً.',
+          statusBreakdown: 'حالات التقارير',
+          reportsSubmittedByShoppersLast28Days: 'التقارير المُرسلة من المتسوقين (آخر 28 يوماً)',
+          reportsReviewedLast28Days: 'التقارير المُراجَعة (آخر 28 يوماً)',
+          reportsSubmittedToClientLast28Days: 'التقارير المُسلّمة للعميل (آخر 28 يوماً)',
+          shoppersCreatedLast28Days: 'المتسوقون المُنشَأون (آخر 28 يوماً)',
+          last28DaysSection: 'آخر 28 يوماً',
+        },
         title: 'دليل الشركات',
         description:
           'انتقل إلى أي مساحة عمل لمراجعة العقارات ونطاقات التركيز.',

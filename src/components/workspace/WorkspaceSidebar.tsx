@@ -74,6 +74,11 @@ export function WorkspaceSidebar({
     ...(showAdminNav
       ? [
           {
+            id: 'overview',
+            labelKey: 'workspace.sidebar.overview',
+            to: '/workspace/admin/overview',
+          },
+          {
             id: 'companies',
             labelKey: 'workspace.sidebar.companies',
             to: '/workspace/admin/companies',

@@ -4,6 +4,7 @@ import { SignInPage } from './pages/SignInPage.tsx'
 import { WorkspacePage } from './pages/WorkspacePage.tsx'
 import { CompanyManagementPage } from './pages/CompanyManagementPage.tsx'
 import { PropertyDetailsPage } from './pages/PropertyDetailsPage.tsx'
+import { SuperAdminOverviewPage } from './pages/SuperAdminOverviewPage.tsx'
 import { SuperAdminCompaniesPage } from './pages/SuperAdminCompaniesPage.tsx'
 import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
 import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
@@ -44,6 +45,7 @@ function App() {
           <Route index element={<Navigate to="profile" replace />} />
           <Route path=":tab" element={<AccountPage />} />
         </Route>
+        <Route path="admin/overview" element={<SuperAdminOverviewPage />} />
         <Route path="admin/companies" element={<SuperAdminCompaniesPage />} />
         <Route
           path="admin/companies/:companyId"
