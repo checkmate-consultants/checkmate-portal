@@ -33,7 +33,7 @@ export function WorkspaceSidebar({
           {
             id: 'profile',
             labelKey: 'workspace.sidebar.profile',
-            to: '/workspace/profile',
+            to: '/workspace/account/profile',
           },
           {
             id: 'visits',

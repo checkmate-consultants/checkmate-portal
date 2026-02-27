@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useOutletContext, useParams, useNavigate, NavLink } from 'react-router-dom'
 import { z } from 'zod'
@@ -35,6 +35,7 @@ function isValidTab(tab: string | undefined): tab is TabId {
 export function AccountPage() {
   const { t, i18n } = useTranslation()
   const { session } = useOutletContext<WorkspaceOutletContext>()
+  const queryClient = useQueryClient()
   const { tab: tabParam } = useParams<{ tab: string }>()
   const navigate = useNavigate()
   const activeTab: TabId = isValidTab(tabParam) ? tabParam : 'profile'
@@ -47,7 +48,31 @@ export function AccountPage() {
   const dir = i18n.dir()
 
   const user = session?.user ?? null
-  const displayName = user ? getDisplayName(user) : ''
+  const isShopper = Boolean(session?.isShopper && session?.shopperId)
+  const shopperId = session?.shopperId ?? null
+
+  const { data: shopper } = useQuery({
+    queryKey: ['shopper-profile', shopperId],
+    queryFn: async () => {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase
+        .from('shoppers')
+        .select('full_name')
+        .eq('id', shopperId)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: Boolean(shopperId),
+  })
+
+  const displayName = (() => {
+    if (!user) return ''
+    const fromAuth = (user.user_metadata?.full_name as string | undefined)?.trim()
+    if (fromAuth) return fromAuth
+    if (isShopper && shopper?.full_name?.trim()) return shopper.full_name.trim()
+    return user.email ?? ''
+  })()
 
   const nameSchema = useMemo(
     () =>
@@ -102,12 +127,23 @@ export function AccountPage() {
   const updateNameMutation = useMutation({
     mutationFn: async (fullName: string) => {
       const supabase = getSupabaseClient()
-      const { error } = await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
+      const trimmed = fullName.trim()
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: trimmed },
       })
-      if (error) throw new Error(error.message)
+      if (authError) throw new Error(authError.message)
+      if (isShopper && shopperId) {
+        const { error: shoppersError } = await supabase
+          .from('shoppers')
+          .update({ full_name: trimmed })
+          .eq('id', shopperId)
+        if (shoppersError) throw new Error(shoppersError.message)
+      }
     },
     onSuccess: () => {
+      if (shopperId) {
+        queryClient.invalidateQueries({ queryKey: ['shopper-profile', shopperId] })
+      }
       setNameSuccess(true)
       setTimeout(() => setNameSuccess(false), 4000)
     },
