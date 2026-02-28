@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import brandIcon from '../../assets/brand/icon.webp'
 import brandIconLight from '../../assets/brand/icon-light.webp'
@@ -31,6 +31,9 @@ export function WorkspaceSidebar({
   const { mode } = useTheme()
   const showAdminNav = isSuperAdmin || isAccountManager
   const iconSrc = mode === 'dark' ? brandIconLight : brandIcon
+
+  const defaultHomePath =
+    showAdminNav ? '/workspace/admin/overview' : isShopper ? '/workspace/visits' : '/workspace/company'
   const navItems: NavItem[] = [
     ...(isShopper
       ? [
@@ -127,7 +130,11 @@ export function WorkspaceSidebar({
           ×
         </button>
       )}
-      <div className="workspace-sidebar__brand">
+      <Link
+        className="workspace-sidebar__brand"
+        to={defaultHomePath}
+        onClick={() => onNavigate?.()}
+      >
         <span className="workspace-sidebar__logo">
           <img src={iconSrc} alt={t('workspace.sidebar.logoAlt')} />
         </span>
@@ -135,7 +142,7 @@ export function WorkspaceSidebar({
           <p className="workspace-sidebar__label">{t('brand.name')}</p>
           <p className="workspace-sidebar__tenant">{t('workspace.sidebar.tenant')}</p>
         </div>
-      </div>
+      </Link>
 
       <nav className="workspace-sidebar__nav">
         {navItems.map((item) => (
