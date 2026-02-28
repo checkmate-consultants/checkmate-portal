@@ -28,4 +28,63 @@
   color: var(--color-text-muted);
 }
 
+.report-form-rating {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.report-form-rating__star {
+  font-size: 1.5rem;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.report-form-rating__star:hover:not(:disabled) {
+  color: var(--color-primary, #2563eb);
+}
+
+.report-form-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-form-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.report-form-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.company-visit-report-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.company-visit-report-answer {
+  margin-bottom: 0.75rem;
+}
+
+.company-visit-report-answer__label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.company-visit-report-answer__value {
+  display: block;
+  margin-top: 0.25rem;
+}
+
 

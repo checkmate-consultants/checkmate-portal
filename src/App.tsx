@@ -10,6 +10,7 @@ import { SuperAdminVisitsPage } from './pages/SuperAdminVisitsPage.tsx'
 import { SuperAdminShoppersPage } from './pages/SuperAdminShoppersPage.tsx'
 import { SuperAdminShopperDetailsPage } from './pages/SuperAdminShopperDetailsPage.tsx'
 import { SuperAdminVisitReportPage } from './pages/SuperAdminVisitReportPage.tsx'
+import { SuperAdminReportTemplatesPage } from './pages/SuperAdminReportTemplatesPage.tsx'
 import { CompanyVisitsPage } from './pages/CompanyVisitsPage.tsx'
 import { CompanyVisitReportPage } from './pages/CompanyVisitReportPage.tsx'
 import { CompanyInvoicesPage } from './pages/CompanyInvoicesPage.tsx'
@@ -68,6 +69,7 @@ function App() {
           element={<PropertyDetailsPage />}
         />
         <Route path="admin/visits" element={<SuperAdminVisitsPage />} />
+        <Route path="admin/report-templates" element={<SuperAdminReportTemplatesPage />} />
         <Route
           path="admin/visits/:visitId/report"
           element={<SuperAdminVisitReportPage />}

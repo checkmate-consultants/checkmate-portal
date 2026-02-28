@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useOutletContext } from 'react-router-dom'
@@ -6,13 +6,15 @@ import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import {
-  fetchVisitReports,
+  fetchVisitReportFormData,
   fetchVisitStatus,
   saveVisitFocusAreaReport,
+  saveVisitReportAnswers,
   shopperSubmitVisitReport,
-  type VisitFocusAreaReport,
+  type VisitReportFormFocusArea,
   type VisitStatus,
 } from '../data/companyManagement.ts'
+import { ReportFormField } from '../components/visit-report/ReportFormField.tsx'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-visit-report-page.css'
@@ -28,7 +30,7 @@ export function CompanyVisitReportPage() {
   const { visitId } = useParams<{ visitId: string }>()
   const { session } = useOutletContext<WorkspaceOutletContext>()
 
-  const [reports, setReports] = useState<VisitFocusAreaReport[]>([])
+  const [formData, setFormData] = useState<VisitReportFormFocusArea[]>([])
   const [visitStatus, setVisitStatus] = useState<VisitStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -36,10 +38,32 @@ export function CompanyVisitReportPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  /** Draft answers: focusAreaId -> questionId -> value (for form-based sections) */
+  const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
   const editorRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const canEdit =
     Boolean(session.isShopper) && visitStatus === 'scheduled'
+
+  const getAnswer = useCallback(
+    (focusAreaId: string, questionId: string): string | null => {
+      return draftAnswers[focusAreaId]?.[questionId] ?? formData.find((fa) => fa.focusAreaId === focusAreaId)?.answers[questionId] ?? null
+    },
+    [draftAnswers, formData],
+  )
+
+  const setAnswer = useCallback(
+    (focusAreaId: string, questionId: string, value: string | null) => {
+      setDraftAnswers((prev) => ({
+        ...prev,
+        [focusAreaId]: {
+          ...(prev[focusAreaId] ?? {}),
+          [questionId]: value,
+        },
+      }))
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!visitId) return
@@ -52,11 +76,16 @@ export function CompanyVisitReportPage() {
     const load = async () => {
       try {
         const [data, status] = await Promise.all([
-          fetchVisitReports(visitId),
+          fetchVisitReportFormData(visitId),
           session.isShopper ? fetchVisitStatus(visitId) : Promise.resolve('scheduled' as VisitStatus),
         ])
-        setReports(data)
+        setFormData(data)
         setVisitStatus(status)
+        const initial: Record<string, Record<string, string | null>> = {}
+        for (const fa of data) {
+          initial[fa.focusAreaId] = { ...fa.answers }
+        }
+        setDraftAnswers(initial)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : t('superAdmin.errors.generic'),
@@ -74,18 +103,41 @@ export function CompanyVisitReportPage() {
     document.execCommand(command, false, value ?? undefined)
   }
 
-  const handleSave = async (focusAreaId: string) => {
+  const handleSaveLegacy = async (focusAreaId: string) => {
     if (!visitId) return
     const editor = editorRefs.current[focusAreaId]
     const html = editor?.innerHTML ?? ''
     try {
       setSavingId(focusAreaId)
       await saveVisitFocusAreaReport(visitId, focusAreaId, html)
-      setReports((prev) =>
-        prev.map((block) =>
-          block.focusAreaId === focusAreaId ? { ...block, content: html } : block,
+      setFormData((prev) =>
+        prev.map((fa) =>
+          fa.focusAreaId === focusAreaId
+            ? { ...fa, legacyContent: html }
+            : fa,
         ),
       )
+      setSavedId(focusAreaId)
+      setTimeout(() => {
+        setSavedId((current) => (current === focusAreaId ? null : current))
+      }, 2000)
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  const handleSaveFormAnswers = async (focusAreaId: string) => {
+    if (!visitId) return
+    const fa = formData.find((x) => x.focusAreaId === focusAreaId)
+    if (!fa || fa.sections.length === 0) return
+    const questionIds = fa.sections.flatMap((s) => s.questions.map((q) => q.id))
+    const answers = questionIds.map((questionId) => ({
+      questionId,
+      value: getAnswer(focusAreaId, questionId),
+    }))
+    try {
+      setSavingId(focusAreaId)
+      await saveVisitReportAnswers(visitId, focusAreaId, answers)
       setSavedId(focusAreaId)
       setTimeout(() => {
         setSavedId((current) => (current === focusAreaId ? null : current))
@@ -99,12 +151,20 @@ export function CompanyVisitReportPage() {
     if (!visitId) return
     try {
       setSubmitting(true)
-      const saves = reports.map((block) => {
-        const editor = editorRefs.current[block.focusAreaId]
-        const html = editor?.innerHTML ?? block.content ?? ''
-        return saveVisitFocusAreaReport(visitId, block.focusAreaId, html)
-      })
-      await Promise.all(saves)
+      for (const fa of formData) {
+        if (fa.sections.length > 0) {
+          const questionIds = fa.sections.flatMap((s) => s.questions.map((q) => q.id))
+          const answers = questionIds.map((questionId) => ({
+            questionId,
+            value: getAnswer(fa.focusAreaId, questionId),
+          }))
+          await saveVisitReportAnswers(visitId, fa.focusAreaId, answers)
+        } else if (fa.legacyContent !== undefined) {
+          const editor = editorRefs.current[fa.focusAreaId]
+          const html = editor?.innerHTML ?? fa.legacyContent ?? ''
+          await saveVisitFocusAreaReport(visitId, fa.focusAreaId, html)
+        }
+      }
       await shopperSubmitVisitReport(visitId)
       navigate('/workspace/visits')
     } finally {
@@ -149,21 +209,38 @@ export function CompanyVisitReportPage() {
         </header>
 
         <div className="company-visit-report-list">
-          {reports.map((block) => (
+          {formData.map((block) => (
             <Card key={block.focusAreaId} className="super-admin-card">
               <h2 className="company-visit-report-heading">
                 {block.focusAreaName}
               </h2>
-              {block.content ? (
+              {block.sections.length > 0 ? (
+                <div className="company-visit-report-sections">
+                  {block.sections.map((section) => (
+                    <div key={section.id}>
+                      <h3 className="report-form-section-title">{section.sectionName}</h3>
+                      {section.questions.map((q) => (
+                        <div key={q.id} className="company-visit-report-answer">
+                          <span className="company-visit-report-answer__label">{q.label}</span>
+                          <span className="company-visit-report-answer__value">
+                            {getAnswer(block.focusAreaId, q.id) ?? '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {block.sections.length === 0 && block.legacyContent ? (
                 <div
                   className="company-visit-report-content"
-                  dangerouslySetInnerHTML={{ __html: block.content }}
+                  dangerouslySetInnerHTML={{ __html: block.legacyContent }}
                 />
-              ) : (
+              ) : block.sections.length === 0 && !block.legacyContent ? (
                 <p className="company-visit-report-empty">
                   {t('companyVisits.noContent')}
                 </p>
-              )}
+              ) : null}
             </Card>
           ))}
         </div>
@@ -194,74 +271,111 @@ export function CompanyVisitReportPage() {
       </header>
 
       <div className="super-admin-visit-report-list">
-        {reports.map((block) => (
+        {formData.map((block) => (
           <Card key={block.focusAreaId} className="super-admin-card">
-            <FormField id={block.focusAreaId} label={block.focusAreaName}>
-              <div className="wysiwyg-wrapper">
-                <div className="wysiwyg-toolbar">
-                  <button
+            <h2 className="company-visit-report-heading">{block.focusAreaName}</h2>
+
+            {block.sections.length > 0 ? (
+              <>
+                {block.sections.map((section) => (
+                  <div key={section.id} className="report-form-section">
+                    <h3 className="report-form-section-title">{section.sectionName}</h3>
+                    {section.questions.map((q) => (
+                      <ReportFormField
+                        key={q.id}
+                        question={q}
+                        value={getAnswer(block.focusAreaId, q.id)}
+                        onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
+                      />
+                    ))}
+                  </div>
+                ))}
+                <div className="wysiwyg-actions">
+                  <Button
                     type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyCommand('formatBlock', 'p')}
+                    variant="ghost"
+                    loading={savingId === block.focusAreaId}
+                    onClick={() => handleSaveFormAnswers(block.focusAreaId)}
                   >
-                    {t('superAdmin.visitReport.toolbar.normal')}
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyCommand('formatBlock', 'h2')}
-                  >
-                    {t('superAdmin.visitReport.toolbar.heading2')}
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyCommand('formatBlock', 'h3')}
-                  >
-                    {t('superAdmin.visitReport.toolbar.heading3')}
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyCommand('insertUnorderedList')}
-                  >
-                    {t('superAdmin.visitReport.toolbar.bulletList')}
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyCommand('insertOrderedList')}
-                  >
-                    {t('superAdmin.visitReport.toolbar.orderedList')}
-                  </button>
+                    {t('superAdmin.visitReport.saveSection')}
+                  </Button>
+                  {savedId === block.focusAreaId && savingId !== block.focusAreaId && (
+                    <span className="wysiwyg-status">
+                      {t('superAdmin.visitReport.sectionSaved')}
+                    </span>
+                  )}
                 </div>
-                <div
-                  ref={(el) => {
-                    editorRefs.current[block.focusAreaId] = el
-                  }}
-                  className="wysiwyg-editor"
-                  contentEditable
-                  dir="auto"
-                  suppressContentEditableWarning
-                  dangerouslySetInnerHTML={{ __html: block.content }}
-                />
-              </div>
-            </FormField>
-            <div className="wysiwyg-actions">
-              <Button
-                type="button"
-                variant="ghost"
-                loading={savingId === block.focusAreaId}
-                onClick={() => handleSave(block.focusAreaId)}
-              >
-                {t('superAdmin.visitReport.saveSection')}
-              </Button>
-              {savedId === block.focusAreaId && savingId !== block.focusAreaId && (
-                <span className="wysiwyg-status">
-                  {t('superAdmin.visitReport.sectionSaved')}
-                </span>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                <FormField id={block.focusAreaId} label={block.focusAreaName}>
+                  <div className="wysiwyg-wrapper">
+                    <div className="wysiwyg-toolbar">
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyCommand('formatBlock', 'p')}
+                      >
+                        {t('superAdmin.visitReport.toolbar.normal')}
+                      </button>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyCommand('formatBlock', 'h2')}
+                      >
+                        {t('superAdmin.visitReport.toolbar.heading2')}
+                      </button>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyCommand('formatBlock', 'h3')}
+                      >
+                        {t('superAdmin.visitReport.toolbar.heading3')}
+                      </button>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyCommand('insertUnorderedList')}
+                      >
+                        {t('superAdmin.visitReport.toolbar.bulletList')}
+                      </button>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => applyCommand('insertOrderedList')}
+                      >
+                        {t('superAdmin.visitReport.toolbar.orderedList')}
+                      </button>
+                    </div>
+                    <div
+                      ref={(el) => {
+                        editorRefs.current[block.focusAreaId] = el
+                      }}
+                      className="wysiwyg-editor"
+                      contentEditable
+                      dir="auto"
+                      suppressContentEditableWarning
+                      dangerouslySetInnerHTML={{ __html: block.legacyContent }}
+                    />
+                  </div>
+                </FormField>
+                <div className="wysiwyg-actions">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    loading={savingId === block.focusAreaId}
+                    onClick={() => handleSaveLegacy(block.focusAreaId)}
+                  >
+                    {t('superAdmin.visitReport.saveSection')}
+                  </Button>
+                  {savedId === block.focusAreaId && savingId !== block.focusAreaId && (
+                    <span className="wysiwyg-status">
+                      {t('superAdmin.visitReport.sectionSaved')}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
           </Card>
         ))}
       </div>

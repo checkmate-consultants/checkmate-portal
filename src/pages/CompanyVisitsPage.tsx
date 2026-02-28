@@ -157,6 +157,11 @@ export function CompanyVisitsPage() {
             ? t('companyManagement.property.emptyFocusAreas')
             : visit.focusAreas.map((area) => area.name).join(', ')}
         </span>
+        <span>
+          {visit.shopper
+            ? visit.shopper.fullName || visit.shopper.email || '—'
+            : '—'}
+        </span>
         <span>{t(`superAdmin.visits.status.${visit.status}`)}</span>
         <span>
           {showReportLink ? (
@@ -205,6 +210,7 @@ export function CompanyVisitsPage() {
                   <span>{t('superAdmin.visits.table.date')}</span>
                   <span>{t('superAdmin.visits.table.property')}</span>
                   <span>{t('superAdmin.visits.table.focusAreas')}</span>
+                  <span>{t('superAdmin.visits.table.shopper')}</span>
                   <span>{t('superAdmin.visits.table.status')}</span>
                   <span>{t('companyVisits.table.actions')}</span>
                 </div>
@@ -227,6 +233,7 @@ export function CompanyVisitsPage() {
                   <span>{t('superAdmin.visits.table.date')}</span>
                   <span>{t('superAdmin.visits.table.property')}</span>
                   <span>{t('superAdmin.visits.table.focusAreas')}</span>
+                  <span>{t('superAdmin.visits.table.shopper')}</span>
                   <span>{t('superAdmin.visits.table.status')}</span>
                   <span>{t('companyVisits.table.actions')}</span>
                 </div>

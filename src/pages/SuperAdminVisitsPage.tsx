@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm, type SubmitHandler } from 'react-hook-form'
+import { useForm, type Resolver, type SubmitHandler } from 'react-hook-form'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,8 +17,9 @@ import {
   fetchCompanySnapshot,
   fetchVisits,
   createVisit,
-  updateVisit,
+  assignVisitShopper,
   searchShoppers,
+  fetchReportTemplateSections,
   type CompanyDirectoryItem,
   type CompanySnapshot,
   type Visit,
@@ -26,6 +27,8 @@ import {
   type VisitReportFilter,
   updateVisitStatus,
   type Shopper,
+  type ReportTemplateSection,
+  type FocusAreaTemplateSectionIds,
 } from '../data/companyManagement.ts'
 // Lightweight styled select just for status in this page
 type StatusSelectProps = {
@@ -56,6 +59,7 @@ function StatusSelect({
 }
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
+import { EditVisitReportFormModal } from '../components/visit-report/EditVisitReportFormModal.tsx'
 import './super-admin-visits-page.css'
 import '../components/ui/select.css'
 
@@ -73,13 +77,13 @@ type ModalState = {
   loadingSnapshot: boolean
 }
 
-type EditingVisit = Visit | null
-
 type VisitFormValues = {
   companyId: string
   propertyId: string
-  shopperId: string
+  shopperId?: string
   focusAreaIds: string[]
+  /** Template section IDs per focus area id */
+  focusAreaTemplateSectionIds?: FocusAreaTemplateSectionIds
   scheduledFor: string
   notes?: string
 }
@@ -112,17 +116,25 @@ export function SuperAdminVisitsPage() {
   const [selectedShopper, setSelectedShopper] = useState<Shopper | null>(null)
   const [isSearchingShoppers, setIsSearchingShoppers] = useState(false)
   const [updatingVisitId, setUpdatingVisitId] = useState<string | null>(null)
-  const [editingVisit, setEditingVisit] = useState<EditingVisit>(null)
+  const [templateSections, setTemplateSections] = useState<ReportTemplateSection[]>([])
+  const [assignShopperVisit, setAssignShopperVisit] = useState<Visit | null>(null)
+  const [assignShopperQuery, setAssignShopperQuery] = useState('')
+  const [assignShopperResults, setAssignShopperResults] = useState<Shopper[]>([])
+  const [assignShopperSelected, setAssignShopperSelected] = useState<Shopper | null>(null)
+  const [assignShopperSearching, setAssignShopperSearching] = useState(false)
+  const [assignShopperSaving, setAssignShopperSaving] = useState(false)
+  const [editReportFormVisit, setEditReportFormVisit] = useState<Visit | null>(null)
 
   const visitSchema = useMemo(
     () =>
       z.object({
         companyId: z.string().min(1, t('validation.required')),
         propertyId: z.string().min(1, t('validation.required')),
-        shopperId: z.string().min(1, t('validation.required')),
+        shopperId: z.string().optional(),
         focusAreaIds: z
           .array(z.string())
           .min(1, t('superAdmin.visits.forms.focusAreasHelper')),
+        focusAreaTemplateSectionIds: z.record(z.string(), z.array(z.string())).default({}),
         scheduledFor: z.string().min(1, t('validation.required')),
         notes: z.string().optional(),
       }),
@@ -130,12 +142,13 @@ export function SuperAdminVisitsPage() {
   )
 
   const form = useForm<VisitFormValues>({
-    resolver: zodResolver(visitSchema),
+    resolver: zodResolver(visitSchema) as Resolver<VisitFormValues>,
     defaultValues: {
       companyId: '',
       propertyId: '',
       shopperId: '',
       focusAreaIds: [],
+      focusAreaTemplateSectionIds: {} as FocusAreaTemplateSectionIds,
       scheduledFor: '',
       notes: '',
     },
@@ -237,10 +250,32 @@ export function SuperAdminVisitsPage() {
     return () => clearTimeout(handle)
   }, [shopperQuery])
 
+  useEffect(() => {
+    if (!assignShopperVisit || assignShopperQuery.trim().length < 2) {
+      setAssignShopperResults([])
+      return
+    }
+    setAssignShopperSearching(true)
+    const handle = setTimeout(async () => {
+      try {
+        const results = await searchShoppers(assignShopperQuery.trim(), 20, { status: 'confirmed' })
+        setAssignShopperResults(results)
+      } catch {
+        setAssignShopperResults([])
+      } finally {
+        setAssignShopperSearching(false)
+      }
+    }, 300)
+    return () => clearTimeout(handle)
+  }, [assignShopperVisit, assignShopperQuery])
+
   const openModal = async () => {
-    setEditingVisit(null)
     try {
-      const companies = await fetchCompanyDirectory()
+      const [companies, sections] = await Promise.all([
+        fetchCompanyDirectory(),
+        fetchReportTemplateSections(),
+      ])
+      setTemplateSections(sections)
       setModalState((prev) => ({
         ...prev,
         open: true,
@@ -251,6 +286,7 @@ export function SuperAdminVisitsPage() {
         propertyId: '',
         shopperId: '',
         focusAreaIds: [],
+        focusAreaTemplateSectionIds: {},
         scheduledFor: '',
         notes: '',
       })
@@ -262,48 +298,31 @@ export function SuperAdminVisitsPage() {
     }
   }
 
-  const openEditModal = async (visit: Visit) => {
-    setEditingVisit(visit)
-    try {
-      const companies = await fetchCompanyDirectory()
-      const snapshot = await fetchCompanySnapshot(visit.company.id)
-      setModalState((prev) => ({
-        ...prev,
-        open: true,
-        companies,
-        selectedCompanyId: visit.company.id,
-        selectedSnapshot: snapshot ?? null,
-        loadingSnapshot: false,
-      }))
-      const scheduledFor = visit.scheduledFor.slice(0, 10)
-      form.reset({
-        companyId: visit.company.id,
-        propertyId: visit.property.id,
-        shopperId: visit.shopper?.id ?? '',
-        focusAreaIds: visit.focusAreas.map((a) => a.id),
-        scheduledFor,
-        notes: visit.notes ?? '',
-      })
-      setShopperQuery('')
-      setShopperResults([])
-      setSelectedShopper(
-        visit.shopper
-          ? {
-              id: visit.shopper.id,
-              fullName: visit.shopper.fullName,
-              email: visit.shopper.email,
-              createdAt: '',
-              status: 'confirmed' as const,
-            }
-          : null,
-      )
-    } catch {
-      setEditingVisit(null)
-    }
+  const openAssignShopperModal = (visit: Visit) => {
+    setAssignShopperVisit(visit)
+    setAssignShopperQuery('')
+    setAssignShopperResults([])
+    setAssignShopperSelected(
+      visit.shopper
+        ? {
+            id: visit.shopper.id,
+            fullName: visit.shopper.fullName,
+            email: visit.shopper.email,
+            createdAt: '',
+            status: 'confirmed' as const,
+          }
+        : null,
+    )
+  }
+
+  const closeAssignShopperModal = () => {
+    setAssignShopperVisit(null)
+    setAssignShopperQuery('')
+    setAssignShopperResults([])
+    setAssignShopperSelected(null)
   }
 
   const closeModal = () => {
-    setEditingVisit(null)
     setModalState((prev) => ({
       ...prev,
       open: false,
@@ -319,6 +338,7 @@ export function SuperAdminVisitsPage() {
     form.setValue('companyId', companyId, { shouldValidate: true })
     form.setValue('propertyId', '', { shouldValidate: true })
     form.setValue('focusAreaIds', [], { shouldValidate: true })
+    form.setValue('focusAreaTemplateSectionIds', {}, { shouldValidate: true })
     form.setValue('shopperId', '', { shouldValidate: true })
     setShopperQuery('')
     setShopperResults([])
@@ -337,26 +357,31 @@ export function SuperAdminVisitsPage() {
   }
 
   const onSubmit: SubmitHandler<VisitFormValues> = async (values) => {
-    if (editingVisit) {
-      await updateVisit(editingVisit.id, {
-        propertyId: values.propertyId,
-        shopperId: values.shopperId,
-        focusAreaIds: values.focusAreaIds,
-        scheduledFor: values.scheduledFor,
-        notes: values.notes ?? '',
-      })
-    } else {
-      await createVisit({
-        companyId: values.companyId,
-        propertyId: values.propertyId,
-        shopperId: values.shopperId,
-        focusAreaIds: values.focusAreaIds,
-        scheduledFor: values.scheduledFor,
-        notes: values.notes ?? '',
-      })
-    }
+    const sectionIds = values.focusAreaTemplateSectionIds ?? {}
+    await createVisit({
+      companyId: values.companyId,
+      propertyId: values.propertyId,
+      shopperId: values.shopperId?.trim() || undefined,
+      focusAreaIds: values.focusAreaIds,
+      focusAreaTemplateSectionIds: sectionIds,
+      scheduledFor: values.scheduledFor,
+      notes: values.notes ?? '',
+    })
     closeModal()
     refreshVisits()
+  }
+
+  const handleAssignShopperSubmit = async () => {
+    if (!assignShopperVisit) return
+    const shopperId = assignShopperSelected?.id ?? null
+    setAssignShopperSaving(true)
+    try {
+      await assignVisitShopper(assignShopperVisit.id, shopperId)
+      closeAssignShopperModal()
+      refreshVisits()
+    } finally {
+      setAssignShopperSaving(false)
+    }
   }
 
   if (visitState.status === 'loading') {
@@ -510,9 +535,18 @@ export function SuperAdminVisitsPage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => openEditModal(visit)}
+                    onClick={() => openAssignShopperModal(visit)}
                   >
-                    {t('superAdmin.visits.editVisit')}
+                    {visit.shopper
+                      ? t('superAdmin.visits.changeShopper')
+                      : t('superAdmin.visits.assignShopper')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setEditReportFormVisit(visit)}
+                  >
+                    {t('superAdmin.visits.editReportForm')}
                   </Button>
                   {visit.status !== 'done' && (
                     <Button
@@ -537,16 +571,8 @@ export function SuperAdminVisitsPage() {
       <Modal
         open={modalState.open}
         onClose={closeModal}
-        title={
-          editingVisit
-            ? t('superAdmin.visits.forms.editTitle')
-            : t('superAdmin.visits.forms.title')
-        }
-        description={
-          editingVisit
-            ? t('superAdmin.visits.forms.editDescription')
-            : t('superAdmin.visits.forms.description')
-        }
+        title={t('superAdmin.visits.forms.title')}
+        description={t('superAdmin.visits.forms.description')}
       >
         <form className="modal-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
@@ -565,7 +591,6 @@ export function SuperAdminVisitsPage() {
                 companyField.onChange(event)
                 handleCompanyChange(event.target.value)
               }}
-              disabled={Boolean(editingVisit)}
             >
               <option value="">{t('superAdmin.selectCompany')}</option>
               {modalState.companies.map((company) => (
@@ -633,6 +658,14 @@ export function SuperAdminVisitsPage() {
                       form.setValue('focusAreaIds', selected, {
                         shouldValidate: true,
                       })
+                      const current = form.getValues('focusAreaTemplateSectionIds') ?? {}
+                      const next: FocusAreaTemplateSectionIds = {}
+                      for (const id of selected) {
+                        next[id] = current[id] ?? []
+                      }
+                      form.setValue('focusAreaTemplateSectionIds', next, {
+                        shouldValidate: true,
+                      })
                     }}
                   >
                     {selectedProperty.focusAreas.map((area) => (
@@ -643,12 +676,54 @@ export function SuperAdminVisitsPage() {
                   </select>
                 </FormField>
               )}
+              {selectedProperty && focusAreaSelection.length > 0 && templateSections.length > 0 && (
+                <div className="report-templates-focus-area-sections">
+                  {focusAreaSelection.map((focusAreaId) => {
+                    const focusArea = selectedProperty.focusAreas.find((a) => a.id === focusAreaId)
+                    if (!focusArea) return null
+                    const selectedSectionIds = (form.watch('focusAreaTemplateSectionIds') ?? {})[focusAreaId] ?? []
+                    return (
+                      <FormField
+                        key={focusAreaId}
+                        id={`visit-template-sections-${focusAreaId}`}
+                        label={`${t('superAdmin.reportTemplates.attachToFocusArea')}: ${focusArea.name}`}
+                        helperText={t('superAdmin.reportTemplates.attachToFocusAreaHelper')}
+                      >
+                        <select
+                          id={`visit-template-sections-${focusAreaId}`}
+                          className="modal-select"
+                          multiple
+                          value={selectedSectionIds}
+                          onChange={(event) => {
+                            const selected = Array.from(event.target.selectedOptions).map(
+                              (opt) => opt.value,
+                            )
+                            const prev = form.getValues('focusAreaTemplateSectionIds') ?? {}
+                            form.setValue(
+                              'focusAreaTemplateSectionIds',
+                              { ...prev, [focusAreaId]: selected },
+                              { shouldValidate: true },
+                            )
+                          }}
+                        >
+                          {templateSections.map((sec) => (
+                            <option key={sec.id} value={sec.id}>
+                              {sec.name}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                    )
+                  })}
+                </div>
+              )}
             </>
           )}
 
           <FormField
             id="visit-shopper"
             label={t('superAdmin.visits.forms.shopper')}
+            helperText={t('superAdmin.visits.forms.shopperOptional')}
             error={form.formState.errors.shopperId?.message}
           >
             <input type="hidden" {...shopperField} />
@@ -724,13 +799,106 @@ export function SuperAdminVisitsPage() {
               {t('superAdmin.visits.forms.cancel')}
             </Button>
             <Button type="submit" disabled={!form.formState.isValid}>
-              {editingVisit
-                ? t('superAdmin.visits.forms.submitEdit')
-                : t('superAdmin.visits.forms.submit')}
+              {t('superAdmin.visits.forms.submit')}
             </Button>
           </div>
         </form>
       </Modal>
+
+      <Modal
+        open={Boolean(assignShopperVisit)}
+        onClose={closeAssignShopperModal}
+        title={
+          assignShopperVisit?.shopper
+            ? t('superAdmin.visits.assignShopperModal.changeTitle')
+            : t('superAdmin.visits.assignShopperModal.assignTitle')
+        }
+        description={t('superAdmin.visits.assignShopperModal.description')}
+      >
+        {assignShopperVisit && (
+          <div className="modal-form">
+            <p className="visits-assign-shopper-context">
+              {assignShopperVisit.property.name} · {assignShopperVisit.scheduledFor}
+            </p>
+            <FormField
+              id="assign-shopper-search"
+              label={t('superAdmin.visits.forms.shopper')}
+              helperText={t('superAdmin.visits.assignShopperModal.helper')}
+            >
+              <Input
+                id="assign-shopper-search"
+                placeholder={t('superAdmin.visits.forms.shopper')}
+                value={assignShopperSelected ? assignShopperSelected.fullName : assignShopperQuery}
+                onChange={(e) => {
+                  setAssignShopperSelected(null)
+                  setAssignShopperQuery(e.target.value)
+                }}
+                hasError={false}
+              />
+              {assignShopperSelected && (
+                <p className="shopper-selected">
+                  {assignShopperSelected.fullName} ({assignShopperSelected.email})
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="visits-assign-clear"
+                    onClick={() => setAssignShopperSelected(null)}
+                  >
+                    {t('superAdmin.visits.assignShopperModal.clear')}
+                  </Button>
+                </p>
+              )}
+              {assignShopperSearching && <p>{t('superAdmin.loading')}</p>}
+              {!assignShopperSearching && assignShopperQuery && !assignShopperSelected && (
+                <ul className="shopper-results">
+                  {assignShopperResults.map((shopper) => (
+                    <li key={shopper.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssignShopperSelected(shopper)
+                          setAssignShopperQuery('')
+                        }}
+                      >
+                        <strong>{shopper.fullName}</strong>
+                        <span>{shopper.email}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {assignShopperResults.length === 0 && (
+                    <li className="shopper-results__empty">
+                      {t('superAdmin.shoppers.empty')}
+                    </li>
+                  )}
+                </ul>
+              )}
+            </FormField>
+            <div className="modal-form__actions">
+              <Button type="button" variant="ghost" onClick={closeAssignShopperModal}>
+                {t('superAdmin.visits.forms.cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAssignShopperSubmit}
+                loading={assignShopperSaving}
+              >
+                {assignShopperVisit.shopper
+                  ? t('superAdmin.visits.changeShopper')
+                  : t('superAdmin.visits.assignShopper')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {editReportFormVisit && (
+        <EditVisitReportFormModal
+          visitId={editReportFormVisit.id}
+          open={Boolean(editReportFormVisit)}
+          onClose={() => setEditReportFormVisit(null)}
+          onSaved={() => setEditReportFormVisit(null)}
+        />
+      )}
     </div>
   )
 }

@@ -226,6 +226,58 @@ export type VisitFocusAreaReport = {
   content: string
 }
 
+/** Question type for report templates and visit report questions */
+export type ReportQuestionType =
+  | 'short_text'
+  | 'long_text'
+  | 'number'
+  | 'single_choice'
+  | 'multi_choice'
+  | 'date'
+  | 'rating'
+
+export type ReportTemplateSection = {
+  id: string
+  name: string
+  displayOrder: number
+}
+
+export type ReportTemplateQuestion = {
+  id: string
+  templateSectionId: string
+  label: string
+  questionType: ReportQuestionType
+  options: { value: string; label?: string }[] | null
+  required: boolean
+  displayOrder: number
+}
+
+export type VisitReportSection = {
+  id: string
+  visitId: string
+  focusAreaId: string
+  sectionName: string
+  displayOrder: number
+  questions: VisitReportQuestion[]
+}
+
+export type VisitReportQuestion = {
+  id: string
+  visitReportSectionId: string
+  label: string
+  questionType: ReportQuestionType
+  options: { value: string; label?: string }[] | null
+  required: boolean
+  displayOrder: number
+}
+
+export type VisitReportAnswer = {
+  visitId: string
+  focusAreaId: string
+  questionId: string
+  value: string | null
+}
+
 export type CreatePropertyInput = {
   companyId: string
   name: string
@@ -241,12 +293,18 @@ export type CreateFocusAreaInput = {
   description: string
 }
 
+/** Template section IDs to attach per focus area when scheduling. Keys are focus_area_id. */
+export type FocusAreaTemplateSectionIds = Record<string, string[]>
+
 export type CreateVisitInput = {
   companyId: string
   propertyId: string
-  shopperId: string
+  /** Optional; shopper can be assigned later. */
+  shopperId?: string | null
   scheduledFor: string
   focusAreaIds: string[]
+  /** For each focus area id, optional list of report_template_sections ids to copy into the visit. */
+  focusAreaTemplateSectionIds?: FocusAreaTemplateSectionIds
   notes?: string
 }
 
@@ -801,6 +859,7 @@ export const createVisit = async ({
   shopperId,
   scheduledFor,
   focusAreaIds,
+  focusAreaTemplateSectionIds,
   notes,
 }: CreateVisitInput) => {
   const supabase = getSupabaseClient()
@@ -810,7 +869,7 @@ export const createVisit = async ({
     .insert({
       company_id: companyId,
       property_id: propertyId,
-      shopper_id: shopperId,
+      shopper_id: shopperId?.trim() || null,
       scheduled_for: scheduledFor,
       notes: notes?.trim() ? notes.trim() : null,
       created_by: userData.user?.id ?? null,
@@ -836,6 +895,15 @@ export const createVisit = async ({
     if (focusError) {
       throw focusError
     }
+
+    // Copy template sections/questions into visit snapshot so template changes don't affect this visit
+    const sectionIdsByFocus = focusAreaTemplateSectionIds ?? {}
+    for (const focusAreaId of focusAreaIds) {
+      const templateSectionIds = sectionIdsByFocus[focusAreaId] ?? []
+      if (templateSectionIds.length > 0) {
+        await copyTemplateSectionsToVisit(data.id, focusAreaId, templateSectionIds)
+      }
+    }
   }
 }
 
@@ -844,12 +912,21 @@ export type UpdateVisitInput = {
   shopperId: string
   scheduledFor: string
   focusAreaIds: string[]
+  /** For each focus area id, optional list of report_template_sections ids to copy into the visit. */
+  focusAreaTemplateSectionIds?: FocusAreaTemplateSectionIds
   notes?: string
 }
 
 export const updateVisit = async (
   visitId: string,
-  { propertyId, shopperId, scheduledFor, focusAreaIds, notes }: UpdateVisitInput,
+  {
+    propertyId,
+    shopperId,
+    scheduledFor,
+    focusAreaIds,
+    focusAreaTemplateSectionIds,
+    notes,
+  }: UpdateVisitInput,
 ) => {
   const supabase = getSupabaseClient()
   const { error: updateError } = await supabase
@@ -865,6 +942,8 @@ export const updateVisit = async (
   if (updateError) {
     throw updateError
   }
+
+  await deleteVisitReportSectionsForVisit(visitId)
 
   const { error: deleteError } = await supabase
     .from('visit_focus_areas')
@@ -888,6 +967,30 @@ export const updateVisit = async (
     if (insertError) {
       throw insertError
     }
+
+    const sectionIdsByFocus = focusAreaTemplateSectionIds ?? {}
+    for (const focusAreaId of focusAreaIds) {
+      const templateSectionIds = sectionIdsByFocus[focusAreaId] ?? []
+      if (templateSectionIds.length > 0) {
+        await copyTemplateSectionsToVisit(visitId, focusAreaId, templateSectionIds)
+      }
+    }
+  }
+}
+
+/** Assign or change the shopper for a visit. Pass null to unassign. */
+export const assignVisitShopper = async (
+  visitId: string,
+  shopperId: string | null,
+) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('visits')
+    .update({ shopper_id: shopperId })
+    .eq('id', visitId)
+
+  if (error) {
+    throw error
   }
 }
 
@@ -1008,6 +1111,530 @@ export const saveVisitFocusAreaReport = async (
   }
 
   return data
+}
+
+// --- Report templates (super admin) ---
+
+export const fetchReportTemplateSections = async (): Promise<
+  ReportTemplateSection[]
+> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('report_template_sections')
+    .select('id, name, display_order')
+    .order('display_order', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []).map((r: { id: string; name: string; display_order: number }) => ({
+    id: r.id,
+    name: r.name,
+    displayOrder: r.display_order,
+  }))
+}
+
+export const fetchReportTemplateQuestionsBySectionIds = async (
+  sectionIds: string[],
+): Promise<ReportTemplateQuestion[]> => {
+  if (sectionIds.length === 0) return []
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('report_template_questions')
+    .select('id, template_section_id, label, question_type, options, required, display_order')
+    .in('template_section_id', sectionIds)
+    .order('display_order', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []).map(
+    (q: {
+      id: string
+      template_section_id: string
+      label: string
+      question_type: string
+      options: unknown
+      required: boolean
+      display_order: number
+    }) => ({
+      id: q.id,
+      templateSectionId: q.template_section_id,
+      label: q.label,
+      questionType: q.question_type as ReportQuestionType,
+      options: (q.options as { value: string; label?: string }[] | null) ?? null,
+      required: q.required,
+      displayOrder: q.display_order,
+    }),
+  )
+}
+
+export const createReportTemplateSection = async (name: string) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('report_template_sections')
+    .insert({ name, display_order: 0 })
+    .select('id')
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export const updateReportTemplateSection = async (
+  id: string,
+  { name, displayOrder }: { name?: string; displayOrder?: number },
+) => {
+  const supabase = getSupabaseClient()
+  const payload: { name?: string; display_order?: number; updated_at?: string } = {
+    updated_at: new Date().toISOString(),
+  }
+  if (name !== undefined) payload.name = name
+  if (displayOrder !== undefined) payload.display_order = displayOrder
+  const { error } = await supabase
+    .from('report_template_sections')
+    .update(payload)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const deleteReportTemplateSection = async (id: string) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('report_template_sections')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const createReportTemplateQuestion = async (input: {
+  templateSectionId: string
+  label: string
+  questionType: ReportQuestionType
+  options?: { value: string; label?: string }[] | null
+  required?: boolean
+  displayOrder?: number
+}) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('report_template_questions')
+    .insert({
+      template_section_id: input.templateSectionId,
+      label: input.label,
+      question_type: input.questionType,
+      options: input.options ?? null,
+      required: input.required ?? true,
+      display_order: input.displayOrder ?? 0,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export const updateReportTemplateQuestion = async (
+  id: string,
+  input: {
+    label?: string
+    questionType?: ReportQuestionType
+    options?: { value: string; label?: string }[] | null
+    required?: boolean
+    displayOrder?: number
+  },
+) => {
+  const supabase = getSupabaseClient()
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+  if (input.label !== undefined) payload.label = input.label
+  if (input.questionType !== undefined) payload.question_type = input.questionType
+  if (input.options !== undefined) payload.options = input.options
+  if (input.required !== undefined) payload.required = input.required
+  if (input.displayOrder !== undefined) payload.display_order = input.displayOrder
+  const { error } = await supabase
+    .from('report_template_questions')
+    .update(payload)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const deleteReportTemplateQuestion = async (id: string) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('report_template_questions')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+/** Copy template sections and their questions into the visit (snapshot). Called when scheduling. */
+export const copyTemplateSectionsToVisit = async (
+  visitId: string,
+  focusAreaId: string,
+  templateSectionIds: string[],
+) => {
+  if (templateSectionIds.length === 0) return
+  const supabase = getSupabaseClient()
+  const sections = await supabase
+    .from('report_template_sections')
+    .select('id, name, display_order')
+    .in('id', templateSectionIds)
+    .order('display_order', { ascending: true })
+
+  if (sections.error || !sections.data?.length) return
+
+  const sectionIds = sections.data.map((s) => s.id)
+  const questions = await supabase
+    .from('report_template_questions')
+    .select('id, template_section_id, label, question_type, options, required, display_order')
+    .in('template_section_id', sectionIds)
+    .order('display_order', { ascending: true })
+
+  if (questions.error) throw questions.error
+
+  type SectionRow = { id: string; name: string; display_order: number }
+  type QuestionRow = {
+    id: string
+    template_section_id?: string
+    templateSectionId?: string
+    label: string
+    question_type: string
+    options: unknown
+    required: boolean
+    display_order: number
+  }
+  const sectionRows = sections.data as SectionRow[]
+  const questionRows = (questions.data ?? []) as QuestionRow[]
+
+  /** Get template section id from row (Supabase may return snake_case or camelCase). */
+  const getTemplateSectionId = (q: QuestionRow): string =>
+    q.template_section_id ?? q.templateSectionId ?? ''
+
+  for (let i = 0; i < sectionRows.length; i++) {
+    const sec = sectionRows[i]
+    if (!sec) continue
+    const { data: insertedSection, error: sectionError } = await supabase
+      .from('visit_report_sections')
+      .insert({
+        visit_id: visitId,
+        focus_area_id: focusAreaId,
+        section_name: sec.name,
+        display_order: i,
+      })
+      .select('id')
+      .single()
+
+    if (sectionError || !insertedSection) throw sectionError ?? new Error('Failed to insert visit report section')
+
+    const sectionQuestions = questionRows.filter(
+      (q) => getTemplateSectionId(q) === sec.id,
+    )
+    for (let j = 0; j < sectionQuestions.length; j++) {
+      const q = sectionQuestions[j]
+      if (!q) continue
+      const qAny = q as Record<string, unknown>
+      const questionType =
+        q.question_type ?? qAny.questionType ?? 'short_text'
+      const { error: questionError } = await supabase
+        .from('visit_report_questions')
+        .insert({
+          visit_report_section_id: insertedSection.id,
+          label: q.label ?? '',
+          question_type: questionType,
+          options: q.options ?? null,
+          required: q.required ?? true,
+          display_order: j,
+        })
+      if (questionError) throw questionError
+    }
+  }
+}
+
+/** Delete all visit report sections (and cascade questions/answers) for a visit. Used when updating visit focus areas. */
+export const deleteVisitReportSectionsForVisit = async (visitId: string) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('visit_report_sections')
+    .delete()
+    .eq('visit_id', visitId)
+  if (error) throw error
+}
+
+/** Add a section to a visit report (for a focus area). Used when editing report form after scheduling. */
+export const createVisitReportSection = async (
+  visitId: string,
+  focusAreaId: string,
+  input: { sectionName: string; displayOrder?: number },
+) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visit_report_sections')
+    .insert({
+      visit_id: visitId,
+      focus_area_id: focusAreaId,
+      section_name: input.sectionName.trim(),
+      display_order: input.displayOrder ?? 0,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+/** Update a visit report section. */
+export const updateVisitReportSection = async (
+  sectionId: string,
+  input: { sectionName?: string; displayOrder?: number },
+) => {
+  const supabase = getSupabaseClient()
+  const payload: Record<string, unknown> = {}
+  if (input.sectionName !== undefined) payload.section_name = input.sectionName.trim()
+  if (input.displayOrder !== undefined) payload.display_order = input.displayOrder
+  if (Object.keys(payload).length === 0) return
+  const { error } = await supabase
+    .from('visit_report_sections')
+    .update(payload)
+    .eq('id', sectionId)
+  if (error) throw error
+}
+
+/** Delete a visit report section (cascades to questions and answers). */
+export const deleteVisitReportSection = async (sectionId: string) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('visit_report_sections')
+    .delete()
+    .eq('id', sectionId)
+  if (error) throw error
+}
+
+/** Add a question to a visit report section. */
+export const createVisitReportQuestion = async (
+  sectionId: string,
+  input: {
+    label: string
+    questionType: ReportQuestionType
+    options?: { value: string; label?: string }[] | null
+    required?: boolean
+    displayOrder?: number
+  },
+) => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('visit_report_questions')
+    .insert({
+      visit_report_section_id: sectionId,
+      label: input.label.trim(),
+      question_type: input.questionType,
+      options: input.options ?? null,
+      required: input.required ?? true,
+      display_order: input.displayOrder ?? 0,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+/** Update a visit report question. */
+export const updateVisitReportQuestion = async (
+  questionId: string,
+  input: {
+    label?: string
+    questionType?: ReportQuestionType
+    options?: { value: string; label?: string }[] | null
+    required?: boolean
+    displayOrder?: number
+  },
+) => {
+  const supabase = getSupabaseClient()
+  const payload: Record<string, unknown> = {}
+  if (input.label !== undefined) payload.label = input.label.trim()
+  if (input.questionType !== undefined) payload.question_type = input.questionType
+  if (input.options !== undefined) payload.options = input.options
+  if (input.required !== undefined) payload.required = input.required
+  if (input.displayOrder !== undefined) payload.display_order = input.displayOrder
+  if (Object.keys(payload).length === 0) return
+  const { error } = await supabase
+    .from('visit_report_questions')
+    .update(payload)
+    .eq('id', questionId)
+  if (error) throw error
+}
+
+/** Delete a visit report question (and its answers). */
+export const deleteVisitReportQuestion = async (questionId: string) => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('visit_report_questions')
+    .delete()
+    .eq('id', questionId)
+  if (error) throw error
+}
+
+/** Fetch sections and questions for a visit (for shopper form and report view). Grouped by focus area. */
+export type VisitReportFormFocusArea = {
+  focusAreaId: string
+  focusAreaName: string
+  sections: VisitReportSection[]
+  /** Current answer value per question id (for this focus area) */
+  answers: Record<string, string | null>
+  /** Legacy free-text content if no sections (backward compat) */
+  legacyContent: string
+}
+
+export const fetchVisitReportFormData = async (
+  visitId: string,
+): Promise<VisitReportFormFocusArea[]> => {
+  const supabase = getSupabaseClient()
+  const [focusRes, sectionsRes, answersRes] = await Promise.all([
+    supabase
+      .from('visit_focus_areas')
+      .select('focus_area:property_focus_areas(id, name)')
+      .eq('visit_id', visitId),
+    supabase
+      .from('visit_report_sections')
+      .select('id, visit_id, focus_area_id, section_name, display_order')
+      .eq('visit_id', visitId)
+      .order('display_order', { ascending: true }),
+    supabase
+      .from('visit_report_answers')
+      .select('focus_area_id, question_id, value')
+      .eq('visit_id', visitId),
+  ])
+
+  if (focusRes.error) throw focusRes.error
+  if (sectionsRes.error) throw sectionsRes.error
+  if (answersRes.error) throw answersRes.error
+
+  const focusRows = (focusRes.data ?? []) as { focus_area: { id: string; name: string } | { id: string; name: string }[] | null }[]
+  const focusAreas = focusRows
+    .map((r) => {
+      const fa = r.focus_area
+      if (!fa) return null
+      return Array.isArray(fa) ? fa[0] ?? null : fa
+    })
+    .filter((fa): fa is { id: string; name: string } => Boolean(fa))
+
+  const reportRows = await supabase
+    .from('visit_focus_area_reports')
+    .select('focus_area_id, content')
+    .eq('visit_id', visitId)
+
+  const reportMap = new Map<string, string>()
+  for (const row of (reportRows.data ?? []) as { focus_area_id: string; content: string }[]) {
+    reportMap.set(row.focus_area_id, row.content)
+  }
+
+  type SectionRow = {
+    id: string
+    visit_id: string
+    focus_area_id: string
+    section_name: string
+    display_order: number
+  }
+  type QuestionRow = {
+    id: string
+    visit_report_section_id: string
+    label: string
+    question_type: string
+    options: unknown
+    required: boolean
+    display_order: number
+  }
+
+  const sectionRows = (sectionsRes.data ?? []) as SectionRow[]
+  const sectionIds = sectionRows.map((s) => s.id)
+
+  let questionsData: QuestionRow[] = []
+  if (sectionIds.length > 0) {
+    const questionsRes = await supabase
+      .from('visit_report_questions')
+      .select('id, visit_report_section_id, label, question_type, options, required, display_order')
+      .in('visit_report_section_id', sectionIds)
+      .order('display_order', { ascending: true })
+    if (!questionsRes.error) {
+      questionsData = (questionsRes.data ?? []) as QuestionRow[]
+    }
+  }
+
+  const questionsBySectionId = new Map<string, QuestionRow[]>()
+  for (const q of questionsData) {
+    const list = questionsBySectionId.get(q.visit_report_section_id) ?? []
+    list.push(q)
+    questionsBySectionId.set(q.visit_report_section_id, list)
+  }
+
+  const answers = (answersRes.data ?? []) as { focus_area_id: string; question_id: string; value: string | null }[]
+  const answerMap = new Map<string, string | null>()
+  for (const a of answers) {
+    answerMap.set(`${a.focus_area_id}:${a.question_id}`, a.value)
+  }
+
+  const sectionsByFocus = new Map<string, VisitReportSection[]>()
+  for (const row of sectionRows) {
+    const sectionQuestions = (questionsBySectionId.get(row.id) ?? []).sort(
+      (a, b) => a.display_order - b.display_order,
+    )
+    const questions: VisitReportQuestion[] = sectionQuestions.map((q) => ({
+      id: q.id,
+      visitReportSectionId: q.visit_report_section_id,
+      label: q.label,
+      questionType: q.question_type as ReportQuestionType,
+      options: (q.options as { value: string; label?: string }[] | null) ?? null,
+      required: q.required,
+      displayOrder: q.display_order,
+    }))
+    sectionsByFocus.set(row.focus_area_id, [
+      ...(sectionsByFocus.get(row.focus_area_id) ?? []),
+      {
+        id: row.id,
+        visitId: row.visit_id,
+        focusAreaId: row.focus_area_id,
+        sectionName: row.section_name,
+        displayOrder: row.display_order,
+        questions,
+      },
+    ])
+  }
+
+  for (const list of sectionsByFocus.values()) {
+    list.sort((a, b) => a.displayOrder - b.displayOrder)
+  }
+
+  return focusAreas.map((fa) => {
+    const focusAnswers: Record<string, string | null> = {}
+    for (const [key, value] of answerMap) {
+      const [fid, qid] = key.split(':')
+      if (fid === fa.id) focusAnswers[qid] = value
+    }
+    return {
+      focusAreaId: fa.id,
+      focusAreaName: fa.name,
+      sections: sectionsByFocus.get(fa.id) ?? [],
+      answers: focusAnswers,
+      legacyContent: reportMap.get(fa.id) ?? '',
+    }
+  })
+}
+
+export const saveVisitReportAnswers = async (
+  visitId: string,
+  focusAreaId: string,
+  answers: { questionId: string; value: string | null }[],
+) => {
+  const supabase = getSupabaseClient()
+  const now = new Date().toISOString()
+  for (const { questionId, value } of answers) {
+    const { error } = await supabase
+      .from('visit_report_answers')
+      .upsert(
+        {
+          visit_id: visitId,
+          focus_area_id: focusAreaId,
+          question_id: questionId,
+          value,
+          updated_at: now,
+        },
+        { onConflict: 'visit_id,focus_area_id,question_id' },
+      )
+    if (error) throw error
+  }
 }
 
 export const fetchCompanyVisits = async (

@@ -120,6 +120,15 @@ export function WorkspaceSidebar({
             labelKey: 'workspace.sidebar.visits',
             to: '/workspace/admin/visits',
           },
+          ...(isSuperAdmin
+            ? [
+                {
+                  id: 'report-templates',
+                  labelKey: 'workspace.sidebar.reportTemplates',
+                  to: '/workspace/admin/report-templates',
+                },
+              ]
+            : []),
           {
             id: 'admin-invoices',
             labelKey: 'workspace.sidebar.invoices',

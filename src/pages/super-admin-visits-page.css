@@ -75,6 +75,17 @@
   color: var(--color-text-muted);
 }
 
+.visits-assign-shopper-context {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.visits-assign-clear {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+}
+
 .shopper-selected {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;

@@ -1,0 +1,108 @@
+.report-templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.report-template-card {
+  padding: 1rem 1.25rem;
+}
+
+.report-template-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.report-template-card__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.report-template-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.report-template-questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.report-template-questions__empty {
+  padding: 1rem;
+  color: var(--color-muted, #6b7280);
+  font-size: 0.875rem;
+}
+
+.report-template-question-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.report-template-question-item:last-child {
+  border-bottom: none;
+}
+
+.report-template-question-item__label {
+  font-weight: 500;
+  flex: 1 1 200px;
+}
+
+.report-template-question-item__type {
+  font-size: 0.875rem;
+  color: var(--color-muted, #6b7280);
+}
+
+.report-template-question-item__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.report-template-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.375rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.report-templates-focus-area-sections {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--color-surface-alt, #f9fafb);
+  border-radius: 0.5rem;
+}
+
+.report-templates-focus-area-sections__label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.report-templates-focus-area-sections select {
+  width: 100%;
+  min-height: 80px;
+}

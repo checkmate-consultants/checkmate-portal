@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm, type SubmitHandler } from 'react-hook-form'
+import { useForm, type Resolver, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
@@ -85,7 +85,7 @@ export function CompanyUserManagementPage() {
   )
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues: {
       email: '',
       fullName: '',

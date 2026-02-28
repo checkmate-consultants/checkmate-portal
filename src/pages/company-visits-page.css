@@ -13,9 +13,9 @@
   color: var(--color-text);
 }
 
-.super-admin-page .super-admin-table__head,
-.super-admin-page .super-admin-table__row {
-  grid-template-columns: 1fr 1.5fr 1.5fr 1fr 1fr;
+.company-visits-page__section .super-admin-table__head,
+.company-visits-page__section .super-admin-table__row {
+  grid-template-columns: 1fr 1.5fr 1.5fr 1.2fr 1fr 1fr;
 }
 
 
