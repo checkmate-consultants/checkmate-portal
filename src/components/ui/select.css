@@ -35,6 +35,9 @@
   background: transparent;
   color: var(--color-text);
   padding-right: 1.25rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .ui-select__field::-ms-expand {
