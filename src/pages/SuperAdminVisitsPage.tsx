@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useOutletContext } from 'react-router-dom'
@@ -23,6 +23,7 @@ import {
   type CompanySnapshot,
   type Visit,
   type VisitStatus,
+  type VisitReportFilter,
   updateVisitStatus,
   type Shopper,
 } from '../data/companyManagement.ts'
@@ -90,7 +91,10 @@ export function SuperAdminVisitsPage() {
     t('meta.superAdminVisits.description'),
   )
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { session } = useOutletContext<WorkspaceOutletContext>()
+  const filterStatus = searchParams.get('status') ?? ''
+  const filterReport = searchParams.get('filter') ?? ''
   const [visitState, setVisitState] = useState<VisitState>({
     status: 'loading',
     visits: [],
@@ -142,9 +146,43 @@ export function SuperAdminVisitsPage() {
   const focusField = form.register('focusAreaIds')
   const shopperField = form.register('shopperId')
 
+  const visitFilterValues = useMemo(
+    () => ({ status: filterStatus, filter: filterReport }),
+    [filterStatus, filterReport],
+  )
+
+  const handleVisitFilterChange = (values: Record<string, unknown>) => {
+    const v = values as { status?: string; filter?: string }
+    const params: Record<string, string> = {}
+    if (v.status) params.status = v.status
+    if (v.filter) params.filter = v.filter
+    setSearchParams(params, { replace: true })
+  }
+
+  const getVisitsFilters = useMemo(() => {
+    const status =
+      filterStatus && [
+        'scheduled',
+        'under_review',
+        'report_submitted',
+        'feedback_requested',
+        'done',
+      ].includes(filterStatus)
+        ? (filterStatus as VisitStatus)
+        : undefined
+    const reportFilter =
+      filterReport &&
+      ['submittedLast28', 'reviewedLast28', 'submittedToClientLast28'].includes(
+        filterReport,
+      )
+        ? (filterReport as VisitReportFilter)
+        : undefined
+    return { status, reportFilter }
+  }, [filterStatus, filterReport])
+
   const refreshVisits = async () => {
     try {
-      const visits = await fetchVisits()
+      const visits = await fetchVisits(getVisitsFilters)
       setVisitState({ status: 'ready', visits, errorMessage: null })
     } catch (error) {
       setVisitState({
@@ -178,7 +216,7 @@ export function SuperAdminVisitsPage() {
       return
     }
     refreshVisits()
-  }, [session.isSuperAdmin, session.isAccountManager, t])
+  }, [session.isSuperAdmin, session.isAccountManager, t, getVisitsFilters])
 
   useEffect(() => {
     if (shopperQuery.trim().length < 2) {
@@ -361,12 +399,39 @@ export function SuperAdminVisitsPage() {
         </Button>
       </header>
 
-      {visitState.visits.length === 0 ? (
+      {visitState.visits.length === 0 && !filterStatus && !filterReport ? (
         <Card className="super-admin-card">
           <p>{t('superAdmin.visits.empty')}</p>
         </Card>
       ) : (
         <Table<Visit>
+          filterMode="server"
+          filterValues={visitFilterValues}
+          onFilterChange={handleVisitFilterChange}
+          filters={[
+            {
+              key: 'status',
+              label: t('superAdmin.visits.filters.status'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.visits.filters.allStatuses') },
+                ...(['scheduled', 'under_review', 'report_submitted', 'feedback_requested', 'done'] as VisitStatus[]).map(
+                  (s) => ({ value: s, label: t(`superAdmin.visits.status.${s}`) }),
+                ),
+              ],
+            },
+            {
+              key: 'filter',
+              label: t('superAdmin.visits.filters.reportPeriod'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.visits.filters.allPeriods') },
+                { value: 'submittedLast28', label: t('superAdmin.visits.filters.submittedLast28') },
+                { value: 'reviewedLast28', label: t('superAdmin.visits.filters.reviewedLast28') },
+                { value: 'submittedToClientLast28', label: t('superAdmin.visits.filters.submittedToClientLast28') },
+              ],
+            },
+          ]}
           columns={[
             {
               key: 'company',

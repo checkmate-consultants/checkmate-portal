@@ -454,6 +454,15 @@ const resources = {
           subtitle: 'Plan and track evaluations across every property.',
           newVisit: 'Schedule visit',
           editVisit: 'Edit',
+          filters: {
+            status: 'Status',
+            reportPeriod: 'Report period',
+            allStatuses: 'All statuses',
+            allPeriods: 'All time',
+            submittedLast28: 'Submitted by shoppers (last 28 days)',
+            reviewedLast28: 'Reviewed (last 28 days)',
+            submittedToClientLast28: 'Submitted to client (last 28 days)',
+          },
           table: {
             property: 'Property',
             company: 'Company',
@@ -1164,6 +1173,15 @@ const resources = {
           subtitle: 'خطط وتتبّع زيارات التقييم لجميع العقارات.',
           newVisit: 'جدولة زيارة',
           editVisit: 'تعديل',
+          filters: {
+            status: 'الحالة',
+            reportPeriod: 'فترة التقرير',
+            allStatuses: 'كل الحالات',
+            allPeriods: 'كل الفترات',
+            submittedLast28: 'المُرسلة من المتسوقين (آخر 28 يوماً)',
+            reviewedLast28: 'المُراجَعة (آخر 28 يوماً)',
+            submittedToClientLast28: 'المُسلّمة للعميل (آخر 28 يوماً)',
+          },
           table: {
             property: 'العقار',
             company: 'الشركة',

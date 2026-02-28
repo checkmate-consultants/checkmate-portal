@@ -529,9 +529,23 @@ export const fetchCompanyDirectory = async (): Promise<
   })
 }
 
-export const fetchVisits = async (): Promise<Visit[]> => {
+/** Filter by report lifecycle (matches overview stats: last 28 days). */
+export type VisitReportFilter =
+  | 'submittedLast28'
+  | 'reviewedLast28'
+  | 'submittedToClientLast28'
+
+export type FetchVisitsFilters = {
+  status?: VisitStatus
+  /** Report lifecycle filter: limits to visits in that stage within last 28 days. */
+  reportFilter?: VisitReportFilter
+}
+
+export const fetchVisits = async (
+  filters?: FetchVisitsFilters,
+): Promise<Visit[]> => {
   const supabase = getSupabaseClient()
-  const { data, error } = await supabase
+  let builder = supabase
     .from('visits')
     .select(
       `
@@ -563,6 +577,28 @@ export const fetchVisits = async (): Promise<Visit[]> => {
       `,
     )
     .order('scheduled_for', { ascending: false })
+
+  if (filters?.status) {
+    builder = builder.eq('status', filters.status)
+  }
+  if (filters?.reportFilter) {
+    const since = new Date()
+    since.setDate(since.getDate() - 28)
+    const sinceIso = since.toISOString()
+    switch (filters.reportFilter) {
+      case 'submittedLast28':
+        builder = builder.gte('under_review_at', sinceIso)
+        break
+      case 'reviewedLast28':
+        builder = builder.gte('reviewed_at', sinceIso)
+        break
+      case 'submittedToClientLast28':
+        builder = builder.gte('report_submitted_at', sinceIso)
+        break
+    }
+  }
+
+  const { data, error } = await builder
 
   if (error) {
     throw error

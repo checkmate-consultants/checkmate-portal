@@ -106,6 +106,10 @@ export function SuperAdminOverviewPage() {
               {t('superAdmin.overview.last28Days')}
             </h3>
             <div className="super-admin-overview__cards">
+              <Link
+                to="/workspace/admin/visits?filter=submittedLast28"
+                className="super-admin-overview__card-link"
+              >
                 <Card className="super-admin-overview__card">
                   <p className="super-admin-overview__label">
                     {t('superAdmin.overview.submittedByShoppers')}
@@ -114,6 +118,11 @@ export function SuperAdminOverviewPage() {
                     {stats.reportsSubmittedByShoppersLast28Days}
                   </p>
                 </Card>
+              </Link>
+              <Link
+                to="/workspace/admin/visits?filter=reviewedLast28"
+                className="super-admin-overview__card-link"
+              >
                 <Card className="super-admin-overview__card">
                   <p className="super-admin-overview__label">
                     {t('superAdmin.overview.reviewed')}
@@ -122,6 +131,11 @@ export function SuperAdminOverviewPage() {
                     {stats.reportsReviewedLast28Days}
                   </p>
                 </Card>
+              </Link>
+              <Link
+                to="/workspace/admin/visits?filter=submittedToClientLast28"
+                className="super-admin-overview__card-link"
+              >
                 <Card className="super-admin-overview__card">
                   <p className="super-admin-overview__label">
                     {t('superAdmin.overview.submittedToClient')}
@@ -130,6 +144,7 @@ export function SuperAdminOverviewPage() {
                     {stats.reportsSubmittedToClientLast28Days}
                   </p>
                 </Card>
+              </Link>
             </div>
           </div>
         </div>
