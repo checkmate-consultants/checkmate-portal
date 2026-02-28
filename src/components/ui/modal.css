@@ -45,16 +45,6 @@
   color: var(--color-text-muted);
 }
 
-.ui-modal__close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent);
-  background: transparent;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
 .ui-modal__body {
   display: flex;
   flex-direction: column;

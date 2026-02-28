@@ -31,16 +31,6 @@ export function Modal({
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          {onClose && (
-            <button
-              type="button"
-              className="ui-modal__close"
-              aria-label="Close"
-              onClick={onClose}
-            >
-              ×
-            </button>
-          )}
         </header>
         <div className="ui-modal__body">{children}</div>
         {actions && <footer className="ui-modal__footer">{actions}</footer>}
