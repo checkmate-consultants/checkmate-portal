@@ -302,6 +302,17 @@ export function AccountPage() {
               className="account-page__form"
               onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
             >
+            {/* Hidden username field for accessibility and password manager recognition */}
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value={user?.email ?? ''}
+              readOnly
+              tabIndex={-1}
+              aria-hidden="true"
+              className="account-page__username-hidden"
+            />
             <FormField
               id="account-current-password"
               label={t('account.changePassword.currentPassword')}

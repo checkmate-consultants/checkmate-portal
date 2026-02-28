@@ -72,6 +72,19 @@
   gap: 1.25rem;
 }
 
+/* Hidden username field for password form accessibility (password managers / a11y) */
+.account-page__username-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .account-page__success {
   color: var(--color-success, var(--color-accent));
   font-size: 0.9rem;
