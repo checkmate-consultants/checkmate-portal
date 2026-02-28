@@ -102,6 +102,7 @@ type ShopperRecord = {
   created_at: string
   status: ShopperStatus
   location_country?: string | null
+  location_city?: string | null
 }
 
 export type Shopper = {
@@ -111,11 +112,13 @@ export type Shopper = {
   createdAt: string
   status: ShopperStatus
   locationCountry?: string | null
+  locationCity?: string | null
 }
 
 export type FetchShoppersFilters = {
   status?: ShopperStatus
   country?: string | null
+  city?: string | null
   /** Search by name or email (case-insensitive). */
   search?: string
 }
@@ -1037,7 +1040,7 @@ export const fetchShoppers = async (
   const supabase = getSupabaseClient()
   let builder = supabase
     .from('shoppers')
-    .select('id, full_name, email, created_at, status, location_country')
+    .select('id, full_name, email, created_at, status, location_country, location_city')
     .order('created_at', { ascending: false })
 
   if (filters?.status) {
@@ -1045,6 +1048,9 @@ export const fetchShoppers = async (
   }
   if (filters?.country != null && filters.country !== '') {
     builder = builder.eq('location_country', filters.country)
+  }
+  if (filters?.city != null && filters.city !== '') {
+    builder = builder.eq('location_city', filters.city)
   }
   if (filters?.search?.trim()) {
     const sanitized = filters.search.trim()
@@ -1071,7 +1077,29 @@ export const fetchShoppers = async (
     createdAt: record.created_at,
     status: record.status,
     locationCountry: record.location_country ?? null,
+    locationCity: record.location_city ?? null,
   }))
+}
+
+/** Returns distinct city values from shoppers (non-null, sorted). Used to populate city filter. */
+export const fetchShopperCities = async (): Promise<string[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('shoppers')
+    .select('location_city')
+    .not('location_city', 'is', null)
+
+  if (error) throw error
+  if (!data?.length) return []
+
+  const cities = [
+    ...new Set(
+      (data as { location_city: string | null }[])
+        .map((r) => r.location_city?.trim())
+        .filter((c): c is string => Boolean(c)),
+    ),
+  ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  return cities
 }
 
 export const searchShoppers = async (

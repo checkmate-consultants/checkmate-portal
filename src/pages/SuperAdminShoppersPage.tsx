@@ -13,6 +13,7 @@ import { Input } from '../components/ui/Input.tsx'
 import { Select } from '../components/ui/Select.tsx'
 import {
   fetchShoppers,
+  fetchShopperCities,
   createShopper,
   updateShopperStatus,
   type Shopper,
@@ -87,8 +88,10 @@ export function SuperAdminShoppersPage() {
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
     status: '',
     country: '',
+    city: '',
     search: '',
   })
+  const [cities, setCities] = useState<string[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [creationResult, setCreationResult] = useState<{
     email: string
@@ -116,14 +119,16 @@ export function SuperAdminShoppersPage() {
   const loadShoppers = async (filters?: {
     status?: string
     country?: string
+    city?: string
     search?: string
   }) => {
     try {
       const apiFilters =
-        filters ?? (filterValues as { status?: string; country?: string; search?: string })
+        filters ?? (filterValues as { status?: string; country?: string; city?: string; search?: string })
       const shoppers = await fetchShoppers({
         ...(apiFilters.status && { status: apiFilters.status as ShopperStatus }),
         ...(apiFilters.country && { country: apiFilters.country }),
+        ...(apiFilters.city && { city: apiFilters.city }),
         ...(apiFilters.search?.trim() && { search: apiFilters.search.trim() }),
       })
       setShopperState({ status: 'ready', shoppers, errorMessage: null })
@@ -148,12 +153,13 @@ export function SuperAdminShoppersPage() {
       })
       return
     }
-    loadShoppers(filterValues as { status?: string; country?: string; search?: string })
+    loadShoppers(filterValues as { status?: string; country?: string; city?: string; search?: string })
+    fetchShopperCities().then(setCities).catch(() => setCities([]))
   }, [session.isSuperAdmin, t])
 
   const handleFilterChange = (values: Record<string, unknown>) => {
     setFilterValues(values)
-    loadShoppers(values as { status?: string; country?: string; search?: string })
+    loadShoppers(values as { status?: string; country?: string; city?: string; search?: string })
   }
 
   const openModal = async () => {
@@ -245,6 +251,11 @@ export function SuperAdminShoppersPage() {
               },
             },
             {
+              key: 'locationCity',
+              header: t('superAdmin.shoppers.table.city'),
+              render: (shopper) => shopper.locationCity ?? '—',
+            },
+            {
               key: 'createdAt',
               header: t('superAdmin.shoppers.table.created'),
               render: (shopper) =>
@@ -281,7 +292,7 @@ export function SuperAdminShoppersPage() {
           filterValues={filterValues}
           onFilterChange={handleFilterChange}
           emptyState={
-            !filterValues.status && !filterValues.country && !filterValues.search ? (
+            !filterValues.status && !filterValues.country && !filterValues.city && !filterValues.search ? (
               <p>{t('superAdmin.shoppers.empty')}</p>
             ) : undefined
           }
@@ -304,6 +315,15 @@ export function SuperAdminShoppersPage() {
               options: [
                 { value: '', label: t('superAdmin.shoppers.filters.allCountries') },
                 ...COUNTRIES.map((c) => ({ value: c.code, label: c.name })),
+              ],
+            },
+            {
+              key: 'city',
+              label: t('superAdmin.shoppers.filters.city'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.shoppers.filters.allCities') },
+                ...cities.map((city) => ({ value: city, label: city })),
               ],
             },
             {
