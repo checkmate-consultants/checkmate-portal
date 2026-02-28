@@ -85,6 +85,17 @@
   gap: 1.25rem;
 }
 
+.super-admin-overview__card-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.super-admin-overview__card-link:hover .super-admin-overview__card {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
 .super-admin-overview__card {
   padding: 1.5rem 1.75rem;
 }

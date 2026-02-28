@@ -92,6 +92,7 @@ export function SuperAdminShoppersPage() {
       country: searchParams.get('country') ?? '',
       city: searchParams.get('city') ?? '',
       search: searchParams.get('search') ?? '',
+      createdInLastDays: searchParams.get('createdInLastDays') ?? '',
     }),
     [searchParams],
   )
@@ -125,15 +126,19 @@ export function SuperAdminShoppersPage() {
     country?: string
     city?: string
     search?: string
+    createdInLastDays?: string
   }) => {
     try {
       const apiFilters =
-        filters ?? (filterValues as { status?: string; country?: string; city?: string; search?: string })
+        filters ?? (filterValues as { status?: string; country?: string; city?: string; search?: string; createdInLastDays?: string })
+      const createdDays = apiFilters.createdInLastDays?.trim()
+      const createdInLastDaysNum = createdDays ? parseInt(createdDays, 10) : undefined
       const shoppers = await fetchShoppers({
         ...(apiFilters.status && { status: apiFilters.status as ShopperStatus }),
         ...(apiFilters.country && { country: apiFilters.country }),
         ...(apiFilters.city && { city: apiFilters.city }),
         ...(apiFilters.search?.trim() && { search: apiFilters.search.trim() }),
+        ...(createdInLastDaysNum != null && !Number.isNaN(createdInLastDaysNum) && createdInLastDaysNum > 0 && { createdInLastDays: createdInLastDaysNum }),
       })
       setShopperState({ status: 'ready', shoppers, errorMessage: null })
     } catch (error) {
@@ -162,18 +167,20 @@ export function SuperAdminShoppersPage() {
       country: searchParams.get('country') ?? '',
       city: searchParams.get('city') ?? '',
       search: searchParams.get('search') ?? '',
+      createdInLastDays: searchParams.get('createdInLastDays') ?? '',
     }
     loadShoppers(filters)
     fetchShopperCities().then(setCities).catch(() => setCities([]))
   }, [session.isSuperAdmin, searchParams, t])
 
   const handleFilterChange = (values: Record<string, unknown>) => {
-    const next = values as { status?: string; country?: string; city?: string; search?: string }
+    const next = values as { status?: string; country?: string; city?: string; search?: string; createdInLastDays?: string }
     const params: Record<string, string> = {}
     if (next.status) params.status = next.status
     if (next.country) params.country = next.country
     if (next.city) params.city = next.city
     if (next.search?.trim()) params.search = next.search.trim()
+    if (next.createdInLastDays?.trim()) params.createdInLastDays = next.createdInLastDays.trim()
     setSearchParams(params, { replace: true })
   }
 
@@ -307,7 +314,7 @@ export function SuperAdminShoppersPage() {
           filterValues={filterValues}
           onFilterChange={handleFilterChange}
           emptyState={
-            !filterValues.status && !filterValues.country && !filterValues.city && !filterValues.search ? (
+            !filterValues.status && !filterValues.country && !filterValues.city && !filterValues.search && !filterValues.createdInLastDays ? (
               <p>{t('superAdmin.shoppers.empty')}</p>
             ) : undefined
           }
@@ -321,6 +328,16 @@ export function SuperAdminShoppersPage() {
                 { value: 'pending', label: t('shopperStatus.pending') },
                 { value: 'under_review', label: t('shopperStatus.under_review') },
                 { value: 'confirmed', label: t('shopperStatus.confirmed') },
+              ],
+            },
+            {
+              key: 'createdInLastDays',
+              label: t('superAdmin.shoppers.filters.createdInLastDays'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.shoppers.filters.allTime') },
+                { value: '7', label: t('superAdmin.shoppers.filters.last7Days') },
+                { value: '28', label: t('superAdmin.shoppers.filters.last28Days') },
               ],
             },
             {

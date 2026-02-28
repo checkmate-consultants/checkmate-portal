@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useOutletContext } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import {
   fetchSuperAdminOverviewStats,
@@ -145,14 +145,19 @@ export function SuperAdminOverviewPage() {
               {t('superAdmin.overview.last28Days')}
             </h3>
             <div className="super-admin-overview__cards">
-              <Card className="super-admin-overview__card">
-                <p className="super-admin-overview__label">
-                  {t('superAdmin.overview.created')}
-                </p>
-                <p className="super-admin-overview__value">
-                  {stats.shoppersCreatedLast28Days}
-                </p>
-              </Card>
+              <Link
+                to="/workspace/admin/shoppers?createdInLastDays=28"
+                className="super-admin-overview__card-link"
+              >
+                <Card className="super-admin-overview__card">
+                  <p className="super-admin-overview__label">
+                    {t('superAdmin.overview.created')}
+                  </p>
+                  <p className="super-admin-overview__value">
+                    {stats.shoppersCreatedLast28Days}
+                  </p>
+                </Card>
+              </Link>
             </div>
           </div>
         </div>

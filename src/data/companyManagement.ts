@@ -121,6 +121,8 @@ export type FetchShoppersFilters = {
   city?: string | null
   /** Search by name or email (case-insensitive). */
   search?: string
+  /** Only shoppers created in the last N days (e.g. 28 for "last 28 days"). */
+  createdInLastDays?: number
 }
 
 /** Full shopper profile as submitted (for super admin details view). */
@@ -1057,6 +1059,11 @@ export const fetchShoppers = async (
     builder = builder.or(
       `full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`,
     )
+  }
+  if (filters?.createdInLastDays != null && filters.createdInLastDays > 0) {
+    const since = new Date()
+    since.setDate(since.getDate() - filters.createdInLastDays)
+    builder = builder.gte('created_at', since.toISOString())
   }
 
   const { data, error } = await builder
