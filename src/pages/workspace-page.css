@@ -62,6 +62,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-inline-start: auto; /* push to end: right in LTR, left in RTL (desktop has only actions visible) */
 }
 
 .workspace-menu-button {
