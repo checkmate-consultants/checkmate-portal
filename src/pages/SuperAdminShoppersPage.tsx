@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useOutletContext, Link } from 'react-router-dom'
+import { useOutletContext, useSearchParams, Link } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { Table } from '../components/ui/Table.tsx'
@@ -80,17 +80,21 @@ export function SuperAdminShoppersPage() {
     t('meta.superAdminShoppers.description'),
   )
   const { session } = useOutletContext<WorkspaceOutletContext>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [shopperState, setShopperState] = useState<ShopperState>({
     status: 'loading',
     shoppers: [],
     errorMessage: null,
   })
-  const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
-    status: '',
-    country: '',
-    city: '',
-    search: '',
-  })
+  const filterValues = useMemo(
+    () => ({
+      status: searchParams.get('status') ?? '',
+      country: searchParams.get('country') ?? '',
+      city: searchParams.get('city') ?? '',
+      search: searchParams.get('search') ?? '',
+    }),
+    [searchParams],
+  )
   const [cities, setCities] = useState<string[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [creationResult, setCreationResult] = useState<{
@@ -153,13 +157,24 @@ export function SuperAdminShoppersPage() {
       })
       return
     }
-    loadShoppers(filterValues as { status?: string; country?: string; city?: string; search?: string })
+    const filters = {
+      status: searchParams.get('status') ?? '',
+      country: searchParams.get('country') ?? '',
+      city: searchParams.get('city') ?? '',
+      search: searchParams.get('search') ?? '',
+    }
+    loadShoppers(filters)
     fetchShopperCities().then(setCities).catch(() => setCities([]))
-  }, [session.isSuperAdmin, t])
+  }, [session.isSuperAdmin, searchParams, t])
 
   const handleFilterChange = (values: Record<string, unknown>) => {
-    setFilterValues(values)
-    loadShoppers(values as { status?: string; country?: string; city?: string; search?: string })
+    const next = values as { status?: string; country?: string; city?: string; search?: string }
+    const params: Record<string, string> = {}
+    if (next.status) params.status = next.status
+    if (next.country) params.country = next.country
+    if (next.city) params.city = next.city
+    if (next.search?.trim()) params.search = next.search.trim()
+    setSearchParams(params, { replace: true })
   }
 
   const openModal = async () => {
