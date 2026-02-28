@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 import { Input } from './Input.tsx'
 import { Select } from './Select.tsx'
 import './table.css'
@@ -83,6 +84,7 @@ export function Table<T>({
   filterValues: controlledFilterValues,
   onFilterChange,
 }: TableProps<T>) {
+  const { t } = useTranslation()
   const [internalFilterValues, setInternalFilterValues] = useState<Record<string, unknown>>(
     () => defaultFilterValues(filters as TableFilterConfig<unknown>[]),
   )
@@ -156,7 +158,7 @@ export function Table<T>({
       {isEmpty && emptyState ? (
         <div className="ui-table-empty">{emptyState}</div>
       ) : isEmpty ? (
-        <div className="ui-table-empty">No results match the current filters.</div>
+        <div className="ui-table-empty">{t('ui.tableNoResultsMatchFilters')}</div>
       ) : (
         <div className="ui-table-wrap">
           <table className="ui-table">

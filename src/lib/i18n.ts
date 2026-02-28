@@ -93,6 +93,7 @@ const resources = {
         changeLanguage: 'Change language',
         showPassword: 'Show password',
         hidePassword: 'Hide password',
+        tableNoResultsMatchFilters: 'No results match the current filters.',
       },
       signin: {
         title: 'Welcome back',
@@ -810,6 +811,7 @@ const resources = {
         changeLanguage: 'تغيير اللغة',
         showPassword: 'إظهار كلمة المرور',
         hidePassword: 'إخفاء كلمة المرور',
+        tableNoResultsMatchFilters: 'لا توجد نتائج تطابق التصفية الحالية.',
       },
       signin: {
         title: 'مرحباً بعودتك',
