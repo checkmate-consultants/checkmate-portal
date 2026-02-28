@@ -12,7 +12,6 @@ import { Input } from '../components/ui/Input.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { getSupabaseClient } from '../lib/supabaseClient.ts'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
-import { getDisplayName } from '../components/workspace/UserAccountDropdown.tsx'
 import './account-page.css'
 
 type UpdateNameValues = {

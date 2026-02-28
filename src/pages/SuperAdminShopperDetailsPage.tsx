@@ -12,6 +12,7 @@ import {
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import { LANGUAGES, FLUENCY_LEVELS } from '../data/languages.ts'
+import { MapDisplay } from '../components/ui/MapDisplay.tsx'
 import './super-admin-shopper-details-page.css'
 
 function DetailRow({
@@ -190,6 +191,18 @@ export function SuperAdminShopperDetailsPage() {
                 noValueLabel={t('superAdmin.shoppers.details.noValue')}
               />
             )}
+            {shopper.locationLat != null &&
+              shopper.locationLng != null &&
+              import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
+                <div className="shopper-details__map-wrap">
+                  <MapDisplay
+                    lat={shopper.locationLat}
+                    lng={shopper.locationLng}
+                    googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string}
+                    height={240}
+                  />
+                </div>
+              )}
           </dl>
         </Card>
 

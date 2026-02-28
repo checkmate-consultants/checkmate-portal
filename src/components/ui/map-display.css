@@ -1,0 +1,20 @@
+.map-display {
+  width: 100%;
+  border-radius: var(--radius-md, 16px);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.map-display--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.map-display__error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
