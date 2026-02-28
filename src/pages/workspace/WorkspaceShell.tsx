@@ -38,6 +38,13 @@ export function WorkspaceShell({
       />
       <main className="workspace-main">
         <header className="workspace-topbar">
+          <div className="workspace-topbar__actions">
+            {session.user && (
+              <UserAccountDropdown user={session.user} onSignOut={onSignOut} />
+            )}
+            <ThemeToggle />
+            <LanguageSwitcher />
+          </div>
           <button
             type="button"
             className="workspace-menu-button"
@@ -46,13 +53,6 @@ export function WorkspaceShell({
           >
             <span />
           </button>
-          <div className="workspace-topbar__actions">
-            {session.user && (
-              <UserAccountDropdown user={session.user} onSignOut={onSignOut} />
-            )}
-            <ThemeToggle />
-            <LanguageSwitcher />
-          </div>
         </header>
         <div className="workspace-content">
           <Outlet context={{ session }} />
