@@ -25,7 +25,7 @@ import { WorkspaceIndexRedirect } from './pages/workspace/WorkspaceIndexRedirect
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/signup" replace />} />
+      <Route path="/" element={<Navigate to="/signin" replace />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/account/update-password" element={<UpdatePasswordPage />} />
@@ -71,7 +71,7 @@ function App() {
         <Route path="admin/account-managers" element={<SuperAdminAccountManagersPage />} />
         <Route path="admin/invoices" element={<SuperAdminInvoicesPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/signup" replace />} />
+      <Route path="*" element={<Navigate to="/signin" replace />} />
     </Routes>
   )
 }
