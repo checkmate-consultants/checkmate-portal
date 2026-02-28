@@ -92,7 +92,7 @@
 }
 
 .super-admin-overview__card-link:hover .super-admin-overview__card {
-  outline: 2px solid var(--color-primary, #2563eb);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
