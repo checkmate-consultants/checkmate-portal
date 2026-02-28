@@ -101,6 +101,7 @@ type ShopperRecord = {
   email: string
   created_at: string
   status: ShopperStatus
+  location_country?: string | null
 }
 
 export type Shopper = {
@@ -109,6 +110,14 @@ export type Shopper = {
   email: string
   createdAt: string
   status: ShopperStatus
+  locationCountry?: string | null
+}
+
+export type FetchShoppersFilters = {
+  status?: ShopperStatus
+  country?: string | null
+  /** Search by name or email (case-insensitive). */
+  search?: string
 }
 
 /** Full shopper profile as submitted (for super admin details view). */
@@ -1022,12 +1031,29 @@ export const fetchSuperAdminOverviewStats =
     }
   }
 
-export const fetchShoppers = async (): Promise<Shopper[]> => {
+export const fetchShoppers = async (
+  filters?: FetchShoppersFilters,
+): Promise<Shopper[]> => {
   const supabase = getSupabaseClient()
-  const { data, error } = await supabase
+  let builder = supabase
     .from('shoppers')
-    .select('id, full_name, email, created_at, status')
+    .select('id, full_name, email, created_at, status, location_country')
     .order('created_at', { ascending: false })
+
+  if (filters?.status) {
+    builder = builder.eq('status', filters.status)
+  }
+  if (filters?.country != null && filters.country !== '') {
+    builder = builder.eq('location_country', filters.country)
+  }
+  if (filters?.search?.trim()) {
+    const sanitized = filters.search.trim()
+    builder = builder.or(
+      `full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`,
+    )
+  }
+
+  const { data, error } = await builder
 
   if (error) {
     throw error
@@ -1044,6 +1070,7 @@ export const fetchShoppers = async (): Promise<Shopper[]> => {
     email: record.email,
     createdAt: record.created_at,
     status: record.status,
+    locationCountry: record.location_country ?? null,
   }))
 }
 

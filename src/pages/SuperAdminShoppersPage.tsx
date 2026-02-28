@@ -18,6 +18,7 @@ import {
   type Shopper,
   type ShopperStatus,
 } from '../data/companyManagement.ts'
+import { COUNTRIES } from '../data/countries.ts'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-shoppers-page.css'
@@ -83,6 +84,11 @@ export function SuperAdminShoppersPage() {
     shoppers: [],
     errorMessage: null,
   })
+  const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
+    status: '',
+    country: '',
+    search: '',
+  })
   const [modalOpen, setModalOpen] = useState(false)
   const [creationResult, setCreationResult] = useState<{
     email: string
@@ -107,9 +113,19 @@ export function SuperAdminShoppersPage() {
     mode: 'onChange',
   })
 
-  const loadShoppers = async () => {
+  const loadShoppers = async (filters?: {
+    status?: string
+    country?: string
+    search?: string
+  }) => {
     try {
-      const shoppers = await fetchShoppers()
+      const apiFilters =
+        filters ?? (filterValues as { status?: string; country?: string; search?: string })
+      const shoppers = await fetchShoppers({
+        ...(apiFilters.status && { status: apiFilters.status as ShopperStatus }),
+        ...(apiFilters.country && { country: apiFilters.country }),
+        ...(apiFilters.search?.trim() && { search: apiFilters.search.trim() }),
+      })
       setShopperState({ status: 'ready', shoppers, errorMessage: null })
     } catch (error) {
       setShopperState({
@@ -132,8 +148,13 @@ export function SuperAdminShoppersPage() {
       })
       return
     }
-    loadShoppers()
+    loadShoppers(filterValues as { status?: string; country?: string; search?: string })
   }, [session.isSuperAdmin, t])
+
+  const handleFilterChange = (values: Record<string, unknown>) => {
+    setFilterValues(values)
+    loadShoppers(values as { status?: string; country?: string; search?: string })
+  }
 
   const openModal = async () => {
     form.reset({ fullName: '', email: '' })
@@ -191,12 +212,7 @@ export function SuperAdminShoppersPage() {
         </Button>
       </header>
 
-      {shopperState.shoppers.length === 0 ? (
-        <Card className="super-admin-card">
-          <p>{t('superAdmin.shoppers.empty')}</p>
-        </Card>
-      ) : (
-        <Table<Shopper>
+      <Table<Shopper>
           columns={[
             {
               key: 'fullName',
@@ -218,6 +234,15 @@ export function SuperAdminShoppersPage() {
               key: 'status',
               header: t('superAdmin.shoppers.table.status'),
               render: (shopper) => t(`shopperStatus.${shopper.status}`),
+            },
+            {
+              key: 'locationCountry',
+              header: t('superAdmin.shoppers.table.country'),
+              render: (shopper) => {
+                const code = shopper.locationCountry ?? ''
+                const name = code ? COUNTRIES.find((c) => c.code === code)?.name ?? code : '—'
+                return name
+              },
             },
             {
               key: 'createdAt',
@@ -252,8 +277,43 @@ export function SuperAdminShoppersPage() {
           ]}
           data={shopperState.shoppers}
           getRowKey={(shopper) => shopper.id}
+          filterMode="server"
+          filterValues={filterValues}
+          onFilterChange={handleFilterChange}
+          emptyState={
+            !filterValues.status && !filterValues.country && !filterValues.search ? (
+              <p>{t('superAdmin.shoppers.empty')}</p>
+            ) : undefined
+          }
+          filters={[
+            {
+              key: 'status',
+              label: t('superAdmin.shoppers.filters.status'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.shoppers.filters.allStatuses') },
+                { value: 'pending', label: t('shopperStatus.pending') },
+                { value: 'under_review', label: t('shopperStatus.under_review') },
+                { value: 'confirmed', label: t('shopperStatus.confirmed') },
+              ],
+            },
+            {
+              key: 'country',
+              label: t('superAdmin.shoppers.filters.country'),
+              type: 'select',
+              options: [
+                { value: '', label: t('superAdmin.shoppers.filters.allCountries') },
+                ...COUNTRIES.map((c) => ({ value: c.code, label: c.name })),
+              ],
+            },
+            {
+              key: 'search',
+              label: t('superAdmin.shoppers.filters.search'),
+              type: 'text',
+              placeholder: t('superAdmin.shoppers.filters.search'),
+            },
+          ]}
         />
-      )}
 
       <Modal
         open={modalOpen}

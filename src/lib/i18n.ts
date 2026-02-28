@@ -528,8 +528,16 @@ const resources = {
             name: 'Name',
             email: 'Email',
             status: 'Status',
+            country: 'Country',
             created: 'Created',
             actions: 'Actions',
+          },
+          filters: {
+            status: 'Status',
+            country: 'Country',
+            search: 'Search by name or email',
+            allStatuses: 'All statuses',
+            allCountries: 'All countries',
           },
           details: {
             title: 'Shopper profile',
@@ -1223,8 +1231,16 @@ const resources = {
             name: 'الاسم',
             email: 'البريد',
             status: 'الحالة',
+            country: 'الدولة',
             created: 'تاريخ الإنشاء',
             actions: 'إجراءات',
+          },
+          filters: {
+            status: 'الحالة',
+            country: 'الدولة',
+            search: 'البحث بالاسم أو البريد',
+            allStatuses: 'كل الحالات',
+            allCountries: 'كل الدول',
           },
           details: {
             title: 'ملف المتسوّق',
