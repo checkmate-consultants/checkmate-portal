@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { User } from '@supabase/supabase-js'
+import { LanguageSwitcher } from '../LanguageSwitcher.tsx'
+import { ThemeToggle } from '../ThemeToggle.tsx'
 import './user-account-dropdown.css'
 
 type UserAccountDropdownProps = {
@@ -62,6 +64,15 @@ export function UserAccountDropdown({ user, onSignOut }: UserAccountDropdownProp
       </button>
       {open && (
         <div className="user-account-dropdown__menu" role="menu">
+          <div className="user-account-dropdown__row" role="none">
+            <span className="user-account-dropdown__row-label">{t('workspace.accountMenu.language')}</span>
+            <LanguageSwitcher />
+          </div>
+          <div className="user-account-dropdown__row" role="none">
+            <span className="user-account-dropdown__row-label">{t('workspace.accountMenu.theme')}</span>
+            <ThemeToggle />
+          </div>
+          <div className="user-account-dropdown__separator" role="separator" />
           <button
             type="button"
             role="menuitem"

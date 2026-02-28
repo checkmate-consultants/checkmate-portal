@@ -259,6 +259,8 @@ const resources = {
         accountMenu: {
           label: 'Open account menu',
           account: 'Account',
+          language: 'Language',
+          theme: 'Theme',
           signOut: 'Sign out',
         },
         noCompany: "You don't have a company workspace. Please contact support.",
@@ -979,6 +981,8 @@ const resources = {
         accountMenu: {
           label: 'فتح قائمة الحساب',
           account: 'الحساب',
+          language: 'اللغة',
+          theme: 'المظهر',
           signOut: 'تسجيل الخروج',
         },
         noCompany: 'ليس لديك مساحة عمل لشركة. يرجى التواصل مع الدعم.',
