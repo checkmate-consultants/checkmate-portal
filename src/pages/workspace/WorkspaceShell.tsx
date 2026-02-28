@@ -33,6 +33,7 @@ export function WorkspaceShell({
         isSuperAdmin={session.isSuperAdmin}
         isAccountManager={session.isAccountManager}
         isShopper={session.isShopper}
+        isCompanyAdmin={session.membership?.role === 'company_admin'}
       />
       <main className="workspace-main">
         <header className="workspace-topbar">

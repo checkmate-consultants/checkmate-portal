@@ -1,0 +1,77 @@
+.company-user-management {
+  padding: 1.5rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.company-user-management--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 1.5rem;
+}
+
+.company-user-management__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.company-user-management__back {
+  margin-bottom: 0.5rem;
+}
+
+.company-user-management__card {
+  padding: 1.5rem;
+}
+
+.company-user-management__card p {
+  margin: 0 0 1rem;
+}
+
+.company-user-management__result-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.company-user-management__result-card p {
+  margin: 0 0 0.5rem;
+}
+
+.company-user-management__result-card p:last-child {
+  margin-bottom: 0;
+}
+
+.company-user-management__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.company-user-management__reset-pwd,
+.company-user-management__remove {
+  padding: 0.25rem 0.5rem;
+}
+
+.company-user-management__select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 6px;
+  background: var(--color-bg, #fff);
+}
+
+.company-user-management__select:focus {
+  outline: 2px solid var(--color-focus, #0a0a0a);
+  outline-offset: 2px;
+}
+
+.company-user-management__select[aria-invalid='true'] {
+  border-color: var(--color-error, #c00);
+}

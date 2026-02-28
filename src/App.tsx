@@ -13,6 +13,7 @@ import { SuperAdminVisitReportPage } from './pages/SuperAdminVisitReportPage.tsx
 import { CompanyVisitsPage } from './pages/CompanyVisitsPage.tsx'
 import { CompanyVisitReportPage } from './pages/CompanyVisitReportPage.tsx'
 import { CompanyInvoicesPage } from './pages/CompanyInvoicesPage.tsx'
+import { CompanyUserManagementPage } from './pages/CompanyUserManagementPage.tsx'
 import { BenchmarkingPage } from './pages/BenchmarkingPage.tsx'
 import { ActionPlansPage } from './pages/ActionPlansPage.tsx'
 import { SuperAdminInvoicesPage } from './pages/SuperAdminInvoicesPage.tsx'
@@ -32,6 +33,7 @@ function App() {
       <Route path="/workspace" element={<WorkspacePage />}>
         <Route index element={<WorkspaceIndexRedirect />} />
         <Route path="company" element={<CompanyManagementPage />} />
+        <Route path="company/users" element={<CompanyUserManagementPage />} />
         <Route
           path="company/properties/:propertyId"
           element={<PropertyDetailsPage />}
@@ -52,6 +54,10 @@ function App() {
         <Route
           path="admin/companies/:companyId"
           element={<CompanyManagementPage />}
+        />
+        <Route
+          path="admin/companies/:companyId/users"
+          element={<CompanyUserManagementPage />}
         />
         <Route
           path="admin/companies/:companyId/action-plans"

@@ -11,6 +11,7 @@ type WorkspaceSidebarProps = {
   isSuperAdmin?: boolean
   isAccountManager?: boolean
   isShopper?: boolean
+  isCompanyAdmin?: boolean
 }
 
 type NavItem = {
@@ -26,6 +27,7 @@ export function WorkspaceSidebar({
   isSuperAdmin = false,
   isAccountManager = false,
   isShopper = false,
+  isCompanyAdmin = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
   const { mode } = useTheme()
@@ -56,6 +58,15 @@ export function WorkspaceSidebar({
             labelKey: 'workspace.sidebar.company',
             to: '/workspace/company',
           },
+          ...(isCompanyAdmin
+            ? [
+                {
+                  id: 'company-users',
+                  labelKey: 'workspace.sidebar.userManagement',
+                  to: '/workspace/company/users',
+                },
+              ]
+            : []),
           {
             id: 'company-visits',
             labelKey: 'workspace.sidebar.companyVisits',

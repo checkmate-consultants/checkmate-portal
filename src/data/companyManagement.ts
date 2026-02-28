@@ -367,6 +367,158 @@ export const fetchAccountManagers = async (): Promise<
   }))
 }
 
+export type CompanyMember = {
+  userId: string
+  role: string
+  email: string | null
+  fullName: string | null
+}
+
+export const fetchCompanyMembers = async (
+  companyId: string,
+): Promise<CompanyMember[]> => {
+  const supabase = getSupabaseClient()
+  const { data: membersData, error: membersError } = await supabase
+    .from('company_members')
+    .select('user_id, role')
+    .eq('company_id', companyId)
+    .order('role', { ascending: true })
+
+  if (membersError) {
+    throw membersError
+  }
+
+  const members = (membersData ?? []) as Array<{ user_id: string; role: string }>
+  if (members.length === 0) {
+    return []
+  }
+
+  const userIds = members.map((m) => m.user_id)
+  const { data: profilesData, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', userIds)
+
+  if (profilesError) {
+    throw profilesError
+  }
+
+  const profilesMap = new Map(
+    (profilesData ?? []).map((p: { id: string; email: string | null; full_name: string | null }) => [
+      p.id,
+      { email: p.email, full_name: p.full_name },
+    ]),
+  )
+
+  return members.map((m) => {
+    const profile = profilesMap.get(m.user_id)
+    return {
+      userId: m.user_id,
+      role: m.role,
+      email: profile?.email ?? null,
+      fullName: profile?.full_name ?? null,
+    }
+  })
+}
+
+export type InviteCompanyUserInput = {
+  companyId: string
+  email: string
+  fullName?: string
+}
+
+export const inviteCompanyUser = async ({
+  companyId,
+  email,
+  fullName,
+}: InviteCompanyUserInput): Promise<{ authUserId: string; tempPassword?: string }> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.functions.invoke('invite-company-user', {
+    body: {
+      companyId,
+      email: email.trim().toLowerCase(),
+      fullName: fullName?.trim() ?? undefined,
+    },
+  })
+
+  if (error) {
+    const message =
+      error.message ||
+      (error as { context?: { msg?: string } })?.context?.msg ||
+      'Failed to invite user.'
+    throw new Error(message)
+  }
+
+  if (data?.error) {
+    throw new Error(data.error)
+  }
+
+  if (!data?.authUserId) {
+    throw new Error('No data returned from invite-company-user')
+  }
+
+  return {
+    authUserId: data.authUserId,
+    ...(data.tempPassword && { tempPassword: data.tempPassword }),
+  }
+}
+
+export const removeCompanyMember = async (
+  companyId: string,
+  userId: string,
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('company_members')
+    .delete()
+    .eq('company_id', companyId)
+    .eq('user_id', userId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
+export type ResetUserPasswordInput = {
+  userId: string
+  /** Required when caller is a company admin (to verify user is in their company). Optional for super admin. */
+  companyId?: string
+}
+
+export const resetUserPassword = async ({
+  userId,
+  companyId,
+}: ResetUserPasswordInput): Promise<{ tempPassword: string }> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.functions.invoke(
+    'reset-user-password',
+    {
+      body: {
+        userId,
+        ...(companyId && { companyId }),
+      },
+    },
+  )
+
+  if (error) {
+    const message =
+      error.message ||
+      (error as { context?: { msg?: string } })?.context?.msg ||
+      'Failed to reset password.'
+    throw new Error(message)
+  }
+
+  if (data?.error) {
+    throw new Error(data.error)
+  }
+
+  if (!data?.tempPassword) {
+    throw new Error('No temporary password returned from reset-user-password')
+  }
+
+  return { tempPassword: data.tempPassword }
+}
+
 export type CreateAccountManagerInput = {
   email: string
   fullName?: string

@@ -296,6 +296,15 @@ export function CompanyManagementPage() {
               type="button"
               variant="ghost"
               onClick={() =>
+                navigate(`/workspace/admin/companies/${routeCompanyId}/users`)
+              }
+            >
+              {t('workspace.sidebar.userManagement')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
                 navigate(`/workspace/admin/companies/${routeCompanyId}/action-plans`)
               }
             >
