@@ -77,9 +77,9 @@ export function CompanyUserManagementPage() {
       z.object({
         email: z.string().min(1, t('validation.required')).email(t('validation.email')),
         fullName: z.string(),
-        ...(isSuperAdmin && {
-          companyId: z.string().min(1, t('validation.required')),
-        }),
+        companyId: isSuperAdmin
+          ? z.string().min(1, t('validation.required'))
+          : z.string().optional(),
       }),
     [t, isSuperAdmin],
   )
