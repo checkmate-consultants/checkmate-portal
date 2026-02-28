@@ -12,6 +12,7 @@
     "db:start": "supabase start",
     "functions:serve": "supabase functions serve",
     "favicon": "node scripts/generate-favicon.mjs",
+    "icon-light": "node scripts/process-icon-light.mjs",
     "logo": "node scripts/generate-logo.mjs"
   },
   "dependencies": {

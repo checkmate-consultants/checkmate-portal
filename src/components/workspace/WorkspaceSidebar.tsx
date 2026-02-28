@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import brandIcon from '../../assets/brand/icon.webp'
+import brandIconLight from '../../assets/brand/icon-light.webp'
+import { useTheme } from '../../theme/useTheme.ts'
 import './workspace-sidebar.css'
 
 type WorkspaceSidebarProps = {
@@ -26,7 +28,9 @@ export function WorkspaceSidebar({
   isShopper = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
+  const { mode } = useTheme()
   const showAdminNav = isSuperAdmin || isAccountManager
+  const iconSrc = mode === 'dark' ? brandIconLight : brandIcon
   const navItems: NavItem[] = [
     ...(isShopper
       ? [
@@ -125,7 +129,7 @@ export function WorkspaceSidebar({
       )}
       <div className="workspace-sidebar__brand">
         <span className="workspace-sidebar__logo">
-          <img src={brandIcon} alt={t('workspace.sidebar.logoAlt')} />
+          <img src={iconSrc} alt={t('workspace.sidebar.logoAlt')} />
         </span>
         <div>
           <p className="workspace-sidebar__label">{t('brand.name')}</p>
