@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
-import { FormField } from '../components/ui/FormField.tsx'
 import {
   fetchVisitReportFormData,
-  saveVisitFocusAreaReport,
+  saveVisitReportAnswers,
   updateVisitStatus,
   type VisitReportFormFocusArea,
 } from '../data/companyManagement.ts'
+import { ReportFormField } from '../components/visit-report/ReportFormField.tsx'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-visit-report-page.css'
 import './company-visit-report-page.css'
+
+type ViewMode = 'shopper' | 'final' | 'edit'
 
 export function SuperAdminVisitReportPage() {
   const { t } = useTranslation()
@@ -32,8 +34,70 @@ export function SuperAdminVisitReportPage() {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('edit')
 
-  const editorRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  /** Draft answers when in edit mode: focusAreaId -> questionId -> value */
+  const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
+
+  const getAnswer = useCallback(
+    (block: VisitReportFormFocusArea, questionId: string): string | null => {
+      if (viewMode === 'edit') {
+        return draftAnswers[block.focusAreaId]?.[questionId] ?? block.answers[questionId] ?? null
+      }
+      if (viewMode === 'shopper' && block.shopperAnswers) {
+        return block.shopperAnswers[questionId] ?? block.answers[questionId] ?? null
+      }
+      return block.answers[questionId] ?? null
+    },
+    [viewMode, draftAnswers],
+  )
+
+  const setAnswer = useCallback(
+    (focusAreaId: string, questionId: string, value: string | null) => {
+      setDraftAnswers((prev) => ({
+        ...prev,
+        [focusAreaId]: {
+          ...(prev[focusAreaId] ?? {}),
+          [questionId]: value,
+        },
+      }))
+    },
+    [],
+  )
+
+  const handleSaveFormAnswers = useCallback(
+    async (focusAreaId: string) => {
+      if (!visitId) return
+      const block = formData.find((b) => b.focusAreaId === focusAreaId)
+      if (!block || block.sections.length === 0) return
+      const questionIds = block.sections.flatMap((s) => s.questions.map((q) => q.id))
+      const getVal = (qId: string) =>
+        draftAnswers[focusAreaId]?.[qId] ?? block.answers[qId] ?? null
+      const answers = questionIds.map((questionId) => ({
+        questionId,
+        value: getVal(questionId),
+      }))
+      try {
+        setSavingId(focusAreaId)
+        await saveVisitReportAnswers(visitId, focusAreaId, answers)
+        setFormData((prev) =>
+          prev.map((fa) =>
+            fa.focusAreaId === focusAreaId
+              ? {
+                  ...fa,
+                  answers: Object.fromEntries(answers.map((a) => [a.questionId, a.value])),
+                }
+              : fa,
+          ),
+        )
+        setSavedId(focusAreaId)
+        setTimeout(() => setSavedId((c) => (c === focusAreaId ? null : c)), 2000)
+      } finally {
+        setSavingId(null)
+      }
+    },
+    [visitId, formData, draftAnswers],
+  )
 
   useEffect(() => {
     if (!visitId) return
@@ -47,6 +111,11 @@ export function SuperAdminVisitReportPage() {
       try {
         const data = await fetchVisitReportFormData(visitId)
         setFormData(data)
+        const initial: Record<string, Record<string, string | null>> = {}
+        for (const fa of data) {
+          initial[fa.focusAreaId] = { ...fa.answers }
+        }
+        setDraftAnswers(initial)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : t('superAdmin.errors.generic'),
@@ -59,42 +128,18 @@ export function SuperAdminVisitReportPage() {
     load()
   }, [visitId, session.isSuperAdmin, session.isAccountManager, t])
 
-  const applyCommand = (command: string, value?: string) => {
-    if (typeof document === 'undefined') return
-    document.execCommand(command, false, value ?? undefined)
-  }
-
-  const handleSaveLegacy = async (focusAreaId: string) => {
-    if (!visitId) return
-    const editor = editorRefs.current[focusAreaId]
-    const html = editor?.innerHTML ?? ''
-    try {
-      setSavingId(focusAreaId)
-      await saveVisitFocusAreaReport(visitId, focusAreaId, html)
-      setFormData((prev) =>
-        prev.map((fa) =>
-          fa.focusAreaId === focusAreaId
-            ? { ...fa, legacyContent: html }
-            : fa,
-        ),
-      )
-      setSavedId(focusAreaId)
-      setTimeout(() => {
-        setSavedId((current) => (current === focusAreaId ? null : current))
-      }, 2000)
-    } finally {
-      setSavingId(null)
-    }
-  }
-
   const handleSubmitReport = async () => {
     if (!visitId) return
     try {
       setSubmitting(true)
       for (const block of formData) {
-        const editor = editorRefs.current[block.focusAreaId]
-        const html = editor?.innerHTML ?? block.legacyContent ?? ''
-        await saveVisitFocusAreaReport(visitId, block.focusAreaId, html)
+        if (block.sections.length === 0) continue
+        const questionIds = block.sections.flatMap((s) => s.questions.map((q) => q.id))
+        const answers = questionIds.map((questionId) => ({
+          questionId,
+          value: getAnswer(block, questionId),
+        }))
+        await saveVisitReportAnswers(visitId, block.focusAreaId, answers)
       }
       await updateVisitStatus(visitId, 'report_submitted')
       navigate('/workspace/admin/visits')
@@ -102,6 +147,10 @@ export function SuperAdminVisitReportPage() {
       setSubmitting(false)
     }
   }
+
+  const hasShopperVersion = formData.some(
+    (b) => b.shopperAnswers && Object.keys(b.shopperAnswers).length > 0,
+  )
 
   if (loading) {
     return (
@@ -139,15 +188,49 @@ export function SuperAdminVisitReportPage() {
           >
             {t('superAdmin.visitReport.backToVisits')}
           </Button>
-          <Button
-            type="button"
-            onClick={handleSubmitReport}
-            loading={submitting}
-          >
-            {t('superAdmin.visitReport.submit')}
-          </Button>
+          {viewMode === 'edit' && (
+            <Button
+              type="button"
+              onClick={handleSubmitReport}
+              loading={submitting}
+            >
+              {t('superAdmin.visitReport.submit')}
+            </Button>
+          )}
         </div>
       </header>
+
+      <div className="super-admin-visit-report-view-toggle">
+        {hasShopperVersion && (
+          <Button
+            type="button"
+            variant={viewMode === 'shopper' ? 'primary' : 'ghost'}
+            onClick={() => setViewMode('shopper')}
+          >
+            {t('superAdmin.visitReport.viewShopperReport')}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant={viewMode === 'final' ? 'primary' : 'ghost'}
+          onClick={() => setViewMode('final')}
+        >
+          {t('superAdmin.visitReport.viewFinalReport')}
+        </Button>
+        <Button
+          type="button"
+          variant={viewMode === 'edit' ? 'primary' : 'ghost'}
+          onClick={() => setViewMode('edit')}
+        >
+          {t('superAdmin.visitReport.editReport')}
+        </Button>
+      </div>
+
+      {viewMode === 'edit' && (
+        <p className="super-admin-visit-report-edit-hint">
+          {t('superAdmin.visitReport.editHint')}
+        </p>
+      )}
 
       <div className="super-admin-visit-report-list">
         {formData.map((block) => (
@@ -159,93 +242,41 @@ export function SuperAdminVisitReportPage() {
                 {block.sections.map((section) => (
                   <div key={section.id}>
                     <h3 className="report-form-section-title">{section.sectionName}</h3>
-                    {section.questions.map((q) => (
-                      <div key={q.id} className="company-visit-report-answer">
-                        <span className="company-visit-report-answer__label">{q.label}</span>
-                        <span className="company-visit-report-answer__value">
-                          {block.answers[q.id] ?? '—'}
-                        </span>
-                      </div>
-                    ))}
+                    {viewMode === 'edit' ? (
+                      <>
+                        {section.questions.map((q) => (
+                          <ReportFormField
+                            key={q.id}
+                            question={q}
+                            value={getAnswer(block, q.id)}
+                            onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
+                            onBlur={() => handleSaveFormAnswers(block.focusAreaId)}
+                            requiredSuffix={t('superAdmin.visitReport.requiredSuffix')}
+                          />
+                        ))}
+                        {(savingId === block.focusAreaId || savedId === block.focusAreaId) && (
+                          <p className="wysiwyg-status" aria-live="polite">
+                            {savingId === block.focusAreaId
+                              ? t('superAdmin.visitReport.saving')
+                              : t('superAdmin.visitReport.sectionSaved')}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      section.questions.map((q) => (
+                        <div key={q.id} className="company-visit-report-answer">
+                          <span className="company-visit-report-answer__label">{q.label}</span>
+                          <span className="company-visit-report-answer__value">
+                            {getAnswer(block, q.id) ?? '—'}
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 ))}
               </div>
-            ) : null}
-
-            {block.sections.length > 0 && block.legacyContent ? (
-              <h3 className="report-form-section-title" style={{ marginTop: '1rem' }}>
-                {t('superAdmin.visitReport.toolbar.normal')}
-              </h3>
-            ) : null}
-            {block.legacyContent !== undefined && (
-              <>
-                <FormField id={block.focusAreaId} label="">
-                  <div className="wysiwyg-wrapper">
-                    <div className="wysiwyg-toolbar">
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyCommand('formatBlock', 'p')}
-                      >
-                        {t('superAdmin.visitReport.toolbar.normal')}
-                      </button>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyCommand('formatBlock', 'h2')}
-                      >
-                        {t('superAdmin.visitReport.toolbar.heading2')}
-                      </button>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyCommand('formatBlock', 'h3')}
-                      >
-                        {t('superAdmin.visitReport.toolbar.heading3')}
-                      </button>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyCommand('insertUnorderedList')}
-                      >
-                        {t('superAdmin.visitReport.toolbar.bulletList')}
-                      </button>
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => applyCommand('insertOrderedList')}
-                      >
-                        {t('superAdmin.visitReport.toolbar.orderedList')}
-                      </button>
-                    </div>
-                    <div
-                      ref={(el) => {
-                        editorRefs.current[block.focusAreaId] = el
-                      }}
-                      className="wysiwyg-editor"
-                      contentEditable
-                      dir="auto"
-                      suppressContentEditableWarning
-                      dangerouslySetInnerHTML={{ __html: block.legacyContent }}
-                    />
-                  </div>
-                </FormField>
-                <div className="wysiwyg-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    loading={savingId === block.focusAreaId}
-                    onClick={() => handleSaveLegacy(block.focusAreaId)}
-                  >
-                    {t('superAdmin.visitReport.saveSection')}
-                  </Button>
-                  {savedId === block.focusAreaId && savingId !== block.focusAreaId && (
-                    <span className="wysiwyg-status">
-                      {t('superAdmin.visitReport.sectionSaved')}
-                    </span>
-                  )}
-                </div>
-              </>
+            ) : (
+              <p className="company-visit-report-empty">{t('companyVisits.noContent')}</p>
             )}
           </Card>
         ))}

@@ -1476,8 +1476,10 @@ export type VisitReportFormFocusArea = {
   focusAreaId: string
   focusAreaName: string
   sections: VisitReportSection[]
-  /** Current answer value per question id (for this focus area) */
+  /** Current/final answer value per question id (for this focus area) */
   answers: Record<string, string | null>
+  /** Original answers submitted by shopper (set when status becomes under_review); for version comparison */
+  shopperAnswers?: Record<string, string | null>
   /** Legacy free-text content if no sections (backward compat) */
   legacyContent: string
 }
@@ -1498,7 +1500,7 @@ export const fetchVisitReportFormData = async (
       .order('display_order', { ascending: true }),
     supabase
       .from('visit_report_answers')
-      .select('focus_area_id, question_id, value')
+      .select('focus_area_id, question_id, value, shopper_value')
       .eq('visit_id', visitId),
   ])
 
@@ -1564,10 +1566,20 @@ export const fetchVisitReportFormData = async (
     questionsBySectionId.set(q.visit_report_section_id, list)
   }
 
-  const answers = (answersRes.data ?? []) as { focus_area_id: string; question_id: string; value: string | null }[]
+  const answers = (answersRes.data ?? []) as {
+    focus_area_id: string
+    question_id: string
+    value: string | null
+    shopper_value?: string | null
+  }[]
   const answerMap = new Map<string, string | null>()
+  const shopperAnswerMap = new Map<string, string | null>()
   for (const a of answers) {
-    answerMap.set(`${a.focus_area_id}:${a.question_id}`, a.value)
+    const key = `${a.focus_area_id}:${a.question_id}`
+    answerMap.set(key, a.value)
+    if (a.shopper_value !== undefined) {
+      shopperAnswerMap.set(key, a.shopper_value ?? null)
+    }
   }
 
   const sectionsByFocus = new Map<string, VisitReportSection[]>()
@@ -1603,15 +1615,21 @@ export const fetchVisitReportFormData = async (
 
   return focusAreas.map((fa) => {
     const focusAnswers: Record<string, string | null> = {}
+    const focusShopperAnswers: Record<string, string | null> = {}
     for (const [key, value] of answerMap) {
       const [fid, qid] = key.split(':')
       if (fid === fa.id) focusAnswers[qid] = value
+    }
+    for (const [key, value] of shopperAnswerMap) {
+      const [fid, qid] = key.split(':')
+      if (fid === fa.id) focusShopperAnswers[qid] = value
     }
     return {
       focusAreaId: fa.id,
       focusAreaName: fa.name,
       sections: sectionsByFocus.get(fa.id) ?? [],
       answers: focusAnswers,
+      shopperAnswers: Object.keys(focusShopperAnswers).length > 0 ? focusShopperAnswers : undefined,
       legacyContent: reportMap.get(fa.id) ?? '',
     }
   })

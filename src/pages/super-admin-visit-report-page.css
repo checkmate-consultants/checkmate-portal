@@ -12,6 +12,18 @@
   align-items: center;
 }
 
+.super-admin-visit-report-view-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.super-admin-visit-report-edit-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
 .super-admin-visit-report-list {
   display: flex;
   flex-direction: column;
