@@ -41,3 +41,46 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--color-border, #e5e7eb);
 }
+
+/* Options list (add/remove/reorder) – shared with report templates page */
+.report-template-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-template-options-list__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.report-template-options-list__order {
+  flex-shrink: 0;
+  width: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.report-template-options-list__input {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.report-template-options-list__actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.report-template-options-list__btn {
+  min-width: 2rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.report-template-options-list__add {
+  margin-top: 0.25rem;
+  align-self: flex-start;
+}

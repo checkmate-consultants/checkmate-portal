@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '../ui/Modal.tsx'
@@ -392,7 +392,7 @@ function VisitSectionModal({
 type QuestionFormValues = {
   label: string
   questionType: ReportQuestionType
-  optionsText: string
+  options: { label: string }[]
   required: boolean
 }
 
@@ -420,24 +420,33 @@ function VisitQuestionModal({
       z.object({
         label: z.string().min(1, t('validation.required')),
         questionType: z.enum(QUESTION_TYPES as [ReportQuestionType, ...ReportQuestionType[]]),
-        optionsText: z.string(),
+        options: z.array(z.object({ label: z.string() })),
         required: z.boolean(),
       }),
     ),
     defaultValues: {
       label: question?.label ?? '',
       questionType: question?.questionType ?? 'short_text',
-      optionsText:
-        question?.options?.map((o) => o.label || o.value).join('\n') ?? '',
+      options:
+        question?.options?.length
+          ? question.options.map((o) => ({ label: o.label || o.value }))
+          : [],
       required: question?.required ?? true,
     },
     values: {
       label: question?.label ?? '',
       questionType: question?.questionType ?? 'short_text',
-      optionsText:
-        question?.options?.map((o) => o.label || o.value).join('\n') ?? '',
+      options:
+        question?.options?.length
+          ? question.options.map((o) => ({ label: o.label || o.value }))
+          : [],
       required: question?.required ?? true,
     },
+  })
+
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: 'options',
   })
 
   const selectedType = form.watch('questionType') as ReportQuestionType
@@ -448,10 +457,9 @@ function VisitQuestionModal({
     setSaving(true)
     try {
       let options: { value: string; label?: string }[] | null = null
-      if (showOptions && values.optionsText.trim()) {
-        options = values.optionsText
-          .split('\n')
-          .map((line) => line.trim())
+      if (showOptions && values.options.length > 0) {
+        options = values.options
+          .map((o) => o.label.trim())
           .filter(Boolean)
           .map((label) => ({
             value: label.replace(/\s+/g, '_').toLowerCase(),
@@ -528,12 +536,66 @@ function VisitQuestionModal({
             label={t('superAdmin.reportTemplates.questionOptions')}
             helperText={t('superAdmin.reportTemplates.questionOptionsHelper')}
           >
-            <textarea
-              id="visit-question-options"
-              className="modal-textarea"
-              rows={4}
-              {...form.register('optionsText')}
-            />
+            <div className="report-template-options-list">
+              {fields.map((field, index) => (
+                <div key={field.id} className="report-template-options-list__row">
+                  <span className="report-template-options-list__order" aria-hidden>
+                    {index + 1}.
+                  </span>
+                  <Input
+                    className="report-template-options-list__input"
+                    value={form.watch(`options.${index}.label`)}
+                    onChange={(e) =>
+                      form.setValue(`options.${index}.label`, e.target.value, {
+                        shouldValidate: true,
+                      })
+                    }
+                    placeholder={t('superAdmin.reportTemplates.optionPlaceholder')}
+                    hasError={false}
+                  />
+                  <div className="report-template-options-list__actions">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="report-template-options-list__btn"
+                      disabled={index === 0}
+                      onClick={() => move(index, index - 1)}
+                      aria-label={t('superAdmin.reportTemplates.moveUp')}
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="report-template-options-list__btn"
+                      disabled={index === fields.length - 1}
+                      onClick={() => move(index, index + 1)}
+                      aria-label={t('superAdmin.reportTemplates.moveDown')}
+                    >
+                      ↓
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="report-template-options-list__btn"
+                      disabled={fields.length <= 1}
+                      onClick={() => remove(index)}
+                      aria-label={t('superAdmin.reportTemplates.removeOption')}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                className="report-template-options-list__add"
+                onClick={() => append({ label: '' })}
+              >
+                {t('superAdmin.reportTemplates.addOption')}
+              </Button>
+            </div>
           </FormField>
         )}
         <FormField
