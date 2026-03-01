@@ -158,6 +158,7 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
       onClose={onClose}
       title={t('superAdmin.visits.editReportFormModal.title')}
       description={t('superAdmin.visits.editReportFormModal.description')}
+      contentClassName="edit-visit-report-form-modal__content"
     >
       <div className="edit-visit-report-form-modal">
       <div className="edit-visit-report-form-modal__body">

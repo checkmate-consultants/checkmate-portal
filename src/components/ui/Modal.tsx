@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import clsx from 'clsx'
 import './modal.css'
 
 type ModalProps = {
@@ -8,6 +9,8 @@ type ModalProps = {
   children: ReactNode
   onClose?: () => void
   actions?: ReactNode
+  /** Optional class applied to the content wrapper for size/layout overrides */
+  contentClassName?: string
 }
 
 export function Modal({
@@ -17,6 +20,7 @@ export function Modal({
   children,
   onClose,
   actions,
+  contentClassName,
 }: ModalProps) {
   if (!open) {
     return null
@@ -25,7 +29,7 @@ export function Modal({
   return (
     <div className="ui-modal" role="dialog" aria-modal="true" aria-label={title}>
       <div className="ui-modal__backdrop" onClick={onClose} />
-      <div className="ui-modal__content">
+      <div className={clsx('ui-modal__content', contentClassName)}>
         <header className="ui-modal__header">
           <div>
             <h2>{title}</h2>
