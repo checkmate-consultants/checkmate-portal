@@ -6,9 +6,11 @@ import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import {
   fetchVisitReportFormData,
+  fetchVisitStatus,
   saveVisitReportAnswers,
   updateVisitStatus,
   type VisitReportFormFocusArea,
+  type VisitStatus,
 } from '../data/companyManagement.ts'
 import { ReportFormField } from '../components/visit-report/ReportFormField.tsx'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
@@ -34,10 +36,13 @@ export function SuperAdminVisitReportPage() {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [visitStatus, setVisitStatus] = useState<VisitStatus | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('edit')
 
   /** Draft answers when in edit mode: focusAreaId -> questionId -> value */
   const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
+
+  const reportLocked = visitStatus === 'report_submitted'
 
   const getAnswer = useCallback(
     (block: VisitReportFormFocusArea, questionId: string): string | null => {
@@ -80,16 +85,15 @@ export function SuperAdminVisitReportPage() {
       try {
         setSavingId(focusAreaId)
         await saveVisitReportAnswers(visitId, focusAreaId, answers)
-        setFormData((prev) =>
-          prev.map((fa) =>
-            fa.focusAreaId === focusAreaId
-              ? {
-                  ...fa,
-                  answers: Object.fromEntries(answers.map((a) => [a.questionId, a.value])),
-                }
-              : fa,
-          ),
-        )
+        const data = await fetchVisitReportFormData(visitId)
+        setFormData(data)
+        setDraftAnswers((prev) => {
+          const updated = data.find((fa) => fa.focusAreaId === focusAreaId)
+          return {
+            ...prev,
+            [focusAreaId]: updated ? { ...updated.answers } : prev[focusAreaId],
+          }
+        })
         setSavedId(focusAreaId)
         setTimeout(() => setSavedId((c) => (c === focusAreaId ? null : c)), 2000)
       } finally {
@@ -109,13 +113,21 @@ export function SuperAdminVisitReportPage() {
 
     const load = async () => {
       try {
-        const data = await fetchVisitReportFormData(visitId)
+        const [data, status] = await Promise.all([
+          fetchVisitReportFormData(visitId),
+          fetchVisitStatus(visitId),
+        ])
         setFormData(data)
-        const initial: Record<string, Record<string, string | null>> = {}
-        for (const fa of data) {
-          initial[fa.focusAreaId] = { ...fa.answers }
+        setVisitStatus(status)
+        if (status === 'report_submitted') {
+          setViewMode('final')
+        } else {
+          const initial: Record<string, Record<string, string | null>> = {}
+          for (const fa of data) {
+            initial[fa.focusAreaId] = { ...fa.answers }
+          }
+          setDraftAnswers(initial)
         }
-        setDraftAnswers(initial)
       } catch (err) {
         setError(
           err instanceof Error ? err.message : t('superAdmin.errors.generic'),
@@ -188,7 +200,7 @@ export function SuperAdminVisitReportPage() {
           >
             {t('superAdmin.visitReport.backToVisits')}
           </Button>
-          {viewMode === 'edit' && (
+          {viewMode === 'edit' && !reportLocked && (
             <Button
               type="button"
               onClick={handleSubmitReport}
@@ -217,16 +229,24 @@ export function SuperAdminVisitReportPage() {
         >
           {t('superAdmin.visitReport.viewFinalReport')}
         </Button>
-        <Button
-          type="button"
-          variant={viewMode === 'edit' ? 'primary' : 'ghost'}
-          onClick={() => setViewMode('edit')}
-        >
-          {t('superAdmin.visitReport.editReport')}
-        </Button>
+        {!reportLocked && (
+          <Button
+            type="button"
+            variant={viewMode === 'edit' ? 'primary' : 'ghost'}
+            onClick={() => setViewMode('edit')}
+          >
+            {t('superAdmin.visitReport.editReport')}
+          </Button>
+        )}
       </div>
 
-      {viewMode === 'edit' && (
+      {reportLocked && (
+        <p className="super-admin-visit-report-locked" role="status">
+          {t('superAdmin.visitReport.reportLocked')}
+        </p>
+      )}
+
+      {viewMode === 'edit' && !reportLocked && (
         <p className="super-admin-visit-report-edit-hint">
           {t('superAdmin.visitReport.editHint')}
         </p>
@@ -242,7 +262,7 @@ export function SuperAdminVisitReportPage() {
                 {block.sections.map((section) => (
                   <div key={section.id}>
                     <h3 className="report-form-section-title">{section.sectionName}</h3>
-                    {viewMode === 'edit' ? (
+                    {viewMode === 'edit' && !reportLocked ? (
                       <>
                         {section.questions.map((q) => (
                           <ReportFormField
