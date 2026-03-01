@@ -124,6 +124,8 @@ export function SuperAdminVisitsPage() {
   const [assignShopperSearching, setAssignShopperSearching] = useState(false)
   const [assignShopperSaving, setAssignShopperSaving] = useState(false)
   const [editReportFormVisit, setEditReportFormVisit] = useState<Visit | null>(null)
+  const [scheduleStep, setScheduleStep] = useState<0 | 1 | 2>(0)
+  const [expandedFocusAreas, setExpandedFocusAreas] = useState<Set<string>>(new Set())
 
   const visitSchema = useMemo(
     () =>
@@ -156,7 +158,6 @@ export function SuperAdminVisitsPage() {
   })
   const companyField = form.register('companyId')
   const propertyField = form.register('propertyId')
-  const focusField = form.register('focusAreaIds')
   const shopperField = form.register('shopperId')
 
   const visitFilterValues = useMemo(
@@ -293,6 +294,8 @@ export function SuperAdminVisitsPage() {
       setShopperQuery('')
       setShopperResults([])
       setSelectedShopper(null)
+      setScheduleStep(0)
+      setExpandedFocusAreas(new Set())
     } catch {
       // ignore for now
     }
@@ -410,6 +413,59 @@ export function SuperAdminVisitsPage() {
     (property) => property.id === form.watch('propertyId'),
   )
   const focusAreaSelection = form.watch('focusAreaIds')
+  const focusAreaTemplateSectionIds = form.watch('focusAreaTemplateSectionIds') ?? {}
+
+  const canGoStep2 =
+    Boolean(form.watch('companyId')) && Boolean(form.watch('propertyId'))
+  const step2Valid =
+    focusAreaSelection.length >= 1 &&
+    focusAreaSelection.every(
+      (faId) => (focusAreaTemplateSectionIds[faId]?.length ?? 0) >= 1,
+    )
+  const toggleFocusAreaExpanded = (focusAreaId: string) => {
+    setExpandedFocusAreas((prev) => {
+      const next = new Set(prev)
+      if (next.has(focusAreaId)) next.delete(focusAreaId)
+      else next.add(focusAreaId)
+      return next
+    })
+  }
+  const setFocusAreaSelected = (focusAreaId: string, selected: boolean) => {
+    if (selected) {
+      setExpandedFocusAreas((prev) => new Set(prev).add(focusAreaId))
+      form.setValue(
+        'focusAreaIds',
+        [...focusAreaSelection.filter((id) => id !== focusAreaId), focusAreaId].sort(),
+        { shouldValidate: true },
+      )
+      const prev = form.getValues('focusAreaTemplateSectionIds') ?? {}
+      form.setValue('focusAreaTemplateSectionIds', {
+        ...prev,
+        [focusAreaId]: prev[focusAreaId] ?? [],
+      })
+    } else {
+      setExpandedFocusAreas((prev) => {
+        const next = new Set(prev)
+        next.delete(focusAreaId)
+        return next
+      })
+      form.setValue(
+        'focusAreaIds',
+        focusAreaSelection.filter((id) => id !== focusAreaId),
+        { shouldValidate: true },
+      )
+      const prev = { ...(form.getValues('focusAreaTemplateSectionIds') ?? {}) }
+      delete prev[focusAreaId]
+      form.setValue('focusAreaTemplateSectionIds', prev)
+    }
+  }
+  const setSectionIdsForFocusArea = (focusAreaId: string, sectionIds: string[]) => {
+    form.setValue(
+      'focusAreaTemplateSectionIds',
+      { ...(form.getValues('focusAreaTemplateSectionIds') ?? {}), [focusAreaId]: sectionIds },
+      { shouldValidate: true },
+    )
+  }
 
   return (
     <div className="super-admin-page">
@@ -574,163 +630,198 @@ export function SuperAdminVisitsPage() {
         title={t('superAdmin.visits.forms.title')}
         description={t('superAdmin.visits.forms.description')}
       >
-        <form className="modal-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <FormField
-            id="visit-company"
-            label={t('superAdmin.visits.forms.company')}
-            error={form.formState.errors.companyId?.message}
-          >
-            <select
-              id="visit-company"
-              className="modal-select"
-              name={companyField.name}
-              ref={companyField.ref}
-              value={form.watch('companyId')}
-              onBlur={companyField.onBlur}
-              onChange={(event) => {
-                companyField.onChange(event)
-                handleCompanyChange(event.target.value)
-              }}
-            >
-              <option value="">{t('superAdmin.selectCompany')}</option>
-              {modalState.companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-          </FormField>
+        <div className="schedule-visit-modal">
+        <form
+          className="schedule-visit-form"
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+        >
+          <nav className="schedule-visit-stepper" aria-label={t('superAdmin.visits.forms.stepper.location')}>
+            <ol className="schedule-visit-stepper__list">
+              <li className={`schedule-visit-stepper__step ${scheduleStep >= 0 ? 'schedule-visit-stepper__step--active' : ''} ${scheduleStep > 0 ? 'schedule-visit-stepper__step--done' : ''}`}>
+                <span className="schedule-visit-stepper__number">1</span>
+                <span className="schedule-visit-stepper__label">{t('superAdmin.visits.forms.stepper.location')}</span>
+              </li>
+              <li className={`schedule-visit-stepper__step ${scheduleStep >= 1 ? 'schedule-visit-stepper__step--active' : ''} ${scheduleStep > 1 ? 'schedule-visit-stepper__step--done' : ''}`}>
+                <span className="schedule-visit-stepper__number">2</span>
+                <span className="schedule-visit-stepper__label">{t('superAdmin.visits.forms.stepper.focusAreasAndTemplates')}</span>
+              </li>
+              <li className={`schedule-visit-stepper__step ${scheduleStep >= 2 ? 'schedule-visit-stepper__step--active' : ''}`}>
+                <span className="schedule-visit-stepper__number">3</span>
+                <span className="schedule-visit-stepper__label">{t('superAdmin.visits.forms.stepper.schedule')}</span>
+              </li>
+            </ol>
+          </nav>
 
-          {modalState.loadingSnapshot && (
-            <p>{t('companyManagement.loading')}</p>
-          )}
-
-          {selectedSnapshot && (
-            <>
+          {scheduleStep === 0 && (
+            <div className="schedule-visit-step" role="tabpanel">
+              <h3 className="schedule-visit-step__title">{t('superAdmin.visits.forms.stepLocationTitle')}</h3>
+              <p className="schedule-visit-step__description">{t('superAdmin.visits.forms.stepLocationDescription')}</p>
               <FormField
-                id="visit-property"
-                label={t('superAdmin.visits.forms.property')}
-                error={form.formState.errors.propertyId?.message}
+                id="visit-company"
+                label={t('superAdmin.visits.forms.company')}
+                error={form.formState.errors.companyId?.message}
               >
                 <select
-                  id="visit-property"
+                  id="visit-company"
                   className="modal-select"
-                  name={propertyField.name}
-                  ref={propertyField.ref}
-                  value={form.watch('propertyId')}
-                  onBlur={propertyField.onBlur}
+                  name={companyField.name}
+                  ref={companyField.ref}
+                  value={form.watch('companyId')}
+                  onBlur={companyField.onBlur}
                   onChange={(event) => {
-                    propertyField.onChange(event)
-                    form.setValue('propertyId', event.target.value, {
-                      shouldValidate: true,
-                    })
-                    form.setValue('focusAreaIds', [], { shouldValidate: true })
+                    companyField.onChange(event)
+                    handleCompanyChange(event.target.value)
                   }}
                 >
-                  <option value="">{t('companyManagement.empty')}</option>
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name} ({property.city})
+                  <option value="">{t('superAdmin.selectCompany')}</option>
+                  {modalState.companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
                     </option>
                   ))}
                 </select>
               </FormField>
-
-              {selectedProperty && (
+              {modalState.loadingSnapshot && <p>{t('companyManagement.loading')}</p>}
+              {selectedSnapshot && (
                 <FormField
-                  id="visit-focus-areas"
-                  label={t('superAdmin.visits.forms.focusAreas')}
-                  error={form.formState.errors.focusAreaIds?.message}
-                  helperText={t('superAdmin.visits.forms.focusAreasHelper')}
+                  id="visit-property"
+                  label={t('superAdmin.visits.forms.property')}
+                  error={form.formState.errors.propertyId?.message}
                 >
                   <select
-                    id="visit-focus-areas"
+                    id="visit-property"
                     className="modal-select"
-                    multiple
-                    name={focusField.name}
-                    ref={focusField.ref}
-                    value={focusAreaSelection}
-                    onBlur={focusField.onBlur}
+                    name={propertyField.name}
+                    ref={propertyField.ref}
+                    value={form.watch('propertyId')}
+                    onBlur={propertyField.onBlur}
                     onChange={(event) => {
-                      const selected = Array.from(event.target.selectedOptions).map(
-                        (option) => option.value,
-                      )
-                      form.setValue('focusAreaIds', selected, {
-                        shouldValidate: true,
-                      })
-                      const current = form.getValues('focusAreaTemplateSectionIds') ?? {}
-                      const next: FocusAreaTemplateSectionIds = {}
-                      for (const id of selected) {
-                        next[id] = current[id] ?? []
-                      }
-                      form.setValue('focusAreaTemplateSectionIds', next, {
-                        shouldValidate: true,
-                      })
+                      propertyField.onChange(event)
+                      form.setValue('propertyId', event.target.value, { shouldValidate: true })
+                      form.setValue('focusAreaIds', [], { shouldValidate: true })
+                      form.setValue('focusAreaTemplateSectionIds', {})
                     }}
                   >
-                    {selectedProperty.focusAreas.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.name}
+                    <option value="">{t('companyManagement.empty')}</option>
+                    {properties.map((property) => (
+                      <option key={property.id} value={property.id}>
+                        {property.name} ({property.city})
                       </option>
                     ))}
                   </select>
                 </FormField>
               )}
-              {selectedProperty && focusAreaSelection.length > 0 && templateSections.length > 0 && (
-                <div className="report-templates-focus-area-sections">
-                  {focusAreaSelection.map((focusAreaId) => {
-                    const focusArea = selectedProperty.focusAreas.find((a) => a.id === focusAreaId)
-                    if (!focusArea) return null
-                    const selectedSectionIds = (form.watch('focusAreaTemplateSectionIds') ?? {})[focusAreaId] ?? []
+            </div>
+          )}
+
+          {scheduleStep === 1 && selectedSnapshot && selectedProperty && (
+            <div className="schedule-visit-step" role="tabpanel">
+              <h3 className="schedule-visit-step__title">{t('superAdmin.visits.forms.stepFocusAreasTitle')}</h3>
+              <p className="schedule-visit-step__description">{t('superAdmin.visits.forms.stepFocusAreasDescription')}</p>
+              {selectedProperty.focusAreas.length === 0 ? (
+                <p>{t('companyManagement.property.emptyFocusAreas')}</p>
+              ) : (
+                <div className="schedule-visit-focus-tree">
+                  {selectedProperty.focusAreas.map((focusArea) => {
+                    const isSelected = focusAreaSelection.includes(focusArea.id)
+                    const isExpanded = expandedFocusAreas.has(focusArea.id)
+                    const sectionIds = focusAreaTemplateSectionIds[focusArea.id] ?? []
                     return (
-                      <FormField
-                        key={focusAreaId}
-                        id={`visit-template-sections-${focusAreaId}`}
-                        label={`${t('superAdmin.reportTemplates.attachToFocusArea')}: ${focusArea.name}`}
-                        helperText={t('superAdmin.reportTemplates.attachToFocusAreaHelper')}
-                      >
-                        <select
-                          id={`visit-template-sections-${focusAreaId}`}
-                          className="modal-select"
-                          multiple
-                          value={selectedSectionIds}
-                          onChange={(event) => {
-                            const selected = Array.from(event.target.selectedOptions).map(
-                              (opt) => opt.value,
-                            )
-                            const prev = form.getValues('focusAreaTemplateSectionIds') ?? {}
-                            form.setValue(
-                              'focusAreaTemplateSectionIds',
-                              { ...prev, [focusAreaId]: selected },
-                              { shouldValidate: true },
-                            )
-                          }}
-                        >
-                          {templateSections.map((sec) => (
-                            <option key={sec.id} value={sec.id}>
-                              {sec.name}
-                            </option>
-                          ))}
-                        </select>
-                      </FormField>
+                      <div key={focusArea.id} className="schedule-visit-focus-node">
+                        <div className="schedule-visit-focus-node__row">
+                          {isSelected && templateSections.length > 0 ? (
+                            <button
+                              type="button"
+                              className="schedule-visit-focus-node__expand"
+                              onClick={() => toggleFocusAreaExpanded(focusArea.id)}
+                              aria-expanded={isExpanded}
+                              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                            >
+                              {isExpanded ? '−' : '+'}
+                            </button>
+                          ) : (
+                            <span className="schedule-visit-focus-node__expand schedule-visit-focus-node__expand--placeholder" aria-hidden> </span>
+                          )}
+                          <label className="schedule-visit-focus-node__label">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => setFocusAreaSelected(focusArea.id, e.target.checked)}
+                            />
+                            <span>{focusArea.name}</span>
+                          </label>
+                        </div>
+                        {isSelected && isExpanded && templateSections.length > 0 && (
+                          <div className="schedule-visit-focus-node__children">
+                            <p className="schedule-visit-focus-node__children-label">
+                              {t('superAdmin.visits.forms.templatesForFocusArea', { name: focusArea.name })}
+                            </p>
+                            <ul className="schedule-visit-template-list">
+                              {templateSections.map((sec) => {
+                                const checked = sectionIds.includes(sec.id)
+                                return (
+                                  <li key={sec.id} className="schedule-visit-template-list__item">
+                                    <label>
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          const next = e.target.checked
+                                            ? [...sectionIds, sec.id]
+                                            : sectionIds.filter((id) => id !== sec.id)
+                                          setSectionIdsForFocusArea(focusArea.id, next)
+                                        }}
+                                      />
+                                      <span>{sec.name}</span>
+                                    </label>
+                                  </li>
+                                )
+                              })}
+                            </ul>
+                            {sectionIds.length === 0 && (
+                              <p className="schedule-visit-step__hint schedule-visit-step__hint--error">
+                                {t('superAdmin.visits.forms.selectAtLeastOneSection')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
               )}
-            </>
+              {form.formState.errors.focusAreaIds?.message && (
+                <p className="schedule-visit-step__hint schedule-visit-step__hint--error">
+                  {form.formState.errors.focusAreaIds.message}
+                </p>
+              )}
+            </div>
           )}
 
-          <FormField
-            id="visit-shopper"
-            label={t('superAdmin.visits.forms.shopper')}
-            helperText={t('superAdmin.visits.forms.shopperOptional')}
-            error={form.formState.errors.shopperId?.message}
-          >
-            <input type="hidden" {...shopperField} />
-            {!selectedSnapshot ? (
-              <p>{t('superAdmin.selectCompany')}</p>
-            ) : (
-              <>
+          {scheduleStep === 2 && (
+            <div className="schedule-visit-step" role="tabpanel">
+              <h3 className="schedule-visit-step__title">{t('superAdmin.visits.forms.stepScheduleTitle')}</h3>
+              <p className="schedule-visit-step__description">{t('superAdmin.visits.forms.stepScheduleDescription')}</p>
+              <FormField
+                id="visit-date"
+                label={t('superAdmin.visits.forms.scheduledFor')}
+                error={form.formState.errors.scheduledFor?.message}
+              >
+                <Input
+                  id="visit-date"
+                  type="date"
+                  {...form.register('scheduledFor')}
+                  hasError={Boolean(form.formState.errors.scheduledFor)}
+                />
+              </FormField>
+              <FormField
+                id="visit-shopper"
+                label={t('superAdmin.visits.forms.shopper')}
+                helperText={t('superAdmin.visits.forms.shopperOptional')}
+                error={form.formState.errors.shopperId?.message}
+              >
+                <input type="hidden" {...shopperField} />
                 <Input
                   id="visit-shopper"
                   placeholder={t('superAdmin.visits.forms.shopper')}
@@ -747,7 +838,7 @@ export function SuperAdminVisitsPage() {
                   </p>
                 )}
                 {isSearchingShoppers && <p>{t('superAdmin.loading')}</p>}
-                {!isSearchingShoppers && shopperQuery && (
+                {!isSearchingShoppers && shopperQuery && !selectedShopper && (
                   <ul className="shopper-results">
                     {shopperResults.map((shopper) => (
                       <li key={shopper.id}>
@@ -756,9 +847,7 @@ export function SuperAdminVisitsPage() {
                           onClick={() => {
                             setSelectedShopper(shopper)
                             setShopperQuery('')
-                            form.setValue('shopperId', shopper.id, {
-                              shouldValidate: true,
-                            })
+                            form.setValue('shopperId', shopper.id, { shouldValidate: true })
                           }}
                         >
                           <strong>{shopper.fullName}</strong>
@@ -767,42 +856,49 @@ export function SuperAdminVisitsPage() {
                       </li>
                     ))}
                     {shopperResults.length === 0 && (
-                      <li className="shopper-results__empty">
-                        {t('superAdmin.shoppers.empty')}
-                      </li>
+                      <li className="shopper-results__empty">{t('superAdmin.shoppers.empty')}</li>
                     )}
                   </ul>
                 )}
-              </>
-            )}
-          </FormField>
+              </FormField>
+              <FormField id="visit-notes" label={t('superAdmin.visits.forms.notes')}>
+                <Textarea id="visit-notes" {...form.register('notes')} />
+              </FormField>
+            </div>
+          )}
 
-          <FormField
-            id="visit-date"
-            label={t('superAdmin.visits.forms.scheduledFor')}
-            error={form.formState.errors.scheduledFor?.message}
-          >
-            <Input
-              id="visit-date"
-              type="date"
-              {...form.register('scheduledFor')}
-              hasError={Boolean(form.formState.errors.scheduledFor)}
-            />
-          </FormField>
-
-          <FormField id="visit-notes" label={t('superAdmin.visits.forms.notes')}>
-            <Textarea id="visit-notes" {...form.register('notes')} />
-          </FormField>
-
-          <div className="modal-form__actions">
+          <div className="schedule-visit-form__actions modal-form__actions">
             <Button type="button" variant="ghost" onClick={closeModal}>
               {t('superAdmin.visits.forms.cancel')}
             </Button>
-            <Button type="submit" disabled={!form.formState.isValid}>
-              {t('superAdmin.visits.forms.submit')}
-            </Button>
+            <div className="schedule-visit-form__nav">
+              {scheduleStep > 0 && (
+                <Button type="button" variant="ghost" onClick={() => setScheduleStep((s) => (s - 1) as 0 | 1 | 2)}>
+                  {t('superAdmin.visits.forms.back')}
+                </Button>
+              )}
+              {scheduleStep < 2 ? (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (scheduleStep === 0 && canGoStep2) setScheduleStep(1)
+                    else if (scheduleStep === 1 && step2Valid) setScheduleStep(2)
+                  }}
+                  disabled={
+                    (scheduleStep === 0 && !canGoStep2) || (scheduleStep === 1 && !step2Valid)
+                  }
+                >
+                  {t('superAdmin.visits.forms.next')}
+                </Button>
+              ) : (
+                <Button type="submit" disabled={!form.formState.isValid}>
+                  {t('superAdmin.visits.forms.submit')}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
+        </div>
       </Modal>
 
       <Modal

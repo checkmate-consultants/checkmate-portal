@@ -96,3 +96,221 @@
   width: 100%;
 }
 
+/* Schedule visit stepper */
+.schedule-visit-modal {
+  max-width: 32rem;
+}
+
+.schedule-visit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 0.25rem;
+}
+
+.schedule-visit-stepper {
+  margin: 0;
+  padding: 0.25rem 0 0;
+}
+
+.schedule-visit-stepper__list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+  min-height: 2rem;
+}
+
+.schedule-visit-stepper__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+  line-height: 1.25;
+}
+
+.schedule-visit-stepper__step--active {
+  color: var(--color-text, #111827);
+  font-weight: 600;
+}
+
+.schedule-visit-stepper__step--done {
+  color: var(--color-accent, #2563eb);
+}
+
+.schedule-visit-stepper__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-border) 50%, transparent);
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.schedule-visit-stepper__step--active .schedule-visit-stepper__number {
+  background: var(--color-accent, #2563eb);
+  color: white;
+}
+
+.schedule-visit-stepper__step--done .schedule-visit-stepper__number {
+  background: var(--color-accent, #2563eb);
+  color: white;
+}
+
+.schedule-visit-step__title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.schedule-visit-step__description {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.schedule-visit-step__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.schedule-visit-step__hint--error {
+  color: var(--color-error, #dc2626);
+}
+
+/* Focus area tree */
+.schedule-visit-focus-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.schedule-visit-focus-node {
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.schedule-visit-focus-node:last-child {
+  border-bottom: none;
+}
+
+.schedule-visit-focus-node__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--color-bg) 98%, var(--color-surface));
+}
+
+.schedule-visit-focus-node__expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--color-bg) 95%, var(--color-surface));
+  color: var(--color-text-muted, #6b7280);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.schedule-visit-focus-node__expand:hover {
+  border-color: var(--color-accent, #2563eb);
+  color: var(--color-accent, #2563eb);
+}
+
+.schedule-visit-focus-node__expand--placeholder {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.schedule-visit-focus-node__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.schedule-visit-focus-node__label input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-accent, #2563eb);
+  flex-shrink: 0;
+}
+
+.schedule-visit-focus-node__children {
+  padding: 0.75rem 1rem 1rem 1.5rem;
+  background: color-mix(in srgb, var(--color-bg) 99%, var(--color-surface));
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.schedule-visit-focus-node__children-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.schedule-visit-template-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.schedule-visit-template-list__item label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.schedule-visit-template-list__item input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent, #2563eb);
+}
+
+.schedule-visit-form__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.schedule-visit-form__nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
