@@ -83,6 +83,27 @@
   margin: 0;
 }
 
+.modal-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 95%, var(--color-surface));
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.modal-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.modal-select option {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
 @media (max-width: 640px) {
   .modal-form__row {
     flex-direction: column;
