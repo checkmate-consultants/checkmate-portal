@@ -1166,11 +1166,14 @@ export const fetchReportTemplateQuestionsBySectionIds = async (
   )
 }
 
-export const createReportTemplateSection = async (name: string) => {
+export const createReportTemplateSection = async (
+  name: string,
+  displayOrder?: number,
+) => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase
     .from('report_template_sections')
-    .insert({ name, display_order: 0 })
+    .insert({ name, display_order: displayOrder ?? 0 })
     .select('id')
     .single()
   if (error) throw error

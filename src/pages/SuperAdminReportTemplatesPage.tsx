@@ -56,6 +56,7 @@ export function SuperAdminReportTemplatesPage() {
   const [questionSectionId, setQuestionSectionId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [movingId, setMovingId] = useState<string | null>(null)
 
   const loadSections = async () => {
     try {
@@ -116,6 +117,38 @@ export function SuperAdminReportTemplatesPage() {
     setQuestionModalOpen(true)
   }
 
+  const moveSection = async (index: number, direction: 'up' | 'down') => {
+    const next = direction === 'up' ? index - 1 : index + 1
+    if (next < 0 || next >= sections.length) return
+    const a = sections[index]
+    const b = sections[next]
+    if (!a || !b) return
+    setMovingId(`section-${a.id}`)
+    try {
+      await updateReportTemplateSection(a.id, { displayOrder: b.displayOrder })
+      await updateReportTemplateSection(b.id, { displayOrder: a.displayOrder })
+      await loadSections()
+    } finally {
+      setMovingId(null)
+    }
+  }
+
+  const moveQuestion = async (section: SectionWithQuestions, questionIndex: number, direction: 'up' | 'down') => {
+    const next = direction === 'up' ? questionIndex - 1 : questionIndex + 1
+    if (next < 0 || next >= section.questions.length) return
+    const a = section.questions[questionIndex]
+    const b = section.questions[next]
+    if (!a || !b) return
+    setMovingId(`question-${a.id}`)
+    try {
+      await updateReportTemplateQuestion(a.id, { displayOrder: b.displayOrder })
+      await updateReportTemplateQuestion(b.id, { displayOrder: a.displayOrder })
+      await loadSections()
+    } finally {
+      setMovingId(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="super-admin-page">
@@ -155,11 +188,29 @@ export function SuperAdminReportTemplatesPage() {
             <p>{t('superAdmin.reportTemplates.empty')}</p>
           </Card>
         ) : (
-          sections.map((section) => (
+          sections.map((section, sectionIndex) => (
             <Card key={section.id} className="super-admin-card report-template-card">
               <div className="report-template-card__header">
                 <h2 className="report-template-card__title">{section.name}</h2>
                 <div className="report-template-card__actions">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={sectionIndex === 0 || movingId !== null}
+                    onClick={() => moveSection(sectionIndex, 'up')}
+                    aria-label={t('superAdmin.reportTemplates.moveUp')}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={sectionIndex === sections.length - 1 || movingId !== null}
+                    onClick={() => moveSection(sectionIndex, 'down')}
+                    aria-label={t('superAdmin.reportTemplates.moveDown')}
+                  >
+                    ↓
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -199,7 +250,7 @@ export function SuperAdminReportTemplatesPage() {
                     {t('superAdmin.reportTemplates.noQuestions')}
                   </li>
                 ) : (
-                  section.questions.map((q) => (
+                  section.questions.map((q, questionIndex) => (
                     <li key={q.id} className="report-template-question-item">
                       <span className="report-template-question-item__label">{q.label}</span>
                       <span className="report-template-question-item__type">
@@ -207,6 +258,24 @@ export function SuperAdminReportTemplatesPage() {
                         {q.required ? ` · ${t('superAdmin.reportTemplates.required')}` : ''}
                       </span>
                       <div className="report-template-question-item__actions">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={questionIndex === 0 || movingId !== null}
+                          onClick={() => moveQuestion(section, questionIndex, 'up')}
+                          aria-label={t('superAdmin.reportTemplates.moveUp')}
+                        >
+                          ↑
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={questionIndex === section.questions.length - 1 || movingId !== null}
+                          onClick={() => moveQuestion(section, questionIndex, 'down')}
+                          aria-label={t('superAdmin.reportTemplates.moveDown')}
+                        >
+                          ↓
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
@@ -245,6 +314,7 @@ export function SuperAdminReportTemplatesPage() {
         open={sectionModalOpen}
         onClose={() => setSectionModalOpen(false)}
         section={editingSection}
+        nextDisplayOrder={editingSection == null ? sections.length : undefined}
         onSaved={() => {
           setSectionModalOpen(false)
           loadSections()
@@ -283,6 +353,7 @@ function SectionModal({
   open,
   onClose,
   section,
+  nextDisplayOrder,
   onSaved,
   saving,
   setSaving,
@@ -291,6 +362,7 @@ function SectionModal({
   open: boolean
   onClose: () => void
   section: TemplateSection | null
+  nextDisplayOrder?: number
   onSaved: () => void
   saving: boolean
   setSaving: (v: boolean) => void
@@ -311,7 +383,10 @@ function SectionModal({
       if (section) {
         await updateReportTemplateSection(section.id, { name: values.name.trim() })
       } else {
-        await createReportTemplateSection(values.name.trim())
+        await createReportTemplateSection(
+          values.name.trim(),
+          nextDisplayOrder,
+        )
       }
       onSaved()
       form.reset()

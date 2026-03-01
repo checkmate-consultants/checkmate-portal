@@ -48,11 +48,13 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
   const [sectionModalOpen, setSectionModalOpen] = useState(false)
   const [editingSection, setEditingSection] = useState<VisitReportSection | null>(null)
   const [sectionFocusAreaId, setSectionFocusAreaId] = useState<string | null>(null)
+  const [newSectionDisplayOrder, setNewSectionDisplayOrder] = useState(0)
   const [questionModalOpen, setQuestionModalOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<VisitReportQuestion | null>(null)
   const [questionSectionId, setQuestionSectionId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [movingId, setMovingId] = useState<string | null>(null)
 
   const load = async () => {
     if (!visitId || !open) return
@@ -72,9 +74,10 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
     if (open && visitId) load()
   }, [open, visitId, t])
 
-  const openNewSection = (focusAreaId: string) => {
+  const openNewSection = (focusAreaId: string, currentSectionCount: number) => {
     setSectionFocusAreaId(focusAreaId)
     setEditingSection(null)
+    setNewSectionDisplayOrder(currentSectionCount)
     setSectionModalOpen(true)
   }
 
@@ -109,6 +112,46 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
     load()
   }
 
+  const moveSection = async (
+    sections: VisitReportSection[],
+    sectionIndex: number,
+    direction: 'up' | 'down',
+  ) => {
+    const next = direction === 'up' ? sectionIndex - 1 : sectionIndex + 1
+    if (next < 0 || next >= sections.length) return
+    const a = sections[sectionIndex]
+    const b = sections[next]
+    if (!a || !b) return
+    setMovingId(`section-${a.id}`)
+    try {
+      await updateVisitReportSection(a.id, { displayOrder: b.displayOrder })
+      await updateVisitReportSection(b.id, { displayOrder: a.displayOrder })
+      await load()
+    } finally {
+      setMovingId(null)
+    }
+  }
+
+  const moveQuestion = async (
+    section: VisitReportSection,
+    questionIndex: number,
+    direction: 'up' | 'down',
+  ) => {
+    const next = direction === 'up' ? questionIndex - 1 : questionIndex + 1
+    if (next < 0 || next >= section.questions.length) return
+    const a = section.questions[questionIndex]
+    const b = section.questions[next]
+    if (!a || !b) return
+    setMovingId(`question-${a.id}`)
+    try {
+      await updateVisitReportQuestion(a.id, { displayOrder: b.displayOrder })
+      await updateVisitReportQuestion(b.id, { displayOrder: a.displayOrder })
+      await load()
+    } finally {
+      setMovingId(null)
+    }
+  }
+
   return (
     <Modal
       open={open}
@@ -134,7 +177,7 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
                       {t('superAdmin.visits.editReportFormModal.noSections')}
                     </p>
                   ) : (
-                    fa.sections.map((section) => (
+                    fa.sections.map((section, sectionIndex) => (
                       <div
                         key={section.id}
                         className="edit-visit-report-form-card report-template-card"
@@ -144,6 +187,31 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
                             {section.sectionName}
                           </h2>
                           <div className="report-template-card__actions">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={sectionIndex === 0 || movingId !== null}
+                              onClick={() =>
+                                moveSection(fa.sections, sectionIndex, 'up')
+                              }
+                              aria-label={t('superAdmin.reportTemplates.moveUp')}
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={
+                                sectionIndex === fa.sections.length - 1 ||
+                                movingId !== null
+                              }
+                              onClick={() =>
+                                moveSection(fa.sections, sectionIndex, 'down')
+                              }
+                              aria-label={t('superAdmin.reportTemplates.moveDown')}
+                            >
+                              ↓
+                            </Button>
                             <Button
                               type="button"
                               variant="ghost"
@@ -188,7 +256,7 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
                               {t('superAdmin.reportTemplates.noQuestions')}
                             </li>
                           ) : (
-                            section.questions.map((q) => (
+                            section.questions.map((q, questionIndex) => (
                               <li
                                 key={q.id}
                                 className="report-template-question-item"
@@ -205,6 +273,42 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
                                     : ''}
                                 </span>
                                 <div className="report-template-question-item__actions">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={
+                                      questionIndex === 0 || movingId !== null
+                                    }
+                                    onClick={() =>
+                                      moveQuestion(
+                                        section,
+                                        questionIndex,
+                                        'up',
+                                      )
+                                    }
+                                    aria-label={t('superAdmin.reportTemplates.moveUp')}
+                                  >
+                                    ↑
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={
+                                      questionIndex ===
+                                        section.questions.length - 1 ||
+                                      movingId !== null
+                                    }
+                                    onClick={() =>
+                                      moveQuestion(
+                                        section,
+                                        questionIndex,
+                                        'down',
+                                      )
+                                    }
+                                    aria-label={t('superAdmin.reportTemplates.moveDown')}
+                                  >
+                                    ↓
+                                  </Button>
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -247,7 +351,9 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => openNewSection(fa.focusAreaId)}
+                    onClick={() =>
+                      openNewSection(fa.focusAreaId, fa.sections.length)
+                    }
                   >
                     {t('superAdmin.reportTemplates.newSection')}
                   </Button>
@@ -274,6 +380,7 @@ export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
             setSectionFocusAreaId(null)
           }}
           section={editingSection}
+          newSectionDisplayOrder={newSectionDisplayOrder}
           onSaved={handleSectionSaved}
           saving={saving}
           setSaving={setSaving}
@@ -308,6 +415,7 @@ function VisitSectionModal({
   open,
   onClose,
   section,
+  newSectionDisplayOrder,
   onSaved,
   saving,
   setSaving,
@@ -318,6 +426,7 @@ function VisitSectionModal({
   open: boolean
   onClose: () => void
   section: VisitReportSection | null
+  newSectionDisplayOrder?: number
   onSaved: () => void
   saving: boolean
   setSaving: (v: boolean) => void
@@ -342,6 +451,7 @@ function VisitSectionModal({
       } else {
         await createVisitReportSection(visitId, focusAreaId, {
           sectionName: values.sectionName.trim(),
+          displayOrder: newSectionDisplayOrder ?? 0,
         })
       }
       onSaved()
