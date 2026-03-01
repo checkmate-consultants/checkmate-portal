@@ -28,6 +28,14 @@
   color: var(--color-text-muted);
 }
 
+.company-visit-report-validation-error {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-error, #dc2626) 12%, transparent);
+  color: var(--color-error, #dc2626);
+  font-size: 0.9rem;
+}
+
 .report-form-rating {
   display: flex;
   gap: 0.25rem;

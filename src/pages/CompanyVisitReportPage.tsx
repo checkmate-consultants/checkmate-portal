@@ -37,6 +37,7 @@ export function CompanyVisitReportPage() {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [submitValidationError, setSubmitValidationError] = useState<string | null>(null)
 
   /** Draft answers: focusAreaId -> questionId -> value (for form-based sections) */
   const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
@@ -54,6 +55,7 @@ export function CompanyVisitReportPage() {
 
   const setAnswer = useCallback(
     (focusAreaId: string, questionId: string, value: string | null) => {
+      setSubmitValidationError(null)
       setDraftAnswers((prev) => ({
         ...prev,
         [focusAreaId]: {
@@ -64,6 +66,12 @@ export function CompanyVisitReportPage() {
     },
     [],
   )
+
+  const isAnswerEmpty = useCallback((value: string | null): boolean => {
+    if (value === null || value === undefined) return true
+    const s = String(value).trim()
+    return s === '' || s === '[]'
+  }, [])
 
   useEffect(() => {
     if (!visitId) return
@@ -147,8 +155,29 @@ export function CompanyVisitReportPage() {
     }
   }
 
+  const isAnswerEmpty = useCallback((value: string | null): boolean => {
+    if (value === null || value === undefined) return true
+    const s = String(value).trim()
+    return s === '' || s === '[]'
+  }, [])
+
   const handleSubmitReport = async () => {
     if (!visitId) return
+    setSubmitValidationError(null)
+    const missingRequired: { focusAreaName: string; label: string }[] = []
+    for (const fa of formData) {
+      for (const section of fa.sections) {
+        for (const q of section.questions) {
+          if (q.required && isAnswerEmpty(getAnswer(fa.focusAreaId, q.id))) {
+            missingRequired.push({ focusAreaName: fa.focusAreaName, label: q.label })
+          }
+        }
+      }
+    }
+    if (missingRequired.length > 0) {
+      setSubmitValidationError(t('superAdmin.visitReport.requiredQuestionsError'))
+      return
+    }
     try {
       setSubmitting(true)
       for (const fa of formData) {
@@ -269,6 +298,12 @@ export function CompanyVisitReportPage() {
           </Button>
         </div>
       </header>
+
+      {submitValidationError && (
+        <div className="company-visit-report-validation-error" role="alert">
+          {submitValidationError}
+        </div>
+      )}
 
       <div className="super-admin-visit-report-list">
         {formData.map((block) => (

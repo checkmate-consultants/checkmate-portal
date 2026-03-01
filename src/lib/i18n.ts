@@ -584,6 +584,7 @@ const resources = {
           saveSection: 'Save section',
           backToVisits: 'Back to visits',
           sectionSaved: 'Saved',
+          requiredQuestionsError: 'Please answer all required questions before submitting.',
           toolbar: {
             normal: 'Normal',
             heading2: 'Heading 2',
@@ -1429,6 +1430,7 @@ const resources = {
           saveSection: 'حفظ هذا القسم',
           backToVisits: 'العودة إلى الزيارات',
           sectionSaved: 'تم الحفظ',
+          requiredQuestionsError: 'يرجى الإجابة على جميع الأسئلة المطلوبة قبل الإرسال.',
           toolbar: {
             normal: 'نص عادي',
             heading2: 'عنوان مستوى ٢',
