@@ -33,6 +33,7 @@ const QUESTION_TYPES: ReportQuestionType[] = [
   'single_choice',
   'multi_choice',
   'date',
+  'datetime',
   'rating',
 ]
 

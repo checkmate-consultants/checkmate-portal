@@ -65,6 +65,19 @@ export function ReportFormField({ question, value, onChange, disabled }: Props) 
           />
         </FormField>
       )
+    case 'datetime':
+      return (
+        <FormField id={id} label={question.label}>
+          <Input
+            id={id}
+            type="datetime-local"
+            value={raw}
+            onChange={(e) => onChange(e.target.value || null)}
+            disabled={disabled}
+            hasError={false}
+          />
+        </FormField>
+      )
     case 'rating': {
       const n = raw ? parseInt(raw, 10) : 0
       return (

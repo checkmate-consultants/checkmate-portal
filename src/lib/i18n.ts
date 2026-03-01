@@ -629,6 +629,7 @@ const resources = {
             single_choice: 'Single choice',
             multi_choice: 'Multiple choice',
             date: 'Date',
+            datetime: 'Date and time',
             rating: 'Rating (1–5)',
           },
           attachToFocusArea: 'Report form sections',

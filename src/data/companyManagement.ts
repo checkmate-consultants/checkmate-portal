@@ -234,6 +234,7 @@ export type ReportQuestionType =
   | 'single_choice'
   | 'multi_choice'
   | 'date'
+  | 'datetime'
   | 'rating'
 
 export type ReportTemplateSection = {
