@@ -38,6 +38,7 @@ export function CompanyVisitReportPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitValidationError, setSubmitValidationError] = useState<string | null>(null)
+  const [invalidQuestionIds, setInvalidQuestionIds] = useState<Set<string>>(new Set())
 
   /** Draft answers: focusAreaId -> questionId -> value (for form-based sections) */
   const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
@@ -56,6 +57,7 @@ export function CompanyVisitReportPage() {
   const setAnswer = useCallback(
     (focusAreaId: string, questionId: string, value: string | null) => {
       setSubmitValidationError(null)
+      setInvalidQuestionIds(new Set())
       setDraftAnswers((prev) => ({
         ...prev,
         [focusAreaId]: {
@@ -114,6 +116,14 @@ export function CompanyVisitReportPage() {
     load()
   }, [visitId, session.membership, session.isShopper, t])
 
+  useEffect(() => {
+    if (invalidQuestionIds.size === 0) return
+    const firstId = Array.from(invalidQuestionIds)[0]
+    if (!firstId) return
+    const el = document.getElementById(`q-${firstId}`)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [invalidQuestionIds])
+
   const applyCommand = (command: string, value?: string) => {
     if (typeof document === 'undefined') return
     document.execCommand(command, false, value ?? undefined)
@@ -166,7 +176,9 @@ export function CompanyVisitReportPage() {
   const handleSubmitReport = async () => {
     if (!visitId) return
     setSubmitValidationError(null)
+    setInvalidQuestionIds(new Set())
     const missingRequired: { focusAreaName: string; label: string }[] = []
+    const invalidIds: string[] = []
     for (const fa of formData) {
       for (const section of fa.sections) {
         for (const q of section.questions) {
@@ -174,12 +186,14 @@ export function CompanyVisitReportPage() {
           const value = getAnswer(fa.focusAreaId, q.id)
           if (required && isAnswerEmpty(value, q)) {
             missingRequired.push({ focusAreaName: fa.focusAreaName, label: q.label })
+            invalidIds.push(q.id)
           }
         }
       }
     }
     if (missingRequired.length > 0) {
       setSubmitValidationError(t('superAdmin.visitReport.requiredQuestionsError'))
+      setInvalidQuestionIds(new Set(invalidIds))
       return
     }
     try {
@@ -325,6 +339,9 @@ export function CompanyVisitReportPage() {
                         question={q}
                         value={getAnswer(block.focusAreaId, q.id)}
                         onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
+                        requiredSuffix={t('superAdmin.visitReport.requiredSuffix')}
+                        hasError={invalidQuestionIds.has(q.id)}
+                        errorMessage={invalidQuestionIds.has(q.id) ? t('superAdmin.visitReport.questionRequiredError') : undefined}
                       />
                     ))}
                   </div>

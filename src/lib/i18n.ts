@@ -585,6 +585,8 @@ const resources = {
           backToVisits: 'Back to visits',
           sectionSaved: 'Saved',
           requiredQuestionsError: 'Please answer all required questions before submitting.',
+          requiredSuffix: '(required)',
+          questionRequiredError: 'This question is required.',
           toolbar: {
             normal: 'Normal',
             heading2: 'Heading 2',
@@ -1431,6 +1433,8 @@ const resources = {
           backToVisits: 'العودة إلى الزيارات',
           sectionSaved: 'تم الحفظ',
           requiredQuestionsError: 'يرجى الإجابة على جميع الأسئلة المطلوبة قبل الإرسال.',
+          requiredSuffix: '(مطلوب)',
+          questionRequiredError: 'هذا السؤال مطلوب.',
           toolbar: {
             normal: 'نص عادي',
             heading2: 'عنوان مستوى ٢',

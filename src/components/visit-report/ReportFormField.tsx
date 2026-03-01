@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { FormField } from '../ui/FormField.tsx'
 import { Input } from '../ui/Input.tsx'
 import { Textarea } from '../ui/Textarea.tsx'
@@ -8,80 +9,98 @@ type Props = {
   value: string | null
   onChange: (value: string | null) => void
   disabled?: boolean
+  /** Show "(required)"-style suffix next to the label when question is required */
+  requiredSuffix?: string
+  /** Mark field as invalid and show error message */
+  hasError?: boolean
+  errorMessage?: string
 }
 
-export function ReportFormField({ question, value, onChange, disabled }: Props) {
+export function ReportFormField({ question, value, onChange, disabled, requiredSuffix, hasError, errorMessage }: Props) {
   const id = `q-${question.id}`
   const raw = value ?? ''
+  const label = question.required && requiredSuffix ? `${question.label} ${requiredSuffix}` : question.label
+  const wrapperClass = clsx('report-form-field', hasError && 'report-form-field--error')
 
   switch (question.questionType) {
     case 'short_text':
       return (
-        <FormField id={id} label={question.label}>
-          <Input
-            id={id}
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Input
+              id={id}
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
     case 'long_text':
       return (
-        <FormField id={id} label={question.label}>
-          <Textarea
-            id={id}
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Textarea
+              id={id}
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
     case 'number':
       return (
-        <FormField id={id} label={question.label}>
-          <Input
-            id={id}
-            type="number"
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Input
+              id={id}
+              type="number"
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
     case 'date':
       return (
-        <FormField id={id} label={question.label}>
-          <Input
-            id={id}
-            type="date"
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Input
+              id={id}
+              type="date"
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
     case 'datetime':
       return (
-        <FormField id={id} label={question.label}>
-          <Input
-            id={id}
-            type="datetime-local"
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Input
+              id={id}
+              type="datetime-local"
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
     case 'rating': {
       const n = raw ? parseInt(raw, 10) : 0
       return (
-        <FormField id={id} label={question.label}>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
           <div className="report-form-rating">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -97,12 +116,14 @@ export function ReportFormField({ question, value, onChange, disabled }: Props) 
             ))}
           </div>
         </FormField>
+        </div>
       )
     }
     case 'single_choice': {
       const options = question.options ?? []
       return (
-        <FormField id={id} label={question.label}>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
           <div className="report-form-choices" role="group">
             {options.map((opt) => (
               <label key={opt.value} className="report-form-choice">
@@ -119,6 +140,7 @@ export function ReportFormField({ question, value, onChange, disabled }: Props) 
             ))}
           </div>
         </FormField>
+        </div>
       )
     }
     case 'multi_choice': {
@@ -136,7 +158,8 @@ export function ReportFormField({ question, value, onChange, disabled }: Props) 
         onChange(next.length > 0 ? JSON.stringify(next) : null)
       }
       return (
-        <FormField id={id} label={question.label}>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
           <div className="report-form-choices" role="group">
             {options.map((opt) => (
               <label key={opt.value} className="report-form-choice">
@@ -151,19 +174,22 @@ export function ReportFormField({ question, value, onChange, disabled }: Props) 
             ))}
           </div>
         </FormField>
+        </div>
       )
     }
     default:
       return (
-        <FormField id={id} label={question.label}>
-          <Input
-            id={id}
-            value={raw}
-            onChange={(e) => onChange(e.target.value || null)}
-            disabled={disabled}
-            hasError={false}
-          />
-        </FormField>
+        <div className={wrapperClass}>
+          <FormField id={id} label={label} error={hasError ? errorMessage : undefined}>
+            <Input
+              id={id}
+              value={raw}
+              onChange={(e) => onChange(e.target.value || null)}
+              disabled={disabled}
+              hasError={!!hasError}
+            />
+          </FormField>
+        </div>
       )
   }
 }
