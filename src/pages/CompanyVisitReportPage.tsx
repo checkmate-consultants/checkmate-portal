@@ -339,6 +339,7 @@ export function CompanyVisitReportPage() {
                         question={q}
                         value={getAnswer(block.focusAreaId, q.id)}
                         onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
+                        onBlur={canEdit ? () => handleSaveFormAnswers(block.focusAreaId) : undefined}
                         requiredSuffix={t('superAdmin.visitReport.requiredSuffix')}
                         hasError={invalidQuestionIds.has(q.id)}
                         errorMessage={invalidQuestionIds.has(q.id) ? t('superAdmin.visitReport.questionRequiredError') : undefined}
@@ -346,21 +347,13 @@ export function CompanyVisitReportPage() {
                     ))}
                   </div>
                 ))}
-                <div className="wysiwyg-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    loading={savingId === block.focusAreaId}
-                    onClick={() => handleSaveFormAnswers(block.focusAreaId)}
-                  >
-                    {t('superAdmin.visitReport.saveSection')}
-                  </Button>
-                  {savedId === block.focusAreaId && savingId !== block.focusAreaId && (
-                    <span className="wysiwyg-status">
-                      {t('superAdmin.visitReport.sectionSaved')}
-                    </span>
-                  )}
-                </div>
+                {canEdit && (savingId === block.focusAreaId || savedId === block.focusAreaId) && (
+                  <p className="wysiwyg-status" aria-live="polite">
+                    {savingId === block.focusAreaId
+                      ? t('superAdmin.visitReport.saving')
+                      : t('superAdmin.visitReport.sectionSaved')}
+                  </p>
+                )}
               </>
             ) : (
               <>

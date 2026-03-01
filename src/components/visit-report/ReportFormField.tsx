@@ -9,6 +9,8 @@ type Props = {
   value: string | null
   onChange: (value: string | null) => void
   disabled?: boolean
+  /** Called when the field loses focus (for auto-save) */
+  onBlur?: () => void
   /** Show "(required)"-style suffix next to the label when question is required */
   requiredSuffix?: string
   /** Mark field as invalid and show error message */
@@ -16,7 +18,7 @@ type Props = {
   errorMessage?: string
 }
 
-export function ReportFormField({ question, value, onChange, disabled, requiredSuffix, hasError, errorMessage }: Props) {
+export function ReportFormField({ question, value, onChange, disabled, onBlur, requiredSuffix, hasError, errorMessage }: Props) {
   const id = `q-${question.id}`
   const raw = value ?? ''
   const label = question.required && requiredSuffix ? `${question.label} ${requiredSuffix}` : question.label
@@ -31,6 +33,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               id={id}
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
@@ -45,6 +48,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               id={id}
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
@@ -60,6 +64,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               type="number"
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
@@ -75,6 +80,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               type="date"
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
@@ -90,6 +96,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               type="datetime-local"
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
@@ -109,6 +116,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
                 className="report-form-rating__star"
                 disabled={disabled}
                 onClick={() => onChange(String(star))}
+                onBlur={onBlur}
                 aria-label={`${star}`}
               >
                 {star <= n ? '★' : '☆'}
@@ -133,6 +141,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
                   value={opt.value}
                   checked={raw === opt.value}
                   onChange={() => onChange(opt.value)}
+                  onBlur={onBlur}
                   disabled={disabled}
                 />
                 <span>{opt.label ?? opt.value}</span>
@@ -167,6 +176,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
                   type="checkbox"
                   checked={selected.includes(opt.value)}
                   onChange={() => toggle(opt.value)}
+                  onBlur={onBlur}
                   disabled={disabled}
                 />
                 <span>{opt.label ?? opt.value}</span>
@@ -185,6 +195,7 @@ export function ReportFormField({ question, value, onChange, disabled, requiredS
               id={id}
               value={raw}
               onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
               disabled={disabled}
               hasError={!!hasError}
             />
