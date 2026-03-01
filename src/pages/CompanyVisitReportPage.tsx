@@ -67,11 +67,19 @@ export function CompanyVisitReportPage() {
     [],
   )
 
-  const isAnswerEmpty = useCallback((value: string | null): boolean => {
-    if (value === null || value === undefined) return true
-    const s = String(value).trim()
-    return s === '' || s === '[]'
-  }, [])
+  const isAnswerEmpty = useCallback(
+    (value: string | null | undefined, question?: { questionType: string; options?: { value: string }[] | null }): boolean => {
+      if (value === null || value === undefined) return true
+      const s = String(value).trim()
+      if (s === '' || s === '[]') return true
+      if (question?.questionType === 'single_choice' && question.options?.length) {
+        const validValues = new Set(question.options.map((o) => o.value))
+        if (!validValues.has(s)) return true
+      }
+      return false
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!visitId) return
@@ -155,12 +163,6 @@ export function CompanyVisitReportPage() {
     }
   }
 
-  const isAnswerEmpty = useCallback((value: string | null): boolean => {
-    if (value === null || value === undefined) return true
-    const s = String(value).trim()
-    return s === '' || s === '[]'
-  }, [])
-
   const handleSubmitReport = async () => {
     if (!visitId) return
     setSubmitValidationError(null)
@@ -168,7 +170,9 @@ export function CompanyVisitReportPage() {
     for (const fa of formData) {
       for (const section of fa.sections) {
         for (const q of section.questions) {
-          if (q.required && isAnswerEmpty(getAnswer(fa.focusAreaId, q.id))) {
+          const required = q.required === true
+          const value = getAnswer(fa.focusAreaId, q.id)
+          if (required && isAnswerEmpty(value, q)) {
             missingRequired.push({ focusAreaName: fa.focusAreaName, label: q.label })
           }
         }
