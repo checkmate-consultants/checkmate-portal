@@ -39,7 +39,7 @@ type Props = {
   onSaved?: () => void
 }
 
-export function EditVisitReportFormModal({ visitId, open, onClose, onSaved }: Props) {
+export function EditVisitReportFormModal({ visitId, open, onClose }: Props) {
   const { t } = useTranslation()
   const [focusAreas, setFocusAreas] = useState<VisitReportFormFocusArea[]>([])
   const [loading, setLoading] = useState(true)
@@ -114,8 +114,8 @@ export function EditVisitReportFormModal({ visitId, open, onClose, onSaved }: Pr
       onClose={onClose}
       title={t('superAdmin.visits.editReportFormModal.title')}
       description={t('superAdmin.visits.editReportFormModal.description')}
-      className="edit-visit-report-form-modal"
     >
+      <div className="edit-visit-report-form-modal">
       <div className="edit-visit-report-form-modal__body">
         {loading && <p>{t('superAdmin.loading')}</p>}
         {error && <p className="edit-visit-report-form-modal__error">{error}</p>}
@@ -260,6 +260,7 @@ export function EditVisitReportFormModal({ visitId, open, onClose, onSaved }: Pr
             {t('superAdmin.visits.forms.cancel')}
           </Button>
         </div>
+      </div>
       </div>
 
       {sectionFocusAreaId && (
