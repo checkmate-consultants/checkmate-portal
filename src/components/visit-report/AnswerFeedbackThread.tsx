@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '../ui/Button.tsx'
 import {
@@ -70,8 +70,16 @@ export function AnswerFeedbackThread({
   }, [visitId, focusAreaId, questionId])
 
   useEffect(() => {
-    if (!collapsed) load()
+    load()
+  }, [load])
+
+  const prevCollapsed = useRef(collapsed)
+  useEffect(() => {
+    if (prevCollapsed.current === false && collapsed === true) load()
+    prevCollapsed.current = collapsed
   }, [collapsed, load])
+
+  const commentCount = thread.reduce((n, item) => n + 1 + (item.replies?.length ?? 0), 0)
 
   const handleAdd = async () => {
     const body = newBody.trim()
@@ -117,6 +125,9 @@ export function AnswerFeedbackThread({
         title={t('superAdmin.visitReport.feedback.viewComments')}
       >
         <CommentIcon className="answer-feedback-thread__trigger-icon" />
+        <span className="answer-feedback-thread__count" aria-hidden>
+          {commentCount}
+        </span>
       </button>
     )
   }
