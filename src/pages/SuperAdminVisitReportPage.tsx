@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Modal } from '../components/ui/Modal.tsx'
 import {
   fetchVisitReportFormData,
   fetchVisitStatus,
@@ -44,7 +45,10 @@ export function SuperAdminVisitReportPage() {
   const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
 
   const reportLocked = visitStatus === 'report_submitted'
-  const [openCommentKey, setOpenCommentKey] = useState<string | null>(null)
+  const [openCommentContext, setOpenCommentContext] = useState<{
+    focusAreaId: string
+    questionId: string
+  } | null>(null)
 
   const getAnswer = useCallback(
     (block: VisitReportFormFocusArea, questionId: string): string | null => {
@@ -284,9 +288,9 @@ export function SuperAdminVisitReportPage() {
                                   focusAreaId={block.focusAreaId}
                                   questionId={q.id}
                                   canComment={true}
-                                  isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                  isOpen={false}
                                   onOpenChange={(open) =>
-                                    setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                    open && setOpenCommentContext({ focusAreaId: block.focusAreaId, questionId: q.id })
                                   }
                                 />
                               </div>
@@ -317,9 +321,9 @@ export function SuperAdminVisitReportPage() {
                                 focusAreaId={block.focusAreaId}
                                 questionId={q.id}
                                 canComment={true}
-                                isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                isOpen={false}
                                 onOpenChange={(open) =>
-                                  setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                  open && setOpenCommentContext({ focusAreaId: block.focusAreaId, questionId: q.id })
                                 }
                               />
                             </div>
@@ -336,6 +340,23 @@ export function SuperAdminVisitReportPage() {
           </Card>
         ))}
       </div>
+
+      <Modal
+        open={Boolean(openCommentContext)}
+        title={t('superAdmin.visitReport.feedback.viewComments')}
+        onClose={() => setOpenCommentContext(null)}
+        contentClassName="answer-feedback-modal"
+      >
+        {openCommentContext && visitId && (
+          <AnswerFeedbackThread
+            visitId={visitId}
+            focusAreaId={openCommentContext.focusAreaId}
+            questionId={openCommentContext.questionId}
+            canComment={true}
+            isOpen={true}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

@@ -104,8 +104,21 @@
 }
 
 .company-visit-report-answer-comments {
-  flex: 0 1 340px;
-  min-width: 280px;
+  flex: 0 0 auto;
+  min-width: 2.25rem;
+}
+
+@media (max-width: 640px) {
+  .company-visit-report-answer-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .company-visit-report-answer-row .company-visit-report-answer {
+    width: 100%;
+  }
+  .company-visit-report-answer-comments {
+    flex-shrink: 0;
+  }
 }
 
 .company-visit-report-answer {

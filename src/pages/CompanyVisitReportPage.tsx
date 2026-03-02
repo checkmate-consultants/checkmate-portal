@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useOutletContext } from 'react-router-dom'
 import { Card } from '../components/ui/Card.tsx'
 import { Button } from '../components/ui/Button.tsx'
+import { Modal } from '../components/ui/Modal.tsx'
 import { FormField } from '../components/ui/FormField.tsx'
 import {
   fetchVisitReportFormData,
@@ -62,7 +63,10 @@ export function CompanyVisitReportPage() {
   }, [formData, session.membership?.role, session.reviewerFocusAreaIds])
 
   const canComment = Boolean(session.membership && !session.isShopper)
-  const [openCommentKey, setOpenCommentKey] = useState<string | null>(null)
+  const [openCommentContext, setOpenCommentContext] = useState<{
+    focusAreaId: string
+    questionId: string
+  } | null>(null)
 
   const getAnswer = useCallback(
     (focusAreaId: string, questionId: string): string | null => {
@@ -306,9 +310,9 @@ export function CompanyVisitReportPage() {
                                   focusAreaId={block.focusAreaId}
                                   questionId={q.id}
                                   canComment={canComment}
-                                  isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                  isOpen={false}
                                   onOpenChange={(open) =>
-                                    setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                    open && setOpenCommentContext({ focusAreaId: block.focusAreaId, questionId: q.id })
                                   }
                                 />
                               </div>
@@ -333,6 +337,23 @@ export function CompanyVisitReportPage() {
             ))
           )}
         </div>
+
+        <Modal
+          open={Boolean(openCommentContext)}
+          title={t('superAdmin.visitReport.feedback.viewComments')}
+          onClose={() => setOpenCommentContext(null)}
+          contentClassName="answer-feedback-modal"
+        >
+          {openCommentContext && visitId && (
+            <AnswerFeedbackThread
+              visitId={visitId}
+              focusAreaId={openCommentContext.focusAreaId}
+              questionId={openCommentContext.questionId}
+              canComment={canComment}
+              isOpen={true}
+            />
+          )}
+        </Modal>
       </div>
     )
   }

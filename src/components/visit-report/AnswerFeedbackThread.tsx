@@ -8,6 +8,26 @@ import {
 } from '../../data/companyManagement.ts'
 import './answer-feedback-thread.css'
 
+/** Comment bubble icon for "open comments" trigger (e.g. opens modal). */
+export function CommentIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
 type Props = {
   visitId: string
   focusAreaId: string
@@ -89,16 +109,15 @@ export function AnswerFeedbackThread({
 
   if (collapsed) {
     return (
-      <div className="answer-feedback-thread answer-feedback-thread--collapsed">
-        <Button
-          type="button"
-          variant="ghost"
-          className="answer-feedback-thread__toggle"
-          onClick={() => onOpenChange?.(true)}
-        >
-          {t('superAdmin.visitReport.feedback.viewComments')}
-        </Button>
-      </div>
+      <button
+        type="button"
+        className="answer-feedback-thread__trigger"
+        onClick={() => onOpenChange?.(true)}
+        aria-label={t('superAdmin.visitReport.feedback.viewComments')}
+        title={t('superAdmin.visitReport.feedback.viewComments')}
+      >
+        <CommentIcon className="answer-feedback-thread__trigger-icon" />
+      </button>
     )
   }
 

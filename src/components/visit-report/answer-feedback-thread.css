@@ -7,7 +7,31 @@
 }
 
 .answer-feedback-thread--collapsed {
-  padding: 0.5rem 0.75rem;
+  padding: 0;
+}
+
+.answer-feedback-thread__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted, #666);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.answer-feedback-thread__trigger:hover {
+  color: var(--color-primary, #0066cc);
+  background: var(--color-surface-alt, #f0f0f0);
+}
+
+.answer-feedback-thread__trigger-icon {
+  flex-shrink: 0;
 }
 
 .answer-feedback-thread__toggle {
@@ -108,4 +132,21 @@
 .answer-feedback-thread__actions {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Feedback modal: cap height so the body scrolls when there are many comments */
+.answer-feedback-modal.ui-modal__content {
+  max-width: min(420px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.answer-feedback-modal .ui-modal__body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 0;
 }
