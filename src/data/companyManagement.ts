@@ -484,12 +484,15 @@ export type InviteCompanyUserInput = {
   companyId: string
   email: string
   fullName?: string
+  /** Defaults to company_member. Use reviewer for users who only review assigned focus areas. */
+  role?: 'company_member' | 'company_viewer' | 'reviewer'
 }
 
 export const inviteCompanyUser = async ({
   companyId,
   email,
   fullName,
+  role = 'company_member',
 }: InviteCompanyUserInput): Promise<{ authUserId: string; tempPassword?: string }> => {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase.functions.invoke('invite-company-user', {
@@ -497,6 +500,7 @@ export const inviteCompanyUser = async ({
       companyId,
       email: email.trim().toLowerCase(),
       fullName: fullName?.trim() ?? undefined,
+      role: role === 'company_member' ? undefined : role,
     },
   })
 
@@ -536,6 +540,59 @@ export const removeCompanyMember = async (
   if (error) {
     throw new Error(error.message)
   }
+}
+
+/** List focus area IDs assigned to a reviewer. Company admins only. */
+export const fetchReviewerFocusAreas = async (
+  companyId: string,
+  userId: string,
+): Promise<string[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('reviewer_focus_areas')
+    .select('focus_area_id')
+    .eq('company_id', companyId)
+    .eq('user_id', userId)
+  if (error) throw error
+  return (data ?? []).map((r: { focus_area_id: string }) => r.focus_area_id)
+}
+
+/** Set focus areas for a reviewer. Replaces existing. Company admins only. */
+export const setReviewerFocusAreas = async (
+  companyId: string,
+  userId: string,
+  focusAreaIds: string[],
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error: delError } = await supabase
+    .from('reviewer_focus_areas')
+    .delete()
+    .eq('company_id', companyId)
+    .eq('user_id', userId)
+  if (delError) throw delError
+  if (focusAreaIds.length === 0) return
+  const rows = focusAreaIds.map((focus_area_id) => ({
+    company_id: companyId,
+    user_id: userId,
+    focus_area_id,
+  }))
+  const { error: insError } = await supabase.from('reviewer_focus_areas').insert(rows)
+  if (insError) throw insError
+}
+
+/** Update a member's role. Company admins only; cannot set company_admin. */
+export const updateCompanyMemberRole = async (
+  companyId: string,
+  userId: string,
+  role: 'company_member' | 'company_viewer' | 'reviewer',
+): Promise<void> => {
+  const supabase = getSupabaseClient()
+  const { error } = await supabase
+    .from('company_members')
+    .update({ role })
+    .eq('company_id', companyId)
+    .eq('user_id', userId)
+  if (error) throw error
 }
 
 export type ResetUserPasswordInput = {
@@ -1656,6 +1713,151 @@ export const saveVisitReportAnswers = async (
         { onConflict: 'visit_id,focus_area_id,question_id' },
       )
     if (error) throw error
+  }
+}
+
+/** Single comment in a thread on an answer */
+export type AnswerFeedbackItem = {
+  id: string
+  visitId: string
+  focusAreaId: string
+  questionId: string
+  parentId: string | null
+  authorId: string
+  authorEmail: string | null
+  authorFullName: string | null
+  body: string
+  createdAt: string
+  replies: AnswerFeedbackItem[]
+}
+
+export const fetchAnswerFeedback = async (
+  visitId: string,
+  focusAreaId: string,
+  questionId: string,
+): Promise<AnswerFeedbackItem[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('answer_feedback')
+    .select('id, visit_id, focus_area_id, question_id, parent_id, author_id, body, created_at')
+    .eq('visit_id', visitId)
+    .eq('focus_area_id', focusAreaId)
+    .eq('question_id', questionId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  const rows = (data ?? []) as Array<{
+    id: string
+    visit_id: string
+    focus_area_id: string
+    question_id: string
+    parent_id: string | null
+    author_id: string
+    body: string
+    created_at: string
+  }>
+  const authorIds = [...new Set(rows.map((r) => r.author_id))]
+  const profilesMap = new Map<string, { email: string | null; full_name: string | null }>()
+  if (authorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email, full_name')
+      .in('id', authorIds)
+    for (const p of profiles ?? []) {
+      profilesMap.set(p.id, { email: p.email ?? null, full_name: p.full_name ?? null })
+    }
+  }
+  const getAuthor = (id: string) => profilesMap.get(id)
+  const items: AnswerFeedbackItem[] = rows.map((r) => {
+    const author = getAuthor(r.author_id)
+    return {
+      id: r.id,
+      visitId: r.visit_id,
+      focusAreaId: r.focus_area_id,
+      questionId: r.question_id,
+      parentId: r.parent_id,
+      authorId: r.author_id,
+      authorEmail: author?.email ?? null,
+      authorFullName: author?.full_name ?? null,
+      body: r.body,
+      createdAt: r.created_at,
+      replies: [],
+    }
+  })
+  const byId = new Map(items.map((i) => [i.id, i]))
+  const roots: AnswerFeedbackItem[] = []
+  for (const item of items) {
+    if (item.parentId) {
+      const parent = byId.get(item.parentId)
+      if (parent) parent.replies.push(item)
+    } else {
+      roots.push(item)
+    }
+  }
+  return roots
+}
+
+export const addAnswerFeedback = async (
+  visitId: string,
+  focusAreaId: string,
+  questionId: string,
+  body: string,
+  parentId?: string,
+): Promise<AnswerFeedbackItem> => {
+  const supabase = getSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.id) throw new Error('Must be authenticated to add feedback.')
+  const { data, error } = await supabase
+    .from('answer_feedback')
+    .insert({
+      visit_id: visitId,
+      focus_area_id: focusAreaId,
+      question_id: questionId,
+      parent_id: parentId ?? null,
+      author_id: user.id,
+      body: body.trim(),
+    })
+    .select(
+      `
+      id,
+      visit_id,
+      focus_area_id,
+      question_id,
+      parent_id,
+      author_id,
+      body,
+      created_at
+    `,
+    )
+    .single()
+  if (error) throw error
+  const r = data as {
+    id: string
+    visit_id: string
+    focus_area_id: string
+    question_id: string
+    parent_id: string | null
+    author_id: string
+    body: string
+    created_at: string
+  }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email, full_name')
+    .eq('id', r.author_id)
+    .single()
+  const author = profile as { email: string | null; full_name: string | null } | null
+  return {
+    id: r.id,
+    visitId: r.visit_id,
+    focusAreaId: r.focus_area_id,
+    questionId: r.question_id,
+    parentId: r.parent_id,
+    authorId: r.author_id,
+    authorEmail: author?.email ?? null,
+    authorFullName: author?.full_name ?? null,
+    body: r.body,
+    createdAt: r.created_at,
+    replies: [],
   }
 }
 

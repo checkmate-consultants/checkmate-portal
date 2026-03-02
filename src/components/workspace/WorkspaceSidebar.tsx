@@ -12,6 +12,7 @@ type WorkspaceSidebarProps = {
   isAccountManager?: boolean
   isShopper?: boolean
   isCompanyAdmin?: boolean
+  isReviewer?: boolean
 }
 
 type NavItem = {
@@ -28,6 +29,7 @@ export function WorkspaceSidebar({
   isAccountManager = false,
   isShopper = false,
   isCompanyAdmin = false,
+  isReviewer = false,
 }: WorkspaceSidebarProps) {
   const { t } = useTranslation()
   const { mode } = useTheme()
@@ -35,7 +37,7 @@ export function WorkspaceSidebar({
   const iconSrc = mode === 'dark' ? brandIconLight : brandIcon
 
   const defaultHomePath =
-    showAdminNav ? '/workspace/admin/overview' : isShopper ? '/workspace/visits' : '/workspace/company'
+    showAdminNav ? '/workspace/admin/overview' : isShopper ? '/workspace/visits' : isReviewer ? '/workspace/visits' : '/workspace/company'
   const navItems: NavItem[] = [
     ...(isShopper
       ? [
@@ -51,7 +53,21 @@ export function WorkspaceSidebar({
           },
         ]
       : []),
-    ...(!showAdminNav && !isShopper
+    ...(isReviewer
+      ? [
+          {
+            id: 'profile',
+            labelKey: 'workspace.sidebar.profile',
+            to: '/workspace/account/profile',
+          },
+          {
+            id: 'company-visits',
+            labelKey: 'workspace.sidebar.companyVisits',
+            to: '/workspace/visits',
+          },
+        ]
+      : []),
+    ...(!showAdminNav && !isShopper && !isReviewer
       ? [
           {
             id: 'company',

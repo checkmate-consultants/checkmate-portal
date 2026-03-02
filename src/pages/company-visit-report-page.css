@@ -90,6 +90,24 @@
   gap: 1rem;
 }
 
+.company-visit-report-answer-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.company-visit-report-answer-row .company-visit-report-answer {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.company-visit-report-answer-comments {
+  flex: 0 1 340px;
+  min-width: 280px;
+}
+
 .company-visit-report-answer {
   margin-bottom: 0.75rem;
 }

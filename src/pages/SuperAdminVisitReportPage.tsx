@@ -13,6 +13,7 @@ import {
   type VisitStatus,
 } from '../data/companyManagement.ts'
 import { ReportFormField } from '../components/visit-report/ReportFormField.tsx'
+import { AnswerFeedbackThread } from '../components/visit-report/AnswerFeedbackThread.tsx'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './super-admin-visit-report-page.css'
@@ -43,6 +44,7 @@ export function SuperAdminVisitReportPage() {
   const [draftAnswers, setDraftAnswers] = useState<Record<string, Record<string, string | null>>>({})
 
   const reportLocked = visitStatus === 'report_submitted'
+  const [openCommentKey, setOpenCommentKey] = useState<string | null>(null)
 
   const getAnswer = useCallback(
     (block: VisitReportFormFocusArea, questionId: string): string | null => {
@@ -265,14 +267,31 @@ export function SuperAdminVisitReportPage() {
                     {viewMode === 'edit' && !reportLocked ? (
                       <>
                         {section.questions.map((q) => (
-                          <ReportFormField
-                            key={q.id}
-                            question={q}
-                            value={getAnswer(block, q.id)}
-                            onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
-                            onBlur={() => handleSaveFormAnswers(block.focusAreaId)}
-                            requiredSuffix={t('superAdmin.visitReport.requiredSuffix')}
-                          />
+                          <div key={q.id} className="company-visit-report-answer-row">
+                            <div className="company-visit-report-answer">
+                              <ReportFormField
+                                question={q}
+                                value={getAnswer(block, q.id)}
+                                onChange={(value) => setAnswer(block.focusAreaId, q.id, value)}
+                                onBlur={() => handleSaveFormAnswers(block.focusAreaId)}
+                                requiredSuffix={t('superAdmin.visitReport.requiredSuffix')}
+                              />
+                            </div>
+                            {visitId && (
+                              <div className="company-visit-report-answer-comments">
+                                <AnswerFeedbackThread
+                                  visitId={visitId}
+                                  focusAreaId={block.focusAreaId}
+                                  questionId={q.id}
+                                  canComment={true}
+                                  isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                  onOpenChange={(open) =>
+                                    setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
                         ))}
                         {(savingId === block.focusAreaId || savedId === block.focusAreaId) && (
                           <p className="wysiwyg-status" aria-live="polite">
@@ -284,11 +303,27 @@ export function SuperAdminVisitReportPage() {
                       </>
                     ) : (
                       section.questions.map((q) => (
-                        <div key={q.id} className="company-visit-report-answer">
-                          <span className="company-visit-report-answer__label">{q.label}</span>
-                          <span className="company-visit-report-answer__value">
-                            {getAnswer(block, q.id) ?? '—'}
-                          </span>
+                        <div key={q.id} className="company-visit-report-answer-row">
+                          <div className="company-visit-report-answer">
+                            <span className="company-visit-report-answer__label">{q.label}</span>
+                            <span className="company-visit-report-answer__value">
+                              {getAnswer(block, q.id) ?? '—'}
+                            </span>
+                          </div>
+                          {visitId && (
+                            <div className="company-visit-report-answer-comments">
+                              <AnswerFeedbackThread
+                                visitId={visitId}
+                                focusAreaId={block.focusAreaId}
+                                questionId={q.id}
+                                canComment={true}
+                                isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                onOpenChange={(open) =>
+                                  setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                }
+                              />
+                            </div>
+                          )}
                         </div>
                       ))
                     )}

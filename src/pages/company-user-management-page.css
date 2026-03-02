@@ -75,3 +75,30 @@
 .company-user-management__select[aria-invalid='true'] {
   border-color: var(--color-error, #c00);
 }
+
+.company-user-management__focus-areas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.company-user-management__focus-areas-empty {
+  margin: 0;
+  color: var(--color-text-muted, #666);
+}
+
+.company-user-management__focus-area-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.company-user-management__focus-area-check input {
+  flex-shrink: 0;
+}
+
+.company-user-management__focus-area-property {
+  color: var(--color-text-muted, #666);
+  font-size: 0.9em;
+}

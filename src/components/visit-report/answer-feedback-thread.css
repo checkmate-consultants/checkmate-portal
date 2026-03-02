@@ -1,0 +1,111 @@
+.answer-feedback-thread {
+  margin-top: 0;
+  padding: 0.75rem;
+  background: var(--color-surface-alt, #f5f5f5);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.answer-feedback-thread--collapsed {
+  padding: 0.5rem 0.75rem;
+}
+
+.answer-feedback-thread__toggle {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.answer-feedback-thread__toggle--hide {
+  margin-bottom: 0.5rem;
+}
+
+.answer-feedback-thread--loading {
+  color: var(--color-text-muted, #666);
+}
+
+.answer-feedback-thread__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.answer-feedback-thread__item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border, #eee);
+}
+
+.answer-feedback-thread__item:last-child {
+  border-bottom: none;
+}
+
+.answer-feedback-thread__item--reply {
+  margin-left: 1rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--color-primary, #0066cc);
+}
+
+.answer-feedback-thread__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.answer-feedback-thread__author {
+  font-weight: 600;
+  color: var(--color-text, #111);
+}
+
+.answer-feedback-thread__date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #666);
+}
+
+.answer-feedback-thread__body {
+  margin: 0 0 0.25rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.answer-feedback-thread__reply-btn {
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.answer-feedback-thread__reply-form {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.answer-feedback-thread__replies {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.answer-feedback-thread__add {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #eee);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.answer-feedback-thread__input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+  min-height: 2.5rem;
+}
+
+.answer-feedback-thread__actions {
+  display: flex;
+  gap: 0.5rem;
+}

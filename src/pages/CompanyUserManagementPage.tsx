@@ -13,9 +13,13 @@ import { Input } from '../components/ui/Input.tsx'
 import {
   fetchCompanyMembers,
   fetchCompanyDirectory,
+  fetchCompanySnapshot,
+  fetchReviewerFocusAreas,
   inviteCompanyUser,
   removeCompanyMember,
   resetUserPassword,
+  setReviewerFocusAreas,
+  updateCompanyMemberRole,
   type CompanyMember,
   type CompanyDirectoryItem,
 } from '../data/companyManagement.ts'
@@ -33,7 +37,10 @@ type FormValues = {
   email: string
   fullName: string
   companyId?: string
+  role: 'company_member' | 'company_viewer' | 'reviewer'
 }
+
+type FocusAreaOption = { id: string; name: string; propertyName: string }
 
 export function CompanyUserManagementPage() {
   const { t } = useTranslation()
@@ -71,6 +78,11 @@ export function CompanyUserManagementPage() {
     email: string
     tempPassword: string
   } | null>(null)
+  const [editMember, setEditMember] = useState<CompanyMember | null>(null)
+  const [editRole, setEditRole] = useState<'company_member' | 'company_viewer' | 'reviewer'>('company_member')
+  const [editFocusAreaIds, setEditFocusAreaIds] = useState<string[]>([])
+  const [companyFocusAreas, setCompanyFocusAreas] = useState<FocusAreaOption[]>([])
+  const [editSaving, setEditSaving] = useState(false)
 
   const schema = useMemo(
     () =>
@@ -80,6 +92,7 @@ export function CompanyUserManagementPage() {
         companyId: isSuperAdmin
           ? z.string().min(1, t('validation.required'))
           : z.string().optional(),
+        role: z.enum(['company_member', 'company_viewer', 'reviewer']),
       }),
     [t, isSuperAdmin],
   )
@@ -90,6 +103,7 @@ export function CompanyUserManagementPage() {
       email: '',
       fullName: '',
       companyId: companyId ?? '',
+      role: 'company_member',
     },
     mode: 'onChange',
   })
@@ -147,9 +161,67 @@ export function CompanyUserManagementPage() {
       email: '',
       fullName: '',
       companyId: companyId ?? '',
+      role: 'company_member',
     })
     setCreationResult(null)
     setModalOpen(true)
+  }
+
+  const openEditModal = async (member: CompanyMember) => {
+    if (!companyId) return
+    setEditMember(member)
+    setEditRole(
+      member.role === 'company_admin'
+        ? 'company_member'
+        : (member.role as 'company_member' | 'company_viewer' | 'reviewer'),
+    )
+    try {
+      const [snapshot, focusAreaIds] = await Promise.all([
+        fetchCompanySnapshot(companyId),
+        member.role === 'reviewer' ? fetchReviewerFocusAreas(companyId, member.userId) : Promise.resolve([]),
+      ])
+      const areas: FocusAreaOption[] = []
+      snapshot?.properties?.forEach((p) => {
+        p.focusAreas?.forEach((fa) => {
+          areas.push({ id: fa.id, name: fa.name, propertyName: p.name })
+        })
+      })
+      setCompanyFocusAreas(areas)
+      setEditFocusAreaIds(focusAreaIds)
+    } catch {
+      setCompanyFocusAreas([])
+      setEditFocusAreaIds([])
+    }
+  }
+
+  const closeEditModal = () => {
+    setEditMember(null)
+    setEditSaving(false)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!companyId || !editMember) return
+    setEditSaving(true)
+    try {
+      await updateCompanyMemberRole(companyId, editMember.userId, editRole)
+      if (editRole === 'reviewer') {
+        await setReviewerFocusAreas(companyId, editMember.userId, editFocusAreaIds)
+      } else {
+        await setReviewerFocusAreas(companyId, editMember.userId, [])
+      }
+      await loadList()
+      closeEditModal()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const toggleEditFocusArea = (focusAreaId: string) => {
+    setEditFocusAreaIds((prev) =>
+      prev.includes(focusAreaId) ? prev.filter((id) => id !== focusAreaId) : [...prev, focusAreaId],
+    )
   }
 
   const closeModal = () => setModalOpen(false)
@@ -161,6 +233,7 @@ export function CompanyUserManagementPage() {
       companyId: targetId,
       email: values.email,
       fullName: values.fullName.trim() || undefined,
+      role: values.role,
     })
     setCreationResult({
       email: values.email,
@@ -213,6 +286,8 @@ export function CompanyUserManagementPage() {
         return t('companyUserManagement.roleMember')
       case 'company_viewer':
         return t('companyUserManagement.roleViewer')
+      case 'reviewer':
+        return t('companyUserManagement.roleReviewer')
       default:
         return role
     }
@@ -307,6 +382,16 @@ export function CompanyUserManagementPage() {
               header: t('companyUserManagement.table.actions'),
               render: (m) => (
                 <div className="company-user-management__row-actions">
+                  {m.role !== 'company_admin' && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="company-user-management__edit"
+                      onClick={() => openEditModal(m)}
+                    >
+                      {t('companyUserManagement.editMember')}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"
@@ -393,6 +478,17 @@ export function CompanyUserManagementPage() {
               hasError={Boolean(form.formState.errors.fullName)}
             />
           </FormField>
+          <FormField id="cum-role" label={t('companyUserManagement.forms.role')}>
+            <select
+              id="cum-role"
+              className="company-user-management__select"
+              {...form.register('role')}
+            >
+              <option value="company_member">{t('companyUserManagement.roleMember')}</option>
+              <option value="company_viewer">{t('companyUserManagement.roleViewer')}</option>
+              <option value="reviewer">{t('companyUserManagement.roleReviewer')}</option>
+            </select>
+          </FormField>
 
           {creationResult && (
             <Card className="company-user-management__result-card">
@@ -443,6 +539,63 @@ export function CompanyUserManagementPage() {
             {t('companyUserManagement.close')}
           </Button>
         </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(editMember)}
+        onClose={closeEditModal}
+        title={t('companyUserManagement.editMemberTitle')}
+        description={t('companyUserManagement.editMemberDescription')}
+      >
+        {editMember && (
+          <>
+            <FormField id="edit-role" label={t('companyUserManagement.table.role')}>
+              <select
+                id="edit-role"
+                className="company-user-management__select"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as typeof editRole)}
+              >
+                <option value="company_member">{t('companyUserManagement.roleMember')}</option>
+                <option value="company_viewer">{t('companyUserManagement.roleViewer')}</option>
+                <option value="reviewer">{t('companyUserManagement.roleReviewer')}</option>
+              </select>
+            </FormField>
+            {editRole === 'reviewer' && (
+              <FormField id="edit-focus-areas" label={t('companyUserManagement.focusAreasLabel')}>
+                <div className="company-user-management__focus-areas">
+                  {companyFocusAreas.length === 0 ? (
+                    <p className="company-user-management__focus-areas-empty">
+                      {t('companyManagement.empty')}
+                    </p>
+                  ) : (
+                    companyFocusAreas.map((fa) => (
+                      <label key={fa.id} className="company-user-management__focus-area-check">
+                        <input
+                          type="checkbox"
+                          checked={editFocusAreaIds.includes(fa.id)}
+                          onChange={() => toggleEditFocusArea(fa.id)}
+                        />
+                        <span>{fa.name}</span>
+                        <span className="company-user-management__focus-area-property">
+                          ({fa.propertyName})
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </FormField>
+            )}
+            <div className="modal-form__actions">
+              <Button type="button" variant="ghost" onClick={closeEditModal}>
+                {t('companyUserManagement.forms.cancel')}
+              </Button>
+              <Button type="button" onClick={handleSaveEdit} disabled={editSaving}>
+                {editSaving ? t('companyUserManagement.saving') : t('companyUserManagement.saveRole')}
+              </Button>
+            </div>
+          </>
+        )}
       </Modal>
     </div>
   )

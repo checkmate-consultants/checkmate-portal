@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useOutletContext } from 'react-router-dom'
@@ -15,6 +15,7 @@ import {
   type VisitStatus,
 } from '../data/companyManagement.ts'
 import { ReportFormField } from '../components/visit-report/ReportFormField.tsx'
+import { AnswerFeedbackThread } from '../components/visit-report/AnswerFeedbackThread.tsx'
 import type { WorkspaceOutletContext } from './WorkspacePage.tsx'
 import { usePageMetadata } from '../hooks/usePageMetadata.ts'
 import './company-visit-report-page.css'
@@ -46,6 +47,22 @@ export function CompanyVisitReportPage() {
 
   const canEdit =
     Boolean(session.isShopper) && visitStatus === 'scheduled'
+
+  /** For reviewers, only show focus areas they are assigned to. */
+  const displayFormData = useMemo(() => {
+    if (
+      session.membership?.role === 'reviewer' &&
+      session.reviewerFocusAreaIds?.length
+    ) {
+      return formData.filter((block) =>
+        session.reviewerFocusAreaIds!.includes(block.focusAreaId),
+      )
+    }
+    return formData
+  }, [formData, session.membership?.role, session.reviewerFocusAreaIds])
+
+  const canComment = Boolean(session.membership && !session.isShopper)
+  const [openCommentKey, setOpenCommentKey] = useState<string | null>(null)
 
   const getAnswer = useCallback(
     (focusAreaId: string, questionId: string): string | null => {
@@ -95,10 +112,10 @@ export function CompanyVisitReportPage() {
       try {
         const [data, status] = await Promise.all([
           fetchVisitReportFormData(visitId),
-          session.isShopper ? fetchVisitStatus(visitId) : Promise.resolve('scheduled' as VisitStatus),
+          fetchVisitStatus(visitId),
         ])
         setFormData(data)
-        setVisitStatus(status)
+        setVisitStatus(status ?? null)
         const initial: Record<string, Record<string, string | null>> = {}
         for (const fa of data) {
           initial[fa.focusAreaId] = { ...fa.answers }
@@ -256,40 +273,65 @@ export function CompanyVisitReportPage() {
         </header>
 
         <div className="company-visit-report-list">
-          {formData.map((block) => (
-            <Card key={block.focusAreaId} className="super-admin-card">
-              <h2 className="company-visit-report-heading">
-                {block.focusAreaName}
-              </h2>
-              {block.sections.length > 0 ? (
-                <div className="company-visit-report-sections">
-                  {block.sections.map((section) => (
-                    <div key={section.id}>
-                      <h3 className="report-form-section-title">{section.sectionName}</h3>
-                      {section.questions.map((q) => (
-                        <div key={q.id} className="company-visit-report-answer">
-                          <span className="company-visit-report-answer__label">{q.label}</span>
-                          <span className="company-visit-report-answer__value">
-                            {getAnswer(block.focusAreaId, q.id) ?? '—'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {block.sections.length === 0 && block.legacyContent ? (
-                <div
-                  className="company-visit-report-content"
-                  dangerouslySetInnerHTML={{ __html: block.legacyContent }}
-                />
-              ) : block.sections.length === 0 && !block.legacyContent ? (
-                <p className="company-visit-report-empty">
-                  {t('companyVisits.noContent')}
-                </p>
-              ) : null}
+          {displayFormData.length === 0 &&
+          session.membership?.role === 'reviewer' ? (
+            <Card className="super-admin-card">
+              <p className="company-visit-report-empty">
+                {t('companyVisits.noFocusAreasAssigned')}
+              </p>
             </Card>
-          ))}
+          ) : (
+            displayFormData.map((block) => (
+              <Card key={block.focusAreaId} className="super-admin-card">
+                <h2 className="company-visit-report-heading">
+                  {block.focusAreaName}
+                </h2>
+                {block.sections.length > 0 ? (
+                  <div className="company-visit-report-sections">
+                    {block.sections.map((section) => (
+                      <div key={section.id}>
+                        <h3 className="report-form-section-title">{section.sectionName}</h3>
+                        {section.questions.map((q) => (
+                          <div key={q.id} className="company-visit-report-answer-row">
+                            <div className="company-visit-report-answer">
+                              <span className="company-visit-report-answer__label">{q.label}</span>
+                              <span className="company-visit-report-answer__value">
+                                {getAnswer(block.focusAreaId, q.id) ?? '—'}
+                              </span>
+                            </div>
+                            {visitId && (
+                              <div className="company-visit-report-answer-comments">
+                                <AnswerFeedbackThread
+                                  visitId={visitId}
+                                  focusAreaId={block.focusAreaId}
+                                  questionId={q.id}
+                                  canComment={canComment}
+                                  isOpen={openCommentKey === `${block.focusAreaId}-${q.id}`}
+                                  onOpenChange={(open) =>
+                                    setOpenCommentKey(open ? `${block.focusAreaId}-${q.id}` : null)
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {block.sections.length === 0 && block.legacyContent ? (
+                  <div
+                    className="company-visit-report-content"
+                    dangerouslySetInnerHTML={{ __html: block.legacyContent }}
+                  />
+                ) : block.sections.length === 0 && !block.legacyContent ? (
+                  <p className="company-visit-report-empty">
+                    {t('companyVisits.noContent')}
+                  </p>
+                ) : null}
+              </Card>
+            ))
+          )}
         </div>
       </div>
     )

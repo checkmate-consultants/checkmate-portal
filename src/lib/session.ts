@@ -16,6 +16,8 @@ export type SessionContext = {
   shopperId: string | null
   /** Only set when isShopper; used to gate visit access and redirect to complete-info when pending */
   shopperStatus: ShopperStatus | null
+  /** When membership.role === 'reviewer', list of focus area IDs this user can review */
+  reviewerFocusAreaIds: string[]
 }
 
 type SessionOptions = {
@@ -46,6 +48,7 @@ export const getSessionContext = async (
       isShopper: false,
       shopperId: null,
       shopperStatus: null,
+      reviewerFocusAreaIds: [],
     }
   }
 
@@ -66,6 +69,11 @@ export const getSessionContext = async (
     }
   }
 
+  const reviewerFocusAreaIds =
+    membership?.role === 'reviewer' && membership.company_id
+      ? await fetchReviewerFocusAreaIds(membership.company_id, user.id)
+      : []
+
   return {
     user,
     membership,
@@ -74,6 +82,7 @@ export const getSessionContext = async (
     isShopper: Boolean(shopperRow),
     shopperId: shopperRow?.id ?? null,
     shopperStatus: shopperRow?.status ?? null,
+    reviewerFocusAreaIds,
   }
 }
 
@@ -135,6 +144,23 @@ const fetchShopperRow = async (userId: string) => {
   }
 
   return data as { id: string; status: ShopperStatus } | null
+}
+
+const fetchReviewerFocusAreaIds = async (
+  companyId: string,
+  userId: string,
+): Promise<string[]> => {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('reviewer_focus_areas')
+    .select('focus_area_id')
+    .eq('company_id', companyId)
+    .eq('user_id', userId)
+
+  if (error) {
+    return []
+  }
+  return (data ?? []).map((r: { focus_area_id: string }) => r.focus_area_id)
 }
 
 const isNoRowsError = (error: PostgrestError) =>

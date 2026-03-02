@@ -9,6 +9,8 @@ type Payload = {
   companyId?: string
   email?: string
   fullName?: string
+  /** company_member | company_viewer | reviewer. Defaults to company_member. */
+  role?: 'company_member' | 'company_viewer' | 'reviewer'
 }
 
 const generatePassword = () => {
@@ -103,6 +105,9 @@ const handler = async (req: Request): Promise<Response> => {
     const companyId = payload.companyId?.trim()
     const email = payload.email?.trim()?.toLowerCase()
     const fullName = payload.fullName?.trim()
+    const role = payload.role && ['company_member', 'company_viewer', 'reviewer'].includes(payload.role)
+      ? payload.role
+      : 'company_member'
     if (!companyId) {
       return errorResponse('Company ID is required', 422)
     }
@@ -171,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { error: insertError } = await admin.from('company_members').insert({
       company_id: companyId,
       user_id: userId,
-      role: 'company_member',
+      role,
     })
 
     if (insertError) {

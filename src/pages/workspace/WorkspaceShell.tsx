@@ -34,6 +34,7 @@ export function WorkspaceShell({
         isAccountManager={session.isAccountManager}
         isShopper={session.isShopper}
         isCompanyAdmin={session.membership?.role === 'company_admin'}
+        isReviewer={session.membership?.role === 'reviewer'}
       />
       <main className="workspace-main">
         <header className="workspace-topbar">
