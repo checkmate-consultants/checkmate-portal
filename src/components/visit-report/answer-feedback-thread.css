@@ -134,9 +134,10 @@
   gap: 0.5rem;
 }
 
-/* Feedback modal: cap height so the body scrolls when there are many comments */
+/* Feedback modal: fixed height so body has space and scrolls when there are many comments */
 .answer-feedback-modal.ui-modal__content {
   max-width: min(420px, 92vw);
+  height: 85vh;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
